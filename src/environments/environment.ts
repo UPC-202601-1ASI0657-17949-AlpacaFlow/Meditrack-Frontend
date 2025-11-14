@@ -5,5 +5,8 @@ export const environment = {
   platformProviderPatientsEndpointPath: '/patients',
   platformProviderApiBaseUrl: 'https://meditrack.free.beeceptor.com',
   platformProviderRelativesEndpointPath: '/relatives',
+  platformProviderUsersEndpointPath: '/users',
+  platformProviderCredentialsEndpointPath: '/credentials',
+  platformProviderAuthEndpointPath: '/auth',
   appName: 'MediTrack'
 };

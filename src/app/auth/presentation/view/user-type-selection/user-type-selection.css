@@ -1,0 +1,108 @@
+.user-type-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100%;
+    padding: 20px;
+}
+
+.user-type-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 40px;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.back-button {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    color: #333;
+}
+
+.selection-title {
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 40px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.user-type-options {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.user-type-card-option {
+    flex: 1;
+    min-width: 200px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid transparent;
+}
+
+.user-type-card-option:hover {
+    background-color: #e8f4f8;
+    border-color: #0C7BB5;
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.user-type-card-option:active {
+    transform: translateY(-2px);
+}
+
+.user-type-card-option:focus {
+    outline: 2px solid #0C7BB5;
+    outline-offset: 2px;
+}
+
+.option-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+    height: 80px;
+    background-color: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.option-icon-large {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #0C7BB5;
+}
+
+.option-label {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #333;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .user-type-options {
+        flex-direction: column;
+    }
+
+    .user-type-card-option {
+        min-width: 100%;
+    }
+}
+

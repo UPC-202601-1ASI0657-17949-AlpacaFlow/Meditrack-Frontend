@@ -82,6 +82,120 @@
     "preview": "Preview",
     "empty": "No patients",
     "backToList": "Back to List"
-
+  },
+  "login": {
+    "welcome": "Welcome to MediTrack",
+    "email": "Email address",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "forgotPassword": "Did you forget your password?",
+    "loginButton": "Log In",
+    "loggingIn": "Logging in...",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "togglePassword": "Toggle password visibility",
+    "errors": {
+      "emailRequired": "Email is required and must be valid",
+      "passwordRequired": "Password is required (minimum 6 characters)",
+      "invalidCredentials": "Invalid email or password. Please try again."
+    }
+  },
+  "signup": {
+    "title": "Create an account",
+    "firstName": "First name",
+    "firstNamePlaceholder": "Enter your first name",
+    "lastName": "Last name",
+    "lastNamePlaceholder": "Enter your last name",
+    "email": "Email address",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "continueButton": "Continue",
+    "registering": "Creating account...",
+    "haveAccount": "Have an account?",
+    "signIn": "Sign in",
+    "togglePassword": "Toggle password visibility",
+    "toggleConfirmPassword": "Toggle confirm password visibility",
+    "errors": {
+      "firstNameRequired": "First name is required",
+      "lastNameRequired": "Last name is required",
+      "emailRequired": "Email is required and must be valid",
+      "passwordRequired": "Password is required (minimum 6 characters)",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordMismatch": "Passwords do not match",
+      "registrationFailed": "Registration failed. Please try again."
+    }
+  },
+  "userTypeSelection": {
+    "title": "Select your user type",
+    "back": "Go back",
+    "relative": "Relative",
+    "nursingHome": "Residence",
+    "clinic": "Clinic"
+  },
+  "subscriptionSelection": {
+    "title": "Select a subscription",
+    "back": "Go back",
+    "fremium": "Fremium",
+    "premium": "Premium",
+    "enterprise": "Enterprise",
+    "free": "$0",
+    "custom": "Custom",
+    "month": "month",
+    "recommended": "Recommended",
+    "selectPlan": "Select Plan",
+    "contactUs": "Contact Us",
+    "features": {
+      "vitalSigns": "Vital signs monitoring",
+      "realTimeAlerts": "Real-time alerts",
+      "webAccess": "Web platform access",
+      "downloadableReports": "Downloadable reports",
+      "prioritySupport": "Priority support",
+      "customReports": "Custom reports"
+    }
+  },
+  "billingInformation": {
+    "title": "Billing information",
+    "card": "Card",
+    "cardNumber": "Card number",
+    "cardNumberPlaceholder": "Card number",
+    "expirationDate": "Expiration Date",
+    "expirationDatePlaceholder": "Expiration Date",
+    "securityCode": "Security code",
+    "securityCodePlaceholder": "Security code",
+    "password": "Password",
+    "passwordPlaceholder": "Password",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Confirm password",
+    "togglePassword": "Toggle password visibility",
+    "toggleConfirmPassword": "Toggle confirm password visibility",
+    "terms": "By providing your card information, you allow MediTrack to charge your card for future payments in accordance with their terms.",
+    "startButton": "Start using MediTrack",
+    "errors": {
+      "cardNumberRequired": "Card number is required",
+      "invalidCardNumber": "Invalid card number",
+      "expirationDateRequired": "Expiration date is required",
+      "invalidExpirationDate": "Invalid expiration date format (MM/YY)",
+      "securityCodeRequired": "Security code is required",
+      "passwordRequired": "Password is required (minimum 6 characters)",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordMismatch": "Passwords do not match"
+    }
+  },
+  "institutionDetails": {
+    "title": "Enter your institution's details",
+    "institutionName": "Institution Name",
+    "institutionNamePlaceholder": "Enter institution name",
+    "institutionType": "Institution Type",
+    "clinic": "Clinic",
+    "residence": "Residence",
+    "startButton": "Start using MediTrack",
+    "errors": {
+      "institutionNameRequired": "Institution name is required",
+      "institutionTypeRequired": "Please select an institution type"
+    }
   }
   }

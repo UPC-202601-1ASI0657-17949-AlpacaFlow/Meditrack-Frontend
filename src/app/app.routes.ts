@@ -12,10 +12,18 @@ import {PatientDetail} from "./organization/presentation/views/patient-detail/pa
 export const routes: Routes = [
   {
     path: '',
+    redirectTo: 'auth',
+    pathMatch: 'full'
+  },
+  {
+    path: 'auth',
+    loadChildren: () =>
+      import('./auth/presentation/auth.routes').then(m => m.authRoutes)
+  },
+  {
+    path: '',
     component: Layout,
     children: [
-      // Ruta predeterminada
-      { path: '', redirectTo: 'doctor-list', pathMatch: 'full' },
       { path: 'doctor-list', component: DoctorList },
       { path: 'doctor-detail/:id', component: DoctorDetail },
       { path: 'patient-list', component: PatientListComponent },

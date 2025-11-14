@@ -5,5 +5,8 @@ export const environment = {
   platformProviderDoctorsEndpointPath: '/doctors',
   platformProviderPatientsEndpointPath: '/patients',
   platformProviderRelativesEndpointPath: '/relatives',
+  platformProviderUsersEndpointPath: '/users',
+  platformProviderCredentialsEndpointPath: '/credentials',
+  platformProviderAuthEndpointPath: '/auth',
   appName: 'MediTrack'
 };

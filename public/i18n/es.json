@@ -82,10 +82,120 @@
     "preview": "vista previa",
     "empty": "Sin pacientes",
     "backToList": "Regresar a Lista"
-
-
+  },
+  "login": {
+    "welcome": "Bienvenido a MediTrack",
+    "email": "Dirección de correo",
+    "emailPlaceholder": "Ingresa tu correo",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Ingresa tu contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "loginButton": "Iniciar sesión",
+    "loggingIn": "Iniciando sesión...",
+    "noAccount": "¿No tienes una cuenta?",
+    "signUp": "Regístrate",
+    "togglePassword": "Mostrar/ocultar contraseña",
+    "errors": {
+      "emailRequired": "El correo es requerido y debe ser válido",
+      "passwordRequired": "La contraseña es requerida (mínimo 6 caracteres)",
+      "invalidCredentials": "Correo o contraseña inválidos. Por favor intenta de nuevo."
+    }
+  },
+  "signup": {
+    "title": "Crear una cuenta",
+    "firstName": "Nombre",
+    "firstNamePlaceholder": "Ingresa tu nombre",
+    "lastName": "Apellido",
+    "lastNamePlaceholder": "Ingresa tu apellido",
+    "email": "Dirección de correo",
+    "emailPlaceholder": "Ingresa tu correo",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Ingresa tu contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Confirma tu contraseña",
+    "continueButton": "Continuar",
+    "registering": "Creando cuenta...",
+    "haveAccount": "¿Ya tienes una cuenta?",
+    "signIn": "Iniciar sesión",
+    "togglePassword": "Mostrar/ocultar contraseña",
+    "toggleConfirmPassword": "Mostrar/ocultar confirmación de contraseña",
+    "errors": {
+      "firstNameRequired": "El nombre es requerido",
+      "lastNameRequired": "El apellido es requerido",
+      "emailRequired": "El correo es requerido y debe ser válido",
+      "passwordRequired": "La contraseña es requerida (mínimo 6 caracteres)",
+      "confirmPasswordRequired": "Por favor confirma tu contraseña",
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "registrationFailed": "Error al registrar. Por favor intenta de nuevo."
+    }
+  },
+  "userTypeSelection": {
+    "title": "Selecciona tu tipo de usuario",
+    "back": "Volver",
+    "relative": "Familiar",
+    "nursingHome": "Casa de Reposo",
+    "clinic": "Clínica"
+  },
+  "subscriptionSelection": {
+    "title": "Selecciona una suscripción",
+    "back": "Volver",
+    "fremium": "Fremium",
+    "premium": "Premium",
+    "enterprise": "Enterprise",
+    "free": "$0",
+    "custom": "Personalizado",
+    "month": "mes",
+    "recommended": "Recomendado",
+    "selectPlan": "Seleccionar Plan",
+    "contactUs": "Contáctanos",
+    "features": {
+      "vitalSigns": "Monitoreo de signos vitales",
+      "realTimeAlerts": "Alertas en tiempo real",
+      "webAccess": "Acceso a la plataforma web",
+      "downloadableReports": "Reportes descargables",
+      "prioritySupport": "Soporte prioritario",
+      "customReports": "Informes personalizados"
+    }
+  },
+  "billingInformation": {
+    "title": "Información de facturación",
+    "card": "Tarjeta",
+    "cardNumber": "Número de tarjeta",
+    "cardNumberPlaceholder": "Número de tarjeta",
+    "expirationDate": "Fecha de vencimiento",
+    "expirationDatePlaceholder": "Fecha de vencimiento",
+    "securityCode": "Código de seguridad",
+    "securityCodePlaceholder": "Código de seguridad",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Confirmar contraseña",
+    "togglePassword": "Alternar visibilidad de contraseña",
+    "toggleConfirmPassword": "Alternar visibilidad de confirmación de contraseña",
+    "terms": "Al proporcionar la información de su tarjeta, permite que MediTrack cargue su tarjeta para pagos futuros de acuerdo con sus términos.",
+    "startButton": "Comenzar a usar MediTrack",
+    "errors": {
+      "cardNumberRequired": "El número de tarjeta es obligatorio",
+      "invalidCardNumber": "Número de tarjeta inválido",
+      "expirationDateRequired": "La fecha de vencimiento es obligatoria",
+      "invalidExpirationDate": "Formato de fecha de vencimiento inválido (MM/AA)",
+      "securityCodeRequired": "El código de seguridad es obligatorio",
+      "passwordRequired": "La contraseña es obligatoria (mínimo 6 caracteres)",
+      "confirmPasswordRequired": "Por favor confirme su contraseña",
+      "passwordMismatch": "Las contraseñas no coinciden"
+    }
+  },
+  "institutionDetails": {
+    "title": "Ingresa los detalles de tu institución",
+    "institutionName": "Nombre de la Institución",
+    "institutionNamePlaceholder": "Ingresa el nombre de la institución",
+    "institutionType": "Tipo de Institución",
+    "clinic": "Clínica",
+    "residence": "Casa de Reposo",
+    "startButton": "Comenzar a usar MediTrack",
+    "errors": {
+      "institutionNameRequired": "El nombre de la institución es obligatorio",
+      "institutionTypeRequired": "Por favor selecciona un tipo de institución"
+    }
   }
-
-
-
 }
