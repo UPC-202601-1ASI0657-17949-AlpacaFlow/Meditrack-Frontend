@@ -1,13 +1,15 @@
 import {Component, inject, OnInit} from '@angular/core';
 import {TranslatePipe} from '@ngx-translate/core';
-import {MatButton} from '@angular/material/button';
+import {MatButtonModule} from '@angular/material/button';
+import {MatIconModule} from '@angular/material/icon';
 import {ActivatedRoute, Router} from '@angular/router';
 
 @Component({
   selector: 'app-page-not-found',
   imports: [
     TranslatePipe,
-    MatButton
+    MatButtonModule,
+    MatIconModule
   ],
   templateUrl: './page-not-found.html',
   standalone: true,
@@ -23,6 +25,6 @@ export class PageNotFound implements OnInit {
   };
 
   protected navigateToHome() {
-    this.router.navigate(['home']).then();
+    this.router.navigate(['/organization']).then();
   }
 }

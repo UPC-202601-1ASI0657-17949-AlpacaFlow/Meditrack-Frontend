@@ -1,0 +1,108 @@
+<div class="form-container">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="doctor-form">
+        
+        <div class="form-grid">
+            <div class="form-field">
+                <label>{{ 'doctor.firstName' | translate }}:</label>
+                <input formControlName="firstName" class="form-input" />
+                @if (form.get('firstName')?.invalid && form.get('firstName')?.touched) {
+                    <div class="error-message">
+                        {{ 'doctor.firstName' | translate }} {{ 'doctor.errors.required' | translate }}
+                    </div>
+                }
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'doctor.lastName' | translate }}:</label>
+                <input formControlName="lastName" class="form-input" />
+                @if (form.get('lastName')?.invalid && form.get('lastName')?.touched) {
+                    <div class="error-message">
+                        {{ 'doctor.lastName' | translate }} {{ 'doctor.errors.required' | translate }}
+                    </div>
+                }
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'doctor.age' | translate }}:</label>
+                <input type="number" formControlName="age" class="form-input" />
+                @if (form.get('age')?.invalid && form.get('age')?.touched) {
+                    <div class="error-message">
+                        {{ 'doctor.age' | translate }} {{ 'doctor.errors.requiredFemale' | translate }}
+                    </div>
+                }
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'doctor.specialty' | translate }}:</label>
+                <input formControlName="specialty" class="form-input" />
+                @if (form.get('specialty')?.invalid && form.get('specialty')?.touched) {
+                    <div class="error-message">
+                        {{ 'doctor.specialty' | translate }} {{ 'doctor.errors.requiredFemale' | translate }}
+                    </div>
+                }
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'doctor.email' | translate }}:</label>
+                <input type="email" formControlName="email" class="form-input" 
+                       [placeholder]="institutionEmailDomain ? (('doctor.emailPlaceholder' | translate) + institutionEmailDomain) : ('doctor.emailPlaceholderExample' | translate)" />
+                @if (institutionEmailDomain && !doctor) {
+                    <small class="email-hint">
+                        {{ 'doctor.emailHint' | translate }} {{ institutionEmailDomain }}
+                    </small>
+                }
+                @if (form.get('email')?.invalid && form.get('email')?.touched) {
+                    <div class="error-message">
+                        {{ 'doctor.email' | translate }} {{ 'doctor.errors.emailInvalid' | translate }}
+                    </div>
+                }
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'doctor.phoneNumber' | translate }}:</label>
+                <input formControlName="phoneNumber" class="form-input" />
+                @if (form.get('phoneNumber')?.invalid && form.get('phoneNumber')?.touched) {
+                    <div class="error-message">
+                        {{ 'doctor.phoneNumber' | translate }}
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- URL de imagen -->
+        <div class="photo-upload">
+            <div class="form-field">
+                <label>{{ 'doctor.imageUrl' | translate }} ({{ 'doctor.imageUrlHint' | translate }}):</label>
+                <input type="url" formControlName="imageUrl" class="form-input" [placeholder]="'doctor.imageUrlPlaceholder' | translate" />
+                @if (form.get('imageUrl')?.invalid && form.get('imageUrl')?.touched) {
+                    <div class="error-message">
+                        {{ 'doctor.imageUrlError' | translate }}
+                    </div>
+                }
+            </div>
+
+            <!-- Vista previa -->
+            @if (form.get('imageUrl')?.value && form.get('imageUrl')?.valid) {
+                <div class="preview">
+                    <p class="preview-title">{{ 'doctor.preview' | translate }}</p>
+                    <img [src]="form.get('imageUrl')?.value" [alt]="'doctor.photo' | translate" class="preview-image" 
+                         (error)="$event.target.src='/assets/default-doctor.png'" />
+                </div>
+            }
+        </div>
+
+        <!-- Botones -->
+        <div class="form-actions">
+            <button type="submit" 
+                    [disabled]="form.invalid" 
+                    class="save-btn">
+                {{ 'doctor.save' | translate }}
+            </button>
+            <button type="button" 
+                    (click)="onCancel()" 
+                    class="cancel-btn">
+                {{ 'doctor.cancel' | translate }}
+            </button>
+        </div>
+    </form>
+</div>

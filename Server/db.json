@@ -19,6 +19,31 @@
       "id": 4,
       "email": "sdf@asd.com",
       "role": "admin"
+    },
+    {
+      "id": 5,
+      "email": "no@clinic.com",
+      "role": "admin"
+    },
+    {
+      "id": 6,
+      "email": "docto1.dc@noc.com",
+      "role": "doctor"
+    },
+    {
+      "id": 7,
+      "email": "pruebag@123.com",
+      "role": "relative"
+    },
+    {
+      "id": 8,
+      "email": "userg@123.com",
+      "role": "relative"
+    },
+    {
+      "id": 9,
+      "email": "userp@123.com",
+      "role": "relative"
     }
   ],
   "credentials": [
@@ -41,6 +66,255 @@
       "userId": 4,
       "password": "123123",
       "id": 4
+    },
+    {
+      "userId": 5,
+      "password": "123123",
+      "id": 5
+    },
+    {
+      "userId": 6,
+      "password": "docto1.dc@noc.com",
+      "id": 6
+    },
+    {
+      "userId": 7,
+      "password": "123123",
+      "id": 7
+    },
+    {
+      "userId": 8,
+      "password": "123123",
+      "id": 8
+    },
+    {
+      "userId": 9,
+      "password": "123123",
+      "id": 9
+    }
+  ],
+  "doctors": [
+    {
+      "id": 1,
+      "organizationId": 1,
+      "firstName": "doctora",
+      "lastName": "doc",
+      "specialty": "qdas",
+      "phoneNumber": "13123123123",
+      "age": 41,
+      "email": "doctora.doc@noc.com",
+      "imageUrl": "https://static.vecteezy.com/system/resources/previews/001/822/322/non_2x/cartoon-couple-doctors-waving-free-vector.jpg",
+      "assignedSeniorIds": []
+    },
+    {
+      "id": 2,
+      "organizationId": 1,
+      "userId": 6,
+      "firstName": "docto1",
+      "lastName": "dc",
+      "specialty": "dasdadsa",
+      "phoneNumber": "1231312",
+      "age": 123,
+      "email": "docto1.dc@noc.com",
+      "imageUrl": "https://static.vecteezy.com/system/resources/previews/001/822/322/non_2x/cartoon-couple-doctors-waving-free-vector.jpg",
+      "assignedSeniorIds": []
+    }
+  ],
+  "organizations": [
+    {
+      "id": 1,
+      "name": "noc",
+      "type": "clinic"
+    }
+  ],
+  "admins": [
+    {
+      "id": 1,
+      "organizationId": 1,
+      "userId": 5,
+      "firstName": "noc",
+      "lastName": "no"
+    }
+  ],
+  "senior-citizens": [
+    {
+      "id": 1,
+      "organizationId": 1,
+      "firstName": "xds",
+      "lastName": "asd",
+      "birthDate": "2312-03-12",
+      "age": -287,
+      "gender": "adasd",
+      "weight": 231123,
+      "dni": "124123",
+      "height": 123213,
+      "imageUrl": "https://i.pinimg.com/736x/cb/9a/60/cb9a6097c3a8ae031fb460f82ac3ba12.jpg",
+      "deviceId": 1231,
+      "assignedDoctorId": 2,
+      "assignedCaregiverId": null,
+      "alerts": []
+    },
+    {
+      "id": 2,
+      "organizationId": 0,
+      "firstName": "carlitos",
+      "lastName": "car",
+      "birthDate": "3132-12-12",
+      "age": -1108,
+      "gender": "qddsa",
+      "weight": 123,
+      "dni": "12123",
+      "height": 12312,
+      "imageUrl": "https://i.pinimg.com/474x/33/6c/2a/336c2a13b5af6d9e27a7bdc7bbc905bd.jpg",
+      "deviceId": 12312,
+      "assignedDoctorId": null,
+      "assignedCaregiverId": null,
+      "alerts": []
+    },
+    {
+      "id": 3,
+      "organizationId": 0,
+      "firstName": "veamos",
+      "lastName": "",
+      "birthDate": "1902-11-15",
+      "age": 123,
+      "gender": "male",
+      "weight": 23,
+      "dni": "123132",
+      "height": 123,
+      "imageUrl": "https://i.pinimg.com/736x/33/6c/2a/336c2a13b5af6d9e27a7bdc7bbc905bd.jpg",
+      "deviceId": 123,
+      "assignedDoctorId": null,
+      "assignedCaregiverId": null,
+      "alerts": []
+    },
+    {
+      "id": 4,
+      "organizationId": 0,
+      "firstName": "user",
+      "lastName": "",
+      "birthDate": "1902-11-15",
+      "age": 123,
+      "gender": "female",
+      "weight": 123,
+      "dni": "123123",
+      "height": 123123,
+      "imageUrl": "https://i.pinimg.com/736x/33/6c/2a/336c2a13b5af6d9e27a7bdc7bbc905bd.jpg",
+      "deviceId": 123123,
+      "assignedDoctorId": null,
+      "assignedCaregiverId": null,
+      "alerts": []
+    },
+    {
+      "id": 5,
+      "organizationId": 0,
+      "firstName": "juancito",
+      "lastName": "",
+      "birthDate": "1903-11-15",
+      "age": 122,
+      "gender": "male",
+      "weight": 123,
+      "dni": "98998",
+      "height": 123123,
+      "imageUrl": "https://i.pinimg.com/736x/29/15/77/2915771c6202130b98dadee9f4ed1e2d.jpg",
+      "deviceId": 12312,
+      "assignedDoctorId": null,
+      "assignedCaregiverId": null,
+      "alerts": []
+    }
+  ],
+  "doctor-assignments": [
+    {
+      "seniorCitizenId": 1,
+      "doctorId": 2,
+      "id": 1
+    },
+    {
+      "seniorCitizenId": 1,
+      "doctorId": 2,
+      "id": 2
+    },
+    {
+      "seniorCitizenId": 1,
+      "doctorId": 2,
+      "id": 3
+    },
+    {
+      "seniorCitizenId": 1,
+      "doctorId": 2,
+      "id": 4
+    }
+  ],
+  "relatives": [
+    {
+      "id": 3,
+      "userId": 3,
+      "firstName": "Test",
+      "lastName": "Relative",
+      "email": "asd@asd.com",
+      "password": "123123",
+      "role": "relative",
+      "planType": "freemium",
+      "creditCard": null,
+      "expirationDate": null,
+      "securityCode": null,
+      "seniorCitizenId": 1
+    },
+    {
+      "userId": 7,
+      "firstName": "pruebag",
+      "lastName": "",
+      "email": "pruebag@123.com",
+      "password": "123123",
+      "role": "relative",
+      "planType": "freemium",
+      "creditCard": null,
+      "expirationDate": null,
+      "securityCode": null,
+      "seniorCitizenId": 2,
+      "id": 4
+    },
+    {
+      "userId": 7,
+      "firstName": "pruebag",
+      "lastName": "",
+      "email": "pruebag@123.com",
+      "password": "",
+      "role": "relative",
+      "planType": "freemium",
+      "creditCard": null,
+      "expirationDate": null,
+      "securityCode": null,
+      "seniorCitizenId": 3,
+      "id": 5
+    },
+    {
+      "userId": 8,
+      "firstName": "userg",
+      "lastName": "",
+      "email": "userg@123.com",
+      "password": "123123",
+      "role": "relative",
+      "planType": "freemium",
+      "creditCard": null,
+      "expirationDate": null,
+      "securityCode": null,
+      "seniorCitizenId": 4,
+      "id": 6
+    },
+    {
+      "userId": 9,
+      "firstName": "userp",
+      "lastName": "",
+      "email": "userp@123.com",
+      "password": "123123",
+      "role": "relative",
+      "planType": "premium",
+      "creditCard": null,
+      "expirationDate": null,
+      "securityCode": null,
+      "seniorCitizenId": 5,
+      "id": 7
     }
   ]
 }

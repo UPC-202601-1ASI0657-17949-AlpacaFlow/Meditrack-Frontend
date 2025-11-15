@@ -116,12 +116,13 @@
                     type="submit"
                     class="signup-button"
                     [disabled]="signupForm.invalid || isLoading">
-                @if (isLoading) {
+                <ng-container *ngIf="isLoading; else continueButton">
                     <mat-icon class="spinner-icon">hourglass_empty</mat-icon>
                     {{ 'signup.registering' | translate }}
-                } @else {
+                </ng-container>
+                <ng-template #continueButton>
                     {{ 'signup.continueButton' | translate }}
-                }
+                </ng-template>
             </button>
         </form>
 

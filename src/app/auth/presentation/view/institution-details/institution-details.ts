@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
+import { RegistrationFlowStore } from '../../../application/registration-flow.store';
 
 @Component({
   selector: 'app-institution-details',
@@ -27,9 +28,10 @@ export class InstitutionDetailsComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private registrationFlowStore = inject(RegistrationFlowStore);
 
   institutionForm: FormGroup;
-  selectedInstitutionType: 'clinic' | 'residence' | null = null;
+  selectedInstitutionType: 'clinic' | 'resident' | null = null;
 
   constructor() {
     this.institutionForm = this.fb.group({
@@ -41,7 +43,7 @@ export class InstitutionDetailsComponent {
   /**
    * Select institution type
    */
-  selectInstitutionType(type: 'clinic' | 'residence'): void {
+  selectInstitutionType(type: 'clinic' | 'resident'): void {
     this.selectedInstitutionType = type;
     this.institutionForm.patchValue({ institutionType: type });
   }
@@ -56,7 +58,10 @@ export class InstitutionDetailsComponent {
       return;
     }
 
-    // This is a static form, data is ignored for now as requested
+    // Save institution data temporarily (not created in DB yet)
+    const { institutionName, institutionType } = this.institutionForm.value;
+    this.registrationFlowStore.setInstitutionData(institutionName, institutionType);
+    
     // Redirect to billing information after completing institution details
     this.router.navigate(['billing-information'], { relativeTo: this.route.parent });
   }

@@ -1,0 +1,126 @@
+<div class="registration-container">
+    <div class="form-card">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="registration-form">
+        <div class="form-content">
+            <!-- Left Section: Personal Details -->
+            <div class="personal-details-section">
+                <div class="section-card">
+                    <h3 class="section-title">{{ 'senior-citizen-registration.personalDetails' | translate }}</h3>
+                    <div class="form-grid">
+                        <!-- Column 1 -->
+                        <div class="form-column">
+                            <mat-form-field appearance="outline">
+                                <mat-label>{{ 'senior-citizen-registration.fullName' | translate }}</mat-label>
+                                <input matInput formControlName="fullName" />
+                                @if (form.get('fullName')?.invalid && form.get('fullName')?.touched) {
+                                    <mat-error>{{ 'senior-citizen-registration.fullNameRequired' | translate }}</mat-error>
+                                }
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline">
+                                <mat-label>{{ 'senior-citizen-registration.gender.label' | translate }}</mat-label>
+                                <mat-select formControlName="gender">
+                                    @for (option of genderOptions; track option.value) {
+                                        <mat-option [value]="option.value">{{ option.label | translate }}</mat-option>
+                                    }
+                                </mat-select>
+                                @if (form.get('gender')?.invalid && form.get('gender')?.touched) {
+                                    <mat-error>{{ 'senior-citizen-registration.genderRequired' | translate }}</mat-error>
+                                }
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline">
+                                <mat-label>{{ 'senior-citizen-registration.dni' | translate }}</mat-label>
+                                <input matInput formControlName="dni" />
+                                @if (form.get('dni')?.invalid && form.get('dni')?.touched) {
+                                    <mat-error>{{ 'senior-citizen-registration.dniRequired' | translate }}</mat-error>
+                                }
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline">
+                                <mat-label>{{ 'senior-citizen-registration.deviceId' | translate }}</mat-label>
+                                <input matInput type="number" formControlName="deviceId" />
+                                @if (form.get('deviceId')?.invalid && form.get('deviceId')?.touched) {
+                                    <mat-error>{{ 'senior-citizen-registration.deviceIdRequired' | translate }}</mat-error>
+                                }
+                            </mat-form-field>
+                        </div>
+
+                        <!-- Column 2 -->
+                        <div class="form-column">
+                            <mat-form-field appearance="outline">
+                                <mat-label>{{ 'senior-citizen-registration.age' | translate }}</mat-label>
+                                <input matInput type="number" formControlName="age" />
+                                @if (form.get('age')?.invalid && form.get('age')?.touched) {
+                                    <mat-error>{{ 'senior-citizen-registration.ageRequired' | translate }}</mat-error>
+                                }
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline">
+                                <mat-label>{{ 'senior-citizen-registration.weight' | translate }}</mat-label>
+                                <input matInput type="number" formControlName="weight" />
+                                @if (form.get('weight')?.invalid && form.get('weight')?.touched) {
+                                    <mat-error>{{ 'senior-citizen-registration.weightRequired' | translate }}</mat-error>
+                                }
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline">
+                                <mat-label>{{ 'senior-citizen-registration.height' | translate }}</mat-label>
+                                <input matInput type="number" formControlName="height" />
+                                @if (form.get('height')?.invalid && form.get('height')?.touched) {
+                                    <mat-error>{{ 'senior-citizen-registration.heightRequired' | translate }}</mat-error>
+                                }
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Section: Photo URL -->
+            <div class="photo-upload-section">
+                <div class="section-card">
+                    <h3 class="section-title">{{ 'senior-citizen-registration.uploadPhoto' | translate }}</h3>
+                    <div class="photo-url-section">
+                        <mat-form-field appearance="outline" class="full-width">
+                            <mat-label>{{ 'senior-citizen.imageUrl' | translate }} ({{ 'senior-citizen.imageUrlHint' | translate }})</mat-label>
+                            <input matInput 
+                                   type="url" 
+                                   formControlName="imageUrl" 
+                                   [placeholder]="'senior-citizen.imageUrlPlaceholder' | translate" />
+                            @if (form.get('imageUrl')?.invalid && form.get('imageUrl')?.touched) {
+                                <mat-error>{{ 'senior-citizen.imageUrlError' | translate }}</mat-error>
+                            }
+                        </mat-form-field>
+
+                        @if (form.get('imageUrl')?.value && form.get('imageUrl')?.valid) {
+                            <div class="preview">
+                                <p class="preview-title">{{ 'senior-citizen.preview' | translate }}</p>
+                                <img [src]="form.get('imageUrl')?.value" 
+                                     [alt]="'senior-citizen.photo' | translate" 
+                                     class="preview-image" 
+                                     (error)="$event.target.src='/assets/default-senior-citizen.png'" />
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (errorMessage) {
+            <div class="error-message">{{ errorMessage }}</div>
+        }
+
+        <!-- Action Button -->
+        <div class="form-actions">
+            <button mat-raised-button 
+                    color="primary" 
+                    type="submit" 
+                    [disabled]="form.invalid || isLoading"
+                    class="save-button">
+                <span>{{ 'senior-citizen-registration.save' | translate }}</span>
+                <mat-icon class="arrow-icon">arrow_forward</mat-icon>
+            </button>
+        </div>
+        </form>
+    </div>
+</div>

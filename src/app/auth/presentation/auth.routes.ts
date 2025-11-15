@@ -14,6 +14,8 @@ const billingInformation = () =>
     import('./view/billing-information/billing-information').then(m => m.BillingInformationComponent);
 const institutionDetails = () =>
     import('./view/institution-details/institution-details').then(m => m.InstitutionDetailsComponent);
+const seniorCitizenRegistration = () =>
+    import('./view/senior-citizen-registration/senior-citizen-registration').then(m => m.SeniorCitizenRegistrationComponent);
 
 export const authRoutes: Routes = [
     {
@@ -26,6 +28,7 @@ export const authRoutes: Routes = [
             { path: 'subscription-selection', loadComponent: subscriptionSelection, data: { title: 'Select Subscription' } },
             { path: 'billing-information', loadComponent: billingInformation, data: { title: 'Billing Information' } },
             { path: 'institution-details', loadComponent: institutionDetails, data: { title: 'Institution Details' } },
+            { path: 'senior-citizen-registration', loadComponent: seniorCitizenRegistration, data: { title: 'Register Senior Citizen' } },
             { path: '', redirectTo: 'login', pathMatch: 'full' }
         ]
     }

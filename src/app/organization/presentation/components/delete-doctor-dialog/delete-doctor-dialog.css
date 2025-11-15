@@ -1,0 +1,21 @@
+mat-dialog-content {
+  margin: 20px 0;
+}
+
+mat-dialog-actions {
+  padding: 20px 0 0 0;
+}
+
+button {
+  margin-left: 10px;
+}
+
+p {
+  margin: 10px 0;
+}
+
+strong {
+  color: #333;
+  font-weight: 600;
+}
+

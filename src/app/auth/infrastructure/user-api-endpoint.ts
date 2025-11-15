@@ -5,7 +5,7 @@ import { UserResource, UsersResponse } from './user-response';
 import { UserAssembler } from './user-assembler';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { map, switchMap } from 'rxjs';
+import { map, switchMap, of, throwError } from 'rxjs';
 
 /**
  * API endpoint for managing users.
@@ -38,16 +38,67 @@ export class UserApiEndpoint extends
 
     /**
      * Login - autentica un usuario con email y password
+     * Busca el usuario por email y valida la contraseña contra las credenciales
      */
     login(email: string, password: string) {
-        return this.http.post<{ token: string; user: UserResource }>(
-            `${environment.platformProviderApiBaseUrl}${environment.platformProviderAuthEndpointPath}/login`,
-            { email, password }
-        ).pipe(
-            map(response => ({
-                token: response.token,
-                user: this.assembler.toEntityFromResource(response.user)
-            }))
+        console.log('[UserApiEndpoint] Login attempt:', { email, passwordLength: password?.length });
+        
+        // Paso 1: Buscar el usuario por email
+        const url = `${this.endpointUrl}?email=${email}`;
+        console.log('[UserApiEndpoint] Searching user by email:', url);
+        
+        return this.http.get<UserResource[]>(url).pipe(
+            switchMap((users) => {
+                console.log('[UserApiEndpoint] Users found:', users);
+                
+                // Verificar que se encontró un usuario
+                if (!users || users.length === 0) {
+                    console.error('[UserApiEndpoint] No user found with email:', email);
+                    return throwError(() => new Error('Invalid email or password'));
+                }
+
+                const userResource = users[0];
+                const userId = userResource.id;
+                console.log('[UserApiEndpoint] User found:', { id: userId, email: userResource.email, role: userResource.role });
+
+                // Paso 2: Buscar las credenciales del usuario
+                const credentialsUrl = `${environment.platformProviderApiBaseUrl}${environment.platformProviderCredentialsEndpointPath}?userId=${userId}`;
+                console.log('[UserApiEndpoint] Searching credentials:', credentialsUrl);
+                
+                return this.http.get<{ userId: number; password: string; id: number }[]>(
+                    credentialsUrl
+                ).pipe(
+                    switchMap((credentialsList) => {
+                        console.log('[UserApiEndpoint] Credentials found:', credentialsList);
+                        
+                        // Verificar que se encontraron credenciales
+                        if (!credentialsList || credentialsList.length === 0) {
+                            console.error('[UserApiEndpoint] No credentials found for userId:', userId);
+                            return throwError(() => new Error('Invalid email or password'));
+                        }
+
+                        const credentials = credentialsList[0];
+                        console.log('[UserApiEndpoint] Validating password:', { 
+                            provided: password, 
+                            stored: credentials.password,
+                            match: credentials.password === password 
+                        });
+
+                        // Paso 3: Validar la contraseña
+                        if (credentials.password !== password) {
+                            console.error('[UserApiEndpoint] Password mismatch');
+                            return throwError(() => new Error('Invalid email or password'));
+                        }
+
+                        // Paso 4: Si la contraseña es correcta, devolver el usuario y un token mock
+                        console.log('[UserApiEndpoint] Login successful for user:', userId);
+                        return of({
+                            token: 'mock_token_for_flow',
+                            user: this.assembler.toEntityFromResource(userResource)
+                        });
+                    })
+                );
+            })
         );
     }
 

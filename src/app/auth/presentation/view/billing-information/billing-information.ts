@@ -7,6 +7,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
+import { AuthStore } from '../../../application/auth.store';
+import { RegistrationFlowStore } from '../../../application/registration-flow.store';
+import { OrganizationApi } from '../../../../organization/infrastructure/organization-api';
+import { Organization } from '../../../../organization/domain/model/organization.entity';
+import { Admin } from '../../../../organization/domain/model/admin.entity';
+import { User } from '../../../domain/model/user.entity';
+import { switchMap, of } from 'rxjs';
 
 @Component({
   selector: 'app-billing-information',
@@ -27,6 +34,9 @@ export class BillingInformationComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private authStore = inject(AuthStore);
+  private registrationFlowStore = inject(RegistrationFlowStore);
+  private organizationApi = inject(OrganizationApi);
 
   billingForm: FormGroup;
   hidePassword = true;
@@ -132,9 +142,144 @@ export class BillingInformationComponent {
       return;
     }
 
-    // This is a static form, just redirect to home
-    // In the future, this could send billing information to a payment processor
-    this.router.navigate(['/']);
+    // This is a static form, billing data is ignored for now
+    // But this is where we create user, organization and admin after payment is completed
+    const role = this.registrationFlowStore.role;
+    
+    if (role === 'relative') {
+      // For relative users, create user and redirect
+      this.createUserAndRedirect();
+    } else if (role === 'admin') {
+      // For admin users, create user, organization and admin
+      this.createUserOrganizationAndAdmin();
+    } else {
+      // No role found, redirect to login
+      this.router.navigate(['/auth/login']);
+    }
+  }
+
+  /**
+   * Creates user for relative users after payment form is completed
+   */
+  private createUserAndRedirect(): void {
+    const email = this.registrationFlowStore.email;
+    const password = this.registrationFlowStore.password;
+    const role = this.registrationFlowStore.role;
+
+    // Validate required data
+    if (!email || !password || !role) {
+      console.error('Missing registration flow data for relative user');
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    // Create user in DB
+    const user = new User({
+      email: email,
+      role: role
+    });
+
+    this.authStore.register(user, password).subscribe({
+      next: (response) => {
+        // Set auth state
+        this.authStore.setAuth(response.token, response.user);
+        
+        // Store planType in registration flow store for later use
+        this.registrationFlowStore.setPlanType('premium');
+        
+        // Clear temporary registration data (except planType)
+        // Don't clear planType yet, we'll need it
+        // this.registrationFlowStore.clear();
+        
+        // Redirect to senior citizen registration form
+        this.router.navigate(['senior-citizen-registration'], { relativeTo: this.route.parent });
+      },
+      error: (error) => {
+        console.error('Error creating user:', error);
+        this.router.navigate(['/auth/login']);
+      }
+    });
+  }
+
+  /**
+   * Creates user, organization and admin after payment form is completed
+   * This ensures users complete payment before anything is created in DB
+   */
+  private createUserOrganizationAndAdmin(): void {
+    const email = this.registrationFlowStore.email;
+    const password = this.registrationFlowStore.password;
+    const role = this.registrationFlowStore.role;
+    const institutionName = this.registrationFlowStore.institutionName;
+    const institutionType = this.registrationFlowStore.institutionType;
+    const adminFirstName = this.registrationFlowStore.adminFirstName;
+    const adminLastName = this.registrationFlowStore.adminLastName;
+
+    // Validate that all required data is available
+    if (!email || !password || !role || !institutionName || !institutionType || !adminFirstName || !adminLastName) {
+      console.error('Missing registration flow data');
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    // Step 1: Create user in DB
+    const user = new User({
+      email: email,
+      role: role
+    });
+
+    this.authStore.register(user, password).pipe(
+      switchMap((userResponse) => {
+        // Step 2: After user is created, create organization
+        const organization = new Organization({
+          name: institutionName,
+          type: institutionType
+        });
+
+        return this.organizationApi.createOrganization(organization).pipe(
+          switchMap((createdOrganization) => {
+            // Step 3: After organization is created, create the admin
+            const admin = new Admin({
+              organizationId: createdOrganization.id,
+              userId: userResponse.user.id,
+              firstName: adminFirstName,
+              lastName: adminLastName
+            });
+
+            return this.organizationApi.createAdmin(admin).pipe(
+              switchMap((createdAdmin) => {
+                // Set auth state with created user
+                this.authStore.setAuth(userResponse.token, userResponse.user);
+                
+                // Clear temporary registration data
+                this.registrationFlowStore.clear();
+                
+                // Return both organization and user for final redirect
+                // The organization layout will handle routing based on institution type
+                return of({ organization: createdOrganization, userId: userResponse.user.id });
+              })
+            );
+          })
+        );
+      })
+    ).subscribe({
+      next: (result) => {
+        // Redirect to organization routes with userId and role
+        // Format: /organization/:organizationId/:userRole/:userId
+        this.router.navigate(['/organization', result.organization.id, 'admin', result.userId]);
+      },
+      error: (error) => {
+        console.error('Error creating user, organization and admin:', error);
+        console.error('Error details:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          error: error.error,
+          url: error.url
+        });
+        // On error, redirect to login
+        this.router.navigate(['/auth/login']);
+      }
+    });
   }
 
   goBack(): void {

@@ -1,0 +1,47 @@
+<!-- Lista de doctores -->
+@if (!showForm) {
+    <div class="doctor-list-container">
+        <!-- Estado vacío -->
+        @if (organizationStore.doctors().length === 0) {
+            <div class="empty-state">
+                <div class="empty-content">
+                    <p class="empty-text">{{ 'doctor.empty' | translate }}</p>
+                    <button mat-raised-button color="primary" class="add-doctor-btn" (click)="openAddDoctorForm()">
+                        {{ 'doctor.add' | translate }}
+                    </button>
+                </div>
+            </div>
+        }
+
+        <!-- Lista de items -->
+        @if (organizationStore.doctors().length > 0) {
+            <div class="doctor-items">
+                @for (doctor of organizationStore.doctors(); track trackById($index, doctor)) {
+                    <app-doctor-item
+                            [doctor]="doctor"
+                            (edit)="openEditDoctorForm($event)"
+                            (remove)="onDoctorRemoved($event)">
+                    </app-doctor-item>
+                }
+            </div>
+        }
+
+        <!-- Botón de agregar cuando hay doctores -->
+        @if (organizationStore.doctors().length > 0) {
+            <div class="add-button">
+                <button mat-raised-button color="primary" (click)="openAddDoctorForm()">
+                    {{ 'doctor.add' | translate }}
+                </button>
+            </div>
+        }
+    </div>
+}
+
+<!-- Formulario de crear/editar -->
+@if (showForm) {
+    <app-doctor-form
+            [doctor]="editingDoctor"
+            (saved)="onDoctorSaved($event)"
+            (cancel)="closeForm()">
+    </app-doctor-form>
+}

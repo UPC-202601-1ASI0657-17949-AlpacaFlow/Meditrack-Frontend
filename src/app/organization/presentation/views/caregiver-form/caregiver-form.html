@@ -1,0 +1,67 @@
+<div class="form-container">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="caregiver-form">
+        <div class="form-grid">
+            <div class="form-field">
+                <label>{{ 'caregiver.firstName' | translate }}:</label>
+                <input formControlName="firstName" class="form-input" />
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'caregiver.lastName' | translate }}:</label>
+                <input formControlName="lastName" class="form-input" />
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'caregiver.age' | translate }}:</label>
+                <input type="number" formControlName="age" class="form-input" />
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'caregiver.email' | translate }}:</label>
+                <input type="email" formControlName="email" class="form-input" 
+                       [placeholder]="institutionEmailDomain ? (('caregiver.emailPlaceholder' | translate) + institutionEmailDomain) : ('caregiver.emailPlaceholderExample' | translate)" />
+                @if (institutionEmailDomain && !caregiver) {
+                    <small class="email-hint">
+                        {{ 'caregiver.emailHint' | translate }} {{ institutionEmailDomain }}
+                    </small>
+                }
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'caregiver.phoneNumber' | translate }}:</label>
+                <input formControlName="phoneNumber" class="form-input" />
+            </div>
+    </div>
+    <!-- URL de imagen -->
+        <div class="photo-upload">
+            <div class="form-field">
+                <label>{{ 'caregiver.imageUrl' | translate }} ({{ 'caregiver.imageUrlHint' | translate }}):</label>
+                <input type="url" formControlName="imageUrl" class="form-input" [placeholder]="'caregiver.imageUrlPlaceholder' | translate" />
+                @if (form.get('imageUrl')?.invalid && form.get('imageUrl')?.touched) {
+                    <div class="error-message">
+                        {{ 'caregiver.imageUrlError' | translate }}
+                    </div>
+                }
+            </div>
+
+            @if (form.get('imageUrl')?.value && form.get('imageUrl')?.valid) {
+                <div class="preview">
+                    <p class="preview-title">{{ 'caregiver.preview' | translate }}</p>
+                    <img [src]="form.get('imageUrl')?.value" [alt]="'caregiver.photo' | translate" class="preview-image" 
+                         (error)="$event.target.src='/assets/default-caregiver.png'" />
+                </div>
+            }
+        </div>
+
+        <!-- Botones -->
+        <div class="form-actions">
+            <button type="submit" [disabled]="form.invalid" class="save-btn">
+                {{ 'caregiver.save' | translate }}
+            </button>
+            <button type="button" (click)="onCancel()" class="cancel-btn">
+                {{ 'caregiver.cancel' | translate }}
+            </button>
+        </div>
+    </form>
+</div>
+

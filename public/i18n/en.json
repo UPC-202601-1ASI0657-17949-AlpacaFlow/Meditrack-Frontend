@@ -7,17 +7,26 @@
       "title": "About MediTrack",
       "content": "Learn more about our application and its features."
     },
-    "navigation": {
-      "doctor-list": "Doctor List",
-      "patient-list": "Patients List",
-      "support": "Support"
-    },
+  "navigation": {
+    "doctor-list": "Doctor List",
+    "patient-list": "Patients List",
+    "senior-citizen-list": "Senior Citizen List",
+    "caregiver-list": "Caregiver List",
+    "support": "Support",
+    "patientProfile": "Patient Profile",
+    "seniorCitizenProfile": "Senior Citizen Profile",
+    "statistics": "Statistics",
+    "alerts": "Alerts"
+  },
     "footer": {
       "copyright": "© 2024 MediTrack. All rights reserved."
     },
-    "language": {
-      "switch": "Switch Language"
-    },
+  "language": {
+    "switch": "Switch Language"
+  },
+  "common": {
+    "loading": "Loading..."
+  },
   "page-not-found": {
     "title": "Page Not Found",
     "content": "The page <strong>{{invalid_path}}</strong> was not found.",
@@ -41,6 +50,7 @@
     "general": "General Inquiry"
   },
   "doctor": {
+    "title": "Dr. ",
     "add": "Add Doctor",
     "empty": "There Are No Registered Doctors",
     "edit": "Edit",
@@ -63,25 +73,158 @@
     "selectPatient": "Select Patient",
     "doctorProfile": "Doctor Profile",
     "assignedPatients": "Assigned Patients",
-    "backToList": "Back to List"
+    "assignedSeniorCitizens": "Assigned Senior Citizens",
+    "availableSeniorCitizens": "Available Senior Citizens",
+    "selectSeniorCitizen": "Select Senior Citizen",
+    "unassignSeniorCitizen": "Unassign Senior Citizen",
+    "backToList": "Back to List",
+    "unassignPatient": "Unassign Patient",
+    "emailHint": "Email will be automatically generated with the institutional domain",
+    "emailPlaceholderExample": "email@example.com",
+    "emailPlaceholder": "firstname.lastname",
+    "imageUrl": "Image URL",
+    "imageUrlHint": "Enter a valid image URL",
+    "imageUrlPlaceholder": "https://example.com/image.jpg",
+    "imageUrlError": "Must be a valid image URL",
+    "photo": "Photo",
+    "clickToView": "Click to view details, double-click to open",
+    "assignedTo": "Assigned to",
+    "unassignPatientDialog": {
+      "title": "Unassign Patient",
+      "message": "Do you want to unassign this patient from the doctor? The patient will remain registered in the system.",
+      "confirm": "Unassign",
+      "cancel": "Cancel"
+    },
+    "deleteDoctorDialog": {
+      "title": "Delete Doctor",
+      "message": "Are you sure you want to delete this doctor? This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "errors": {
+      "required": "is required",
+      "requiredFemale": "is required",
+      "emailInvalid": "is required and must be valid",
+      "photoRequired": "Photo is required",
+      "cannotAssignToCaregiver": "This senior citizen is already assigned to a caregiver. Cannot be assigned to a doctor (mutual exclusion).",
+      "assignError": "Error assigning senior citizen"
+    }
   },
-  "patient": {
+  "senior-citizen": {
+    "fullName": "Full Name",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "birthDate": "Birth Date",
+    "age": "Age",
+    "gender": "Gender",
+    "weight": "Weight",
+    "height": "Height",
+    "dni": "DNI",
+    "deviceId": "Device ID",
+    "doctor": "Doctor",
+    "assignedTo": "Assigned to",
+    "notAssigned": "Not assigned",
+    "empty": "Empty List of Senior Citizens",
+    "add": "Add Senior Citizen",
+    "uploadPhoto": "Upload Photo",
+    "dragFile": "Drag File",
+    "save": "Save",
+    "cancel": "Cancel",
+    "backToList": "Back To List",
+    "caregiver": "Caregiver",
+    "noCaregiver": "No caregiver assigned",
+    "imageUrl": "Image Url",
+    "imageUrlHint": "Image Url Update",
+    "imageUrlPlaceholder": "https://example.com/image.jpg",
+    "imageUrlError": "Must be a valid image URL",
+    "clickToView": "Click to view details",
+    "edit": "Edit",
+    "delete": "Delete",
+    "photo": "Photo",
+    "preview": "Preview",
+    "deleteSeniorCitizenDialog": {
+      "title": "Delete Senior Citizen",
+      "message": "Are you sure you want to delete this senior citizen? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "unassignSeniorCitizenDialog": {
+      "title": "Unassign Senior Citizen",
+      "message": "Do you want to unassign this senior citizen from the caregiver? The senior citizen will remain registered in the system.",
+      "cancel": "Cancel",
+      "confirm": "Unassign"
+    },
+    "units": {
+      "kg": "kg",
+      "cm": "cm"
+    },
+    "alert": {
+      "date": "Date",
+      "time": "Time",
+      "dataRegistered": "Data Registered",
+      "reason": "Reason",
+      "noAlerts": "No alerts available"
+    },
+    "statistics": {
+      "bloodPressure": "Blood Pressure (mmHg)",
+      "bloodPressureTitle": "Blood Pressure (Diastolic & Systolic) - Last 7 Days",
+      "bloodPressureTooltip": "Diastolic: {{diastolic}}, Systolic: {{systolic}}",
+      "heartRate": "Heart Rate (bpm)",
+      "heartRateTitle": "Heart Rate - Last 7 Days",
+      "oxygenSaturation": "Oxygen Saturation (%) - Last 7 Days",
+      "temperature": "Body Temperature - Last 7 Days",
+      "dayOfWeek": "Day of the Week",
+      "mmhg": "mmHg",
+      "bpm": "bpm",
+      "spO2": "SpO₂ (%)",
+      "temperatureUnit": "Temperature (°C)",
+      "diastolic": "Diastolic",
+      "systolic": "Systolic"
+    }
+  },
+  "caregiver": {
     "firstName": "First Name",
     "lastName": "Last Name",
     "age": "Age",
-    "gender": "Gender",
-    "weight": "Weight (kg)",
-    "height": "Height (cm)",
-    "dni": "ID Number",
+    "email": "Email",
+    "specialty": "Specialty",
+    "phoneNumber": "Phone Number",
     "uploadPhoto": "Upload Photo",
-    "dragFile": "Drag file here",
-    "fullName": "Full Name",
-    "add": "Add Patient",
+    "dragFile": "Drag File",
     "save": "Save",
     "cancel": "Cancel",
-    "preview": "Preview",
-    "empty": "No patients",
-    "backToList": "Back to List"
+    "empty": "Empty List of Caregivers",
+    "add": "Add Caregiver",
+    "backToList": "Back to List",
+    "selectSeniorCitizen": "Select a Senior Citizen",
+    "assignedSeniorCitizens": "Assigned Senior Citizen",
+    "availableSeniorCitizens": "Available Senior Citizen",
+    "title": "Caregiver",
+    "emailHint": "Email will be automatically generated with the institutional domain",
+    "emailPlaceholderExample": "email@example.com",
+    "emailPlaceholder": "firstname.lastname",
+    "imageUrl": "Image URL",
+    "imageUrlHint": "Enter a valid image URL",
+    "imageUrlPlaceholder": "https://example.com/image.jpg",
+    "imageUrlError": "Must be a valid image URL",
+    "photo": "Photo",
+    "assignedTo": "Assigned to",
+    "errors": {
+      "required": "is required",
+      "requiredFemale": "is required",
+      "emailInvalid": "is required and must be valid",
+      "photoRequired": "Photo is required",
+      "cannotAssignToDoctor": "This senior citizen is already assigned to a doctor. Cannot be assigned to a caregiver (mutual exclusion).",
+      "assignError": "Error assigning senior citizen"
+    },
+    "deleteCaregiverDialog": {
+      "title": "Delete Caregiver",
+      "message": "Are you sure you want to delete this caregiver?",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "unassignSeniorCitizen": "Unassign Senior Citizen",
+    "clickToView": "Click to view details"
   },
   "login": {
     "welcome": "Welcome to MediTrack",
@@ -196,6 +339,57 @@
     "errors": {
       "institutionNameRequired": "Institution name is required",
       "institutionTypeRequired": "Please select an institution type"
+    }
+  },
+  "senior-citizen-registration": {
+    "title": "Senior Citizen Registration",
+    "subtitle": "Please complete the form to register your senior citizen",
+    "personalDetails": "Personal Details",
+    "fullName": "Full Name",
+    "fullNameRequired": "Full name is required",
+    "age": "Age",
+    "ageRequired": "Age is required",
+    "gender": {
+      "label": "Gender",
+      "male": "Male",
+      "female": "Female",
+      "other": "Other"
+    },
+    "genderRequired": "Gender is required",
+    "dni": "DNI",
+    "dniRequired": "DNI is required",
+    "deviceId": "Device ID",
+    "deviceIdRequired": "Device ID is required",
+    "weight": "Weight",
+    "weightRequired": "Weight is required",
+    "height": "Height",
+    "heightRequired": "Height is required",
+    "uploadPhoto": "Upload a photo",
+    "dragFile": "Drag the file into this box",
+    "browse": "Browse",
+    "save": "Save",
+    "register": "Register"
+  },
+  "relative": {
+    "profile": {
+      "patientProfile": "Patient Profile",
+      "photo": "Profile photo",
+      "age": "Age",
+      "weight": "Weight",
+      "dni": "DNI",
+      "gender": "Gender",
+      "height": "Height"
+    },
+    "alerts": {
+      "date": "Date",
+      "time": "Time",
+      "dataRegistered": "Data Registered",
+      "reason": "Reason",
+      "noAlerts": "No alerts available"
+    },
+    "statistics": {
+      "title": "Statistics",
+      "noData": "No statistics data available"
     }
   }
   }

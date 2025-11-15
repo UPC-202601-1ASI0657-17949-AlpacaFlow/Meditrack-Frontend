@@ -85,6 +85,7 @@ export class AuthApi extends BaseApi {
    * @returns An Observable emitting an object with token and user.
    */
   login(email: string, password: string): Observable<{ token: string; user: User }> {
+    console.log('[AuthApi] Login called with:', { email, passwordLength: password?.length });
     return this.usersEndpoint.login(email, password);
   }
 

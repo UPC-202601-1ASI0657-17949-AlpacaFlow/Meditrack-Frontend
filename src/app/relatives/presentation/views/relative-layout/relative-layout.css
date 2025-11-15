@@ -1,23 +1,125 @@
-.sidenav-container {
+:host {
+    display: block;
     height: 100vh;
+    overflow: hidden;
+}
+
+.header-toolbar {
+    background-color: #0C7BB5;
+    color: white;
+    height: 64px;
+    padding: 0 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.menu-button {
+    color: white;
+}
+
+.app-title {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: white;
+}
+
+.current-time {
+    font-size: 1rem;
+    color: white;
+}
+
+.app-logo {
+    height: 40px;
+    width: auto;
+}
+
+.sidenav-container {
+    height: calc(100vh - 64px);
+    margin-top: 64px; /* Espacio para el header fijo */
 }
 
 .sidenav {
     width: 250px;
+    height: 100%;
+    background-color: white;
+    border-right: 1px solid #e0e0e0;
 }
 
-.toggle-btn {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 100;
+.nav-list {
+    padding-top: 24px;
+    padding-bottom: 24px;
+}
+
+.nav-item {
+    width: 100%;
+    min-height: 80px;
+    margin: 40px 0;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 0;
+}
+
+.nav-item:hover {
+    background-color: #f8f9fa;
 }
 
 .nav-item.active {
-    background-color: #e0e0e0;
+    background-color: #e3f2fd;
+    border-left: 4px solid #0C7BB5;
 }
 
-.mat-mdc-list-item {
-    border-radius: 4px;
-    margin: 8px;
+.nav-item.active mat-icon,
+.nav-item.active span {
+    color: #0C7BB5;
+    font-weight: 600;
+}
+
+.nav-item mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+}
+
+.nav-item span {
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.language-switcher-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+mat-sidenav-content {
+    background-color: white;
+    padding: 24px;
+    overflow-y: auto;
+    height: 100%;
 }

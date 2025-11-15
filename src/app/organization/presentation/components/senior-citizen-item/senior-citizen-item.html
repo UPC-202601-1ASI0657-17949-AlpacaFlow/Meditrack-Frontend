@@ -1,0 +1,30 @@
+<div class="senior-citizen-card"
+     (click)="onCardClick()"
+     (dblclick)="onCardDoubleClick()"
+     [title]="'senior-citizen.clickToView' | translate">
+
+    <div class="senior-citizen-avatar">
+        <img [src]="seniorCitizen.imageUrl || '/assets/default-senior-citizen.png'"
+             [alt]="seniorCitizen.fullName"
+             class="avatar-image">
+    </div>
+
+    <div class="senior-citizen-info">
+        <div class="senior-citizen-name"> {{ seniorCitizen.fullName }}</div>
+    </div>
+
+    <div class="senior-citizen-actions">
+        @if (organizationStore.getCurrentUserRole() === 'admin-casa-reposo') {
+            <button class="action-btn edit-btn"
+                    (click)="onEdit($event)"
+                    [title]="'senior-citizen.edit' | translate">
+                <mat-icon>edit</mat-icon>
+            </button>
+            <button class="action-btn delete-btn"
+                    (click)="onRemove($event)"
+                    [title]="'senior-citizen.delete' | translate">
+                <mat-icon>delete</mat-icon>
+            </button>
+        }
+    </div>
+</div>

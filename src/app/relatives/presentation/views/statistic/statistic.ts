@@ -1,9 +1,12 @@
-import {Component, computed, inject} from '@angular/core';
+import {Component, computed, inject, OnInit} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
 import {RelativesStore} from "../../../application/relatives.store";
 import {BloodPreasure} from "../../components/blood-preasure/blood-preasure";
 import {HeartRate} from "../../components/hear-rate/hear-rate";
 import {OxygenSaturation} from "../../components/oxigen-saturation/oxigen-saturation";
 import {TemperatureRate} from "../../components/temperature-rate/temperature-rate";
+import {TranslatePipe} from '@ngx-translate/core';
+import {CommonModule} from '@angular/common';
 
 @Component({
   selector: 'app-statistic',
@@ -11,14 +14,17 @@ import {TemperatureRate} from "../../components/temperature-rate/temperature-rat
         BloodPreasure,
         HeartRate,
         OxygenSaturation,
-        TemperatureRate
+        TemperatureRate,
+        TranslatePipe,
+        CommonModule
     ],
   templateUrl: './statistic.html',
   styleUrl: './statistic.css'
 })
-export class Statistic {
+export class Statistic implements OnInit {
 
-    private relativeStore = inject(RelativesStore)
+    private relativeStore = inject(RelativesStore);
+    private route = inject(ActivatedRoute);
 
     relative = computed(() => this.relativeStore.selectedRelative())
 
@@ -41,6 +47,12 @@ export class Statistic {
 
 
     ngOnInit() {
-        this.relativeStore.loadRelativeById()
+        const relativeId = this.route.snapshot.parent?.params['id'];
+        if (relativeId) {
+            const id = parseInt(relativeId, 10);
+            if (id) {
+                this.relativeStore.loadRelativeById(id);
+            }
+        }
     }
 }

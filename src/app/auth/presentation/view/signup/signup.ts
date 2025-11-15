@@ -6,8 +6,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgIf } from '@angular/common';
 import { AuthStore } from '../../../application/auth.store';
+import { RegistrationFlowStore } from '../../../application/registration-flow.store';
 import { User } from '../../../domain/model/user.entity';
 
 @Component({
@@ -15,6 +16,7 @@ import { User } from '../../../domain/model/user.entity';
   standalone: true,
   imports: [
     CommonModule,
+    NgIf,
     ReactiveFormsModule,
     MatButtonModule,
     MatInputModule,
@@ -30,6 +32,7 @@ export class SignupComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private authStore = inject(AuthStore);
+  private registrationFlowStore = inject(RegistrationFlowStore);
 
   signupForm: FormGroup;
   hidePassword = true;
@@ -93,26 +96,18 @@ export class SignupComponent {
 
     const { firstName, lastName, email, password } = this.signupForm.value;
 
-    // Create User entity with role from query params
-    // Note: firstName and lastName are captured but not stored in User entity yet
-    const user = new User({
-      email: email,
-      role: this.selectedRole // Role determined by user type selection
-    });
-
-    this.authStore.register(user, password).subscribe({
-      next: (response) => {
-        this.authStore.setAuth(response.token, response.user);
-        this.isLoading = false;
-        // Redirect to subscription selection after successful registration
-        this.router.navigate(['subscription-selection'], { relativeTo: this.route.parent });
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.errorMessage = error.error?.message || 'signup.errors.registrationFailed';
-        console.error('Signup error:', error);
-      }
-    });
+    // Save all data temporarily - user is NOT created in DB until payment is completed
+    // This prevents users from creating multiple organizations with the same name
+    this.registrationFlowStore.setUserData(email, password, this.selectedRole);
+    
+    // If user is admin, save firstName and lastName for later admin creation
+    if (this.selectedRole === 'admin') {
+      this.registrationFlowStore.setAdminData(firstName, lastName);
+    }
+    
+    this.isLoading = false;
+    // Redirect to subscription selection - user will be created when payment is completed
+    this.router.navigate(['subscription-selection'], { relativeTo: this.route.parent });
   }
 
   navigateToSignIn(): void {

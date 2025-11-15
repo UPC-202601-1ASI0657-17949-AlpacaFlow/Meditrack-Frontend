@@ -1,0 +1,48 @@
+<!-- Lista de caregivers -->
+@if (!showForm) {
+    <div class="caregiver-list-container">
+        <!-- Estado vacío -->
+        @if (organizationStore.caregivers().length === 0) {
+            <div class="empty-state">
+                <div class="empty-content">
+                    <p class="empty-text">{{ 'caregiver.empty' | translate }}</p>
+                    <button mat-raised-button color="primary" class="add-caregiver-btn" (click)="openAddCaregiverForm()">
+                        {{ 'caregiver.add' | translate }}
+                    </button>
+                </div>
+            </div>
+        }
+
+        <!-- Lista de items -->
+        @if (organizationStore.caregivers().length > 0) {
+            <div class="caregiver-items">
+                @for (caregiver of organizationStore.caregivers(); track trackById($index, caregiver)) {
+                    <app-caregiver-item
+                            [caregiver]="caregiver"
+                            (edit)="openEditCaregiverForm($event)"
+                            (remove)="onCaregiverRemoved($event)">
+                    </app-caregiver-item>
+                }
+            </div>
+        }
+
+        <!-- Botón de agregar cuando hay caregivers -->
+        @if (organizationStore.caregivers().length > 0) {
+            <div class="add-button">
+                <button mat-raised-button color="primary" (click)="openAddCaregiverForm()">
+                    {{ 'caregiver.add' | translate }}
+                </button>
+            </div>
+        }
+    </div>
+}
+
+<!-- Formulario de crear/editar -->
+@if (showForm) {
+    <app-caregiver-form
+            [caregiver]="editingCaregiver"
+            (saved)="onCaregiverSaved($event)"
+            (cancel)="closeForm()">
+    </app-caregiver-form>
+}
+

@@ -1,0 +1,28 @@
+<div class="doctor-card" 
+     (click)="onCardClick()" 
+     (dblclick)="onCardDoubleClick()"
+     [title]="'doctor.clickToView' | translate">
+    
+    <div class="doctor-avatar">
+        <img [src]="doctor.imageUrl || '/assets/default-doctor.png'" 
+             [alt]="doctor.fullName"
+             class="avatar-image">
+    </div>
+    
+    <div class="doctor-info">
+        <div class="doctor-name">{{ 'doctor.title' | translate }} {{ doctor.fullName }}</div>
+    </div>
+    
+    <div class="doctor-actions">
+        <button class="action-btn edit-btn" 
+                (click)="onEdit($event)"
+                [title]="'doctor.edit' | translate">
+            <mat-icon>edit</mat-icon>
+        </button>
+        <button class="action-btn delete-btn" 
+                (click)="onRemove($event)"
+                [title]="'doctor.delete' | translate">
+            <mat-icon>delete</mat-icon>
+        </button>
+    </div>
+</div>

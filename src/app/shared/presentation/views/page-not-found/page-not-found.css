@@ -1,0 +1,97 @@
+.page-not-found-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 64px);
+  padding: 24px;
+  background-color: #f8f9fa;
+}
+
+.page-not-found-content {
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 48px 32px;
+  border: 1px solid #e0e0e0;
+}
+
+.error-icon {
+  margin-bottom: 24px;
+}
+
+.error-icon mat-icon {
+  font-size: 120px;
+  width: 120px;
+  height: 120px;
+  color: #0C7BB5;
+  opacity: 0.8;
+}
+
+.page-not-found-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+.page-not-found-message {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0 0 32px 0;
+  line-height: 1.6;
+}
+
+.page-not-found-message strong {
+  color: #0C7BB5;
+  font-weight: 600;
+}
+
+.page-not-found-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.home-button {
+  background-color: #0C7BB5;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 32px;
+  border-radius: 8px;
+  min-width: 160px;
+  text-transform: none;
+}
+
+.home-button:hover {
+  background-color: #0a6ba3;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .page-not-found-container {
+    padding: 16px;
+    min-height: calc(100vh - 64px);
+  }
+  
+  .page-not-found-content {
+    padding: 32px 24px;
+  }
+  
+  .error-icon mat-icon {
+    font-size: 80px;
+    width: 80px;
+    height: 80px;
+  }
+  
+  .page-not-found-title {
+    font-size: 2rem;
+  }
+  
+  .page-not-found-message {
+    font-size: 1rem;
+  }
+}

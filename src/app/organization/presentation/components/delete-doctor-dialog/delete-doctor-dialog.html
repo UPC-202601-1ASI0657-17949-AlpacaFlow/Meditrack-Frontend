@@ -1,0 +1,14 @@
+<h2 mat-dialog-title>{{ 'doctor.deleteDoctorDialog.title' | translate }}</h2>
+<mat-dialog-content>
+  <p>{{ 'doctor.deleteDoctorDialog.message' | translate }}</p>
+  <p><strong>{{ data.doctor.fullName }}</strong></p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">
+    {{ 'doctor.deleteDoctorDialog.cancel' | translate }}
+  </button>
+  <button mat-raised-button color="warn" (click)="onConfirm()">
+    {{ 'doctor.deleteDoctorDialog.confirm' | translate }}
+  </button>
+</mat-dialog-actions>
+

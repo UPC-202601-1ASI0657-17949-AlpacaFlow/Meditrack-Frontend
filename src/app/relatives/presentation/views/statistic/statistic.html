@@ -1,17 +1,21 @@
-@if (bloodPressure().length)
-{
-    <app-blood-preasure [bloodPressure]="bloodPressure()"></app-blood-preasure>
-}
+@if (bloodPressure().length || relative()?.seniorCitizen?.signalVitals?.heartRate || relative()?.seniorCitizen?.signalVitals?.oxygenLevel || relative()?.seniorCitizen?.signalVitals?.temperature) {
+    @if (bloodPressure().length) {
+        <app-blood-preasure [bloodPressure]="bloodPressure()"></app-blood-preasure>
+    }
 
-@if (relative()?.seniorCitizen?.signalVitals?.heartRate) {
-    <app-heart-rate [heartRate]="heartRate()"></app-heart-rate>
-}
+    @if (relative()?.seniorCitizen?.signalVitals?.heartRate) {
+        <app-heart-rate [heartRate]="heartRate()"></app-heart-rate>
+    }
 
-@if (relative()?.seniorCitizen?.signalVitals?.oxygenLevel) {
-    <app-oxygen-saturation [oxygenLevel]="oxigenLevel()"></app-oxygen-saturation>
-}
+    @if (relative()?.seniorCitizen?.signalVitals?.oxygenLevel) {
+        <app-oxygen-saturation [oxygenLevel]="oxigenLevel()"></app-oxygen-saturation>
+    }
 
-
-@if (relative()?.seniorCitizen?.signalVitals?.temperature) {
-    <app-temperature-rate [temperature]="temperature()"></app-temperature-rate>
+    @if (relative()?.seniorCitizen?.signalVitals?.temperature) {
+        <app-temperature-rate [temperature]="temperature()"></app-temperature-rate>
+    }
+} @else {
+    <div class="no-statistics">
+        <p>{{ 'relative.statistics.noData' | translate }}</p>
+    </div>
 }
