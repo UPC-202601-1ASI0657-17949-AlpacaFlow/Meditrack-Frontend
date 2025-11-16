@@ -5,7 +5,7 @@ import { UserResource, UsersResponse } from './user-response';
 import { UserAssembler } from './user-assembler';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { map, switchMap, of, throwError } from 'rxjs';
+import { map, switchMap, of, throwError, catchError } from 'rxjs';
 
 /**
  * API endpoint for managing users.
@@ -38,100 +38,186 @@ export class UserApiEndpoint extends
 
     /**
      * Login - autentica un usuario con email y password
-     * Busca el usuario por email y valida la contraseña contra las credenciales
+     * Usa el endpoint de autenticación del backend Spring Boot o mock para json-server
      */
     login(email: string, password: string) {
         console.log('[UserApiEndpoint] Login attempt:', { email, passwordLength: password?.length });
         
-        // Paso 1: Buscar el usuario por email
-        const url = `${this.endpointUrl}?email=${email}`;
-        console.log('[UserApiEndpoint] Searching user by email:', url);
+        // Detectar si estamos usando json-server (puerto 3000) o backend Spring Boot (puerto 8080)
+        const isJsonServer = environment.platformProviderApiBaseUrl.includes('localhost:3000');
         
-        return this.http.get<UserResource[]>(url).pipe(
-            switchMap((users) => {
-                console.log('[UserApiEndpoint] Users found:', users);
-                
-                // Verificar que se encontró un usuario
-                if (!users || users.length === 0) {
-                    console.error('[UserApiEndpoint] No user found with email:', email);
+        if (isJsonServer) {
+            // Mock login para json-server: buscar usuario por email y validar password
+            console.log('[UserApiEndpoint] Using json-server mock authentication');
+            return this.http.get<UserResource[]>(`${this.endpointUrl}?email=${email}`).pipe(
+                switchMap(users => {
+                    if (!users || users.length === 0) {
+                        return throwError(() => new Error('Invalid email or password'));
+                    }
+                    
+                    const user = users[0];
+                    // En json-server, validar password desde credentials
+                    return this.http.get<any[]>(`${environment.platformProviderApiBaseUrl}${environment.platformProviderCredentialsEndpointPath}?userId=${user.id}`).pipe(
+                        switchMap(credentials => {
+                            if (!credentials || credentials.length === 0 || credentials[0].password !== password) {
+                                return throwError(() => new Error('Invalid email or password'));
+                            }
+                            
+                            // Generar token mock
+                            const mockToken = `mock-token-${user.id}-${Date.now()}`;
+                            
+                            return of({
+                                token: mockToken,
+                                user: this.assembler.toEntityFromResource(user)
+                            });
+                        })
+                    );
+                })
+            );
+        } else {
+            // Backend Spring Boot: usar endpoint de autenticación real
+            const authUrl = `${environment.platformProviderApiBaseUrl}/api/v1/authentication/sign-in`;
+            console.log('[UserApiEndpoint] Using Spring Boot authentication endpoint:', authUrl);
+            
+            return this.http.post<{ id: number; email: string; role: string; token: string }>(
+                authUrl,
+                { email, password }
+            ).pipe(
+                map((response) => {
+                    console.log('[UserApiEndpoint] Login successful:', response);
+                    
+                    // Convertir la respuesta al formato esperado
+                    const userResource: UserResource = {
+                        id: response.id,
+                        email: response.email,
+                        role: response.role ?? null
+                    };
+                    
+                    return {
+                        token: response.token,
+                        user: this.assembler.toEntityFromResource(userResource)
+                    };
+                }),
+                switchMap((result) => {
+                    // Si hay error, propagarlo
+                    if (!result.token) {
+                        return throwError(() => new Error('Invalid email or password'));
+                    }
+                    return of(result);
+                }),
+                catchError((error) => {
+                    // Manejar errores HTTP y convertirlos en mensajes amigables
+                    console.error('[UserApiEndpoint] Login error:', error);
+                    
+                    // Si es un error HTTP 401, 404, o 400, es un error de credenciales
+                    if (error.status === 401 || error.status === 404 || error.status === 400) {
+                        return throwError(() => new Error('Invalid email or password'));
+                    }
+                    
+                    // Para otros errores, extraer el mensaje del backend si está disponible
+                    const backendMessage = error.error?.message || error.error?.error || error.message;
+                    if (typeof backendMessage === 'string' && backendMessage.toLowerCase().includes('user not found')) {
+                        return throwError(() => new Error('Invalid email or password'));
+                    }
+                    if (typeof backendMessage === 'string' && backendMessage.toLowerCase().includes('invalid password')) {
+                        return throwError(() => new Error('Invalid email or password'));
+                    }
+                    
+                    // Si no hay un mensaje específico, usar el mensaje genérico
                     return throwError(() => new Error('Invalid email or password'));
-                }
-
-                const userResource = users[0];
-                const userId = userResource.id;
-                console.log('[UserApiEndpoint] User found:', { id: userId, email: userResource.email, role: userResource.role });
-
-                // Paso 2: Buscar las credenciales del usuario
-                const credentialsUrl = `${environment.platformProviderApiBaseUrl}${environment.platformProviderCredentialsEndpointPath}?userId=${userId}`;
-                console.log('[UserApiEndpoint] Searching credentials:', credentialsUrl);
-                
-                return this.http.get<{ userId: number; password: string; id: number }[]>(
-                    credentialsUrl
-                ).pipe(
-                    switchMap((credentialsList) => {
-                        console.log('[UserApiEndpoint] Credentials found:', credentialsList);
-                        
-                        // Verificar que se encontraron credenciales
-                        if (!credentialsList || credentialsList.length === 0) {
-                            console.error('[UserApiEndpoint] No credentials found for userId:', userId);
-                            return throwError(() => new Error('Invalid email or password'));
-                        }
-
-                        const credentials = credentialsList[0];
-                        console.log('[UserApiEndpoint] Validating password:', { 
-                            provided: password, 
-                            stored: credentials.password,
-                            match: credentials.password === password 
-                        });
-
-                        // Paso 3: Validar la contraseña
-                        if (credentials.password !== password) {
-                            console.error('[UserApiEndpoint] Password mismatch');
-                            return throwError(() => new Error('Invalid email or password'));
-                        }
-
-                        // Paso 4: Si la contraseña es correcta, devolver el usuario y un token mock
-                        console.log('[UserApiEndpoint] Login successful for user:', userId);
-                        return of({
-                            token: 'mock_token_for_flow',
-                            user: this.assembler.toEntityFromResource(userResource)
-                        });
-                    })
-                );
-            })
-        );
+                })
+            );
+        }
     }
 
     /**
-     * Register - registra un nuevo usuario usando el endpoint estándar de json-server
+     * Register - registra un nuevo usuario
+     * Usa el endpoint de autenticación del backend Spring Boot o mock para json-server
      */
     register(user: User, password: string) {
-        const userData = this.assembler.toResourceFromEntity(user);
+        console.log('[UserApiEndpoint] Register attempt:', { email: user.email, role: user.role });
         
-        // Crear usuario en /users (endpoint estándar de json-server)
-        return this.http.post<UserResource>(
-            `${environment.platformProviderApiBaseUrl}${environment.platformProviderUsersEndpointPath}`,
-            userData
-        ).pipe(
-            switchMap((createdUser: UserResource) => {
-                // Crear credenciales en /credentials
-                const credentialsData = {
-                    userId: createdUser.id,
-                    password: password
-                };
-                
-                // Crear credenciales y luego devolver la respuesta
-                return this.http.post(
-                    `${environment.platformProviderApiBaseUrl}${environment.platformProviderCredentialsEndpointPath}`,
-                    credentialsData
-                ).pipe(
-                    map(() => ({
-                        token: 'mock_token_for_flow',
-                        user: this.assembler.toEntityFromResource(createdUser)
-                    }))
-                );
-            })
-        );
+        // Detectar si estamos usando json-server (puerto 3000) o backend Spring Boot (puerto 8080)
+        const isJsonServer = environment.platformProviderApiBaseUrl.includes('localhost:3000');
+        
+        if (isJsonServer) {
+            // Mock register para json-server: crear usuario y credentials
+            console.log('[UserApiEndpoint] Using json-server mock registration');
+            
+            // Verificar si el usuario ya existe
+            return this.http.get<UserResource[]>(`${this.endpointUrl}?email=${user.email}`).pipe(
+                switchMap(existingUsers => {
+                    if (existingUsers && existingUsers.length > 0) {
+                        return throwError(() => new Error('Email already exists'));
+                    }
+                    
+                    // Crear usuario
+                    const userResource: UserResource = {
+                        id: 0, // json-server generará el ID
+                        email: user.email,
+                        role: user.role ?? null
+                    };
+                    
+                    return this.http.post<UserResource>(this.endpointUrl, userResource).pipe(
+                        switchMap(createdUser => {
+                            // Crear credentials
+                            const credentials = {
+                                userId: createdUser.id,
+                                password: password
+                            };
+                            
+                            return this.http.post<any>(`${environment.platformProviderApiBaseUrl}${environment.platformProviderCredentialsEndpointPath}`, credentials).pipe(
+                                map(() => {
+                                    // Generar token mock
+                                    const mockToken = `mock-token-${createdUser.id}-${Date.now()}`;
+                                    
+                                    return {
+                                        token: mockToken,
+                                        user: this.assembler.toEntityFromResource(createdUser)
+                                    };
+                                })
+                            );
+                        })
+                    );
+                })
+            );
+        } else {
+            // Backend Spring Boot: usar endpoint de autenticación real
+            const authUrl = `${environment.platformProviderApiBaseUrl}/api/v1/authentication/sign-up`;
+            console.log('[UserApiEndpoint] Using Spring Boot authentication endpoint:', authUrl);
+            
+            return this.http.post<{ id: number; email: string; role: string; token: string }>(
+                authUrl,
+                { 
+                    email: user.email, 
+                    password: password,
+                    role: user.role 
+                }
+            ).pipe(
+                map((response) => {
+                    console.log('[UserApiEndpoint] User created and authenticated:', response);
+                    
+                    // Convertir la respuesta al formato esperado
+                    const userResource: UserResource = {
+                        id: response.id,
+                        email: response.email,
+                        role: response.role ?? null
+                    };
+                    
+                    return {
+                        token: response.token,
+                        user: this.assembler.toEntityFromResource(userResource)
+                    };
+                }),
+                switchMap((result) => {
+                    // Si hay error, propagarlo
+                    if (!result.token) {
+                        return throwError(() => new Error('Registration failed'));
+                    }
+                    return of(result);
+                })
+            );
+        }
     }
 }
 

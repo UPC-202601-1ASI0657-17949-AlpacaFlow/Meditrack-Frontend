@@ -121,6 +121,28 @@ export class LoginComponent {
               this.authStore.clearAuth();
             }
           });
+        } else if (user.role === 'caregiver') {
+          // Para caregivers, buscar su caregiver entity y redirigir a la organización
+          console.log('[LoginComponent] Caregiver user, fetching caregiver details');
+          this.organizationApi.getCaregiverByUserId(user.id).subscribe({
+            next: (caregiver) => {
+              console.log('[LoginComponent] Caregiver details:', caregiver);
+              if (caregiver) {
+                console.log('[LoginComponent] Redirecting to organization route for caregiver');
+                this.router.navigate(['/organization', caregiver.organizationId, 'caregiver', user.id, 'senior-citizens']);
+              } else {
+                // Si no se encuentra el caregiver, mostrar error
+                console.error('[LoginComponent] Caregiver not found for user:', user.id);
+                this.errorMessage = 'login.errors.caregiverNotFound';
+                this.authStore.clearAuth();
+              }
+            },
+            error: (err) => {
+              console.error('[LoginComponent] Error finding caregiver:', err);
+              this.errorMessage = 'login.errors.caregiverNotFound';
+              this.authStore.clearAuth();
+            }
+          });
         } else {
           // Para otros roles, redirigir a home
           console.log('[LoginComponent] Unknown role, redirecting to home');
@@ -130,9 +152,12 @@ export class LoginComponent {
       error: (error) => {
         console.error('[LoginComponent] Login error:', error);
         this.isLoading = false;
-        // Extraer el mensaje de error del error lanzado
-        const errorMessage = error.message || error.error?.message || 'login.errors.invalidCredentials';
-        this.errorMessage = errorMessage === 'Invalid email or password' ? 'login.errors.invalidCredentials' : errorMessage;
+        
+        // Siempre mostrar mensaje amigable de credenciales inválidas
+        // El UserApiEndpoint ya convierte todos los errores HTTP en "Invalid email or password"
+        // Esto evita mostrar errores HTTP técnicos al usuario
+        this.errorMessage = 'login.errors.invalidCredentials';
+        
         console.error('[LoginComponent] Error message set:', this.errorMessage);
       }
     });

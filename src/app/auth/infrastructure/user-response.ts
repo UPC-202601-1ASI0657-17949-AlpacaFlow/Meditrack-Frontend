@@ -6,7 +6,7 @@ import { CredentialsResource } from './credentials-response';
  */
 export interface UserResource extends BaseResource {
     email: string;
-    role: string;
+    role: string | null;
     credentials?: CredentialsResource;
 }
 

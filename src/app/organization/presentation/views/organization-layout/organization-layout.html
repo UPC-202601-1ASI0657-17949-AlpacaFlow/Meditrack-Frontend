@@ -31,6 +31,15 @@
                     </div>
                 </a>
             }
+            
+            <a mat-list-item 
+               (click)="logout()"
+               class="nav-item logout-button">
+                <div class="nav-icon-text">
+                    <mat-icon>logout</mat-icon>
+                    <span>{{ 'navigation.logout' | translate }}</span>
+                </div>
+            </a>
         </mat-nav-list>
 
         <div class="language-switcher-container">

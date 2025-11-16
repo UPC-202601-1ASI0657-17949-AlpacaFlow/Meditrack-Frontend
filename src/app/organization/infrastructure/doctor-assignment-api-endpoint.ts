@@ -26,7 +26,7 @@ export interface AssignSeniorCitizenToDoctorResource {
   providedIn: 'root'
 })
 export class DoctorAssignmentApiEndpoint {
-  private readonly endpointUrl = `${environment.platformProviderApiBaseUrl}/doctor-assignments`;
+  private readonly endpointUrl = `${environment.platformProviderApiBaseUrl}/api/v1/doctor-assignments`;
   private readonly assembler = new SeniorCitizensAssembler();
 
   constructor(private http: HttpClient) {}

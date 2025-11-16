@@ -1,14 +1,16 @@
 import { Component, OnInit, OnDestroy, inject, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive, ActivatedRoute } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, ActivatedRoute, Router } from '@angular/router';
 import { MatSidenavModule, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { MatListModule, MatNavList, MatListItem } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule, MatIconButton } from '@angular/material/button';
 import { MatToolbar } from '@angular/material/toolbar';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subscription, interval } from 'rxjs';
 import { LanguageSwitcher } from '../../../../shared/presentation/components/language-switcher/language-switcher';
 import { RelativesStore } from '../../../application/relatives.store';
+import { AuthStore } from '../../../../auth/application/auth.store';
 
 @Component({
     selector: 'app-relative-layout',
@@ -28,7 +30,8 @@ import { RelativesStore } from '../../../application/relatives.store';
         MatButtonModule,
         MatIconButton,
         MatToolbar,
-        LanguageSwitcher
+        LanguageSwitcher,
+        TranslatePipe
     ],
     templateUrl: 'relative-layout.html',
     styleUrls: ['relative-layout.css']
@@ -40,6 +43,8 @@ export class RelativeLayoutComponent implements OnInit, OnDestroy {
     private routeSub!: Subscription;
     private timeSubscription?: Subscription;
     private relativesStore = inject(RelativesStore);
+    private authStore = inject(AuthStore);
+    private router = inject(Router);
 
     selectedRelative = computed(() => this.relativesStore.selectedRelative());
     navigationItems: { link: string; icon: string; label: string }[] = [];
@@ -113,5 +118,11 @@ export class RelativeLayoutComponent implements OnInit, OnDestroy {
 
     closeSidenav() {
         this.isSidenavOpen = false;
+    }
+
+    logout(): void {
+        // Cerrar sesión: limpiar autenticación y redirigir al login
+        this.authStore.clearAuth();
+        this.router.navigate(['/auth/login']).then();
     }
 }

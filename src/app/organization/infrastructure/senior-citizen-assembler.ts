@@ -82,5 +82,50 @@ export class SeniorCitizensAssembler implements BaseAssembler<SeniorCitizen, Sen
             })) : undefined
         } as SeniorCitizenResource;
     }
+
+    /**
+     * Converts a SeniorCitizen entity to a CreateSeniorCitizenResource (for POST requests).
+     * Only includes the fields required for creation (excludes id, age, assignedDoctorId, etc.).
+     * @param entity - The entity to convert
+     * @returns The resource for creating a senior citizen
+     */
+    toCreateResourceFromEntity(entity: SeniorCitizen): {
+        organizationId: number;
+        firstName: string;
+        lastName: string;
+        birthDate: string; // ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ)
+        gender: string;
+        weight: number;
+        dni: string;
+        height: number;
+        imageUrl: string;
+        deviceId: number;
+    } {
+        // Convert birthDate to ISO 8601 format (Spring Boot can deserialize this to Java Date)
+        let birthDateStr: string;
+        if (entity.birthDate instanceof Date) {
+            // Use ISO 8601 format with time component for proper deserialization
+            birthDateStr = entity.birthDate.toISOString();
+        } else if (typeof entity.birthDate === 'string') {
+            // If it's already a string, try to parse it and convert to ISO
+            const date = new Date(entity.birthDate);
+            birthDateStr = date.toISOString();
+        } else {
+            throw new Error('Invalid birthDate format');
+        }
+
+        return {
+            organizationId: entity.organizationId,
+            firstName: entity.firstName,
+            lastName: entity.lastName,
+            birthDate: birthDateStr,
+            gender: entity.gender,
+            weight: entity.weight,
+            dni: entity.dni,
+            height: entity.height,
+            imageUrl: entity.imageUrl,
+            deviceId: entity.deviceId
+        };
+    }
 }
 

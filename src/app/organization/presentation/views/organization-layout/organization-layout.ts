@@ -2,7 +2,7 @@ import {Component, OnDestroy, OnInit, inject, ChangeDetectorRef, signal, compute
 import {MatSidenav, MatSidenavContainer, MatSidenavContent} from "@angular/material/sidenav";
 import {TranslatePipe} from "@ngx-translate/core";
 import {MatToolbar} from "@angular/material/toolbar";
-import {MatIconButton} from "@angular/material/button";
+import {MatIconButton, MatButtonModule} from "@angular/material/button";
 import {MatListItem, MatNavList} from "@angular/material/list";
 import {RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd, ActivatedRoute} from "@angular/router";
 import {MatIconModule} from "@angular/material/icon";
@@ -12,6 +12,7 @@ import {TimeEntity} from "../../../../shared/domain/model/time.entity";
 import {LanguageSwitcher} from "../../../../shared/presentation/components/language-switcher/language-switcher";
 import {OrganizationStore} from "../../../application/organization.store";
 import {Organization} from "../../../domain/model/organization.entity";
+import {AuthStore} from "../../../../auth/application/auth.store";
 
 @Component({
   selector: 'app-organization-layout',
@@ -28,7 +29,8 @@ import {Organization} from "../../../domain/model/organization.entity";
     RouterLinkActive,
     MatSidenav,
     RouterOutlet,
-    LanguageSwitcher
+    LanguageSwitcher,
+    MatButtonModule
   ],
   templateUrl: './organization-layout.html',
   standalone: true,
@@ -197,6 +199,7 @@ export class OrganizationLayout implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
   private injector = inject(Injector);
+  private authStore = inject(AuthStore);
 
   constructor(
     private timeApiService: TimeApiService,
@@ -274,8 +277,15 @@ export class OrganizationLayout implements OnInit, OnDestroy {
         
         console.log(`Loading organization data by organizationId: ${organizationId}${userRoleStr ? `, userRole: ${userRoleStr}` : ''}${userId ? `, userId: ${userId}` : ''}`);
         
-        // Load organization data with optional userId
-        this.organizationStore.loadOrganizationDataByOrganizationId(organizationId, userId);
+        // Load organization data with optional userId and userRole
+        // Si userRole está en la URL, usarlo directamente para evitar búsquedas innecesarias
+        if (userRoleStr && userId) {
+          // Si tenemos el rol de la URL, establecerlo directamente y cargar datos
+          this.organizationStore.loadOrganizationDataWithId(userId, organizationId, userRoleStr);
+        } else {
+          // Si no tenemos el rol, buscar en el backend
+          this.organizationStore.loadOrganizationDataByOrganizationId(organizationId, userId);
+        }
         
         // Si no se proporcionó userRole en la URL pero sí userId, esperar a que el store determine el rol
         // y luego actualizar la URL para incluir el userRole
@@ -406,6 +416,12 @@ export class OrganizationLayout implements OnInit, OnDestroy {
 
   closeSidenav(): void {
     this.isSidenavOpen = false;
+  }
+
+  logout(): void {
+    // Cerrar sesión: limpiar autenticación y redirigir al login
+    this.authStore.clearAuth();
+    this.router.navigate(['/auth/login']).then();
   }
 
   /**

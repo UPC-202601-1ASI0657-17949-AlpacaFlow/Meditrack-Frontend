@@ -15,7 +15,7 @@ import { RelativesApi } from '../../../../relatives/infrastructure/relatives-api
 import { SeniorCitizen } from '../../../../organization/domain/model/senior-citizen.entity';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
-import { map, switchMap } from 'rxjs';
+import { map, switchMap, of } from 'rxjs';
 
 @Component({
   selector: 'app-senior-citizen-registration',
@@ -95,7 +95,8 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
     // Split fullName into firstName and lastName
     const fullNameParts = this.form.value.fullName.trim().split(/\s+/);
     const firstName = fullNameParts[0] || '';
-    const lastName = fullNameParts.slice(1).join(' ') || '';
+    // If no lastName provided, use "N/A" as default (backend requires non-empty lastName)
+    const lastName = fullNameParts.slice(1).join(' ').trim() || 'N/A';
     
     // Calculate birthDate from age
     const today = new Date();
@@ -129,40 +130,61 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
     }
 
     console.log('[SeniorCitizenRegistration] Creating senior citizen:', seniorCitizen);
-
+    console.log('[SeniorCitizenRegistration] Senior citizen data:', JSON.stringify(seniorCitizen, null, 2));
+    
     // Get planType from registration flow store
     const planType = this.registrationFlowStore.planType || 'freemium';
     const currentUser = this.authStore.currentUser();
+    const tokenSignal = this.authStore.token;
+    const token = tokenSignal();
+    
+    console.log('[SeniorCitizenRegistration] Current user:', currentUser);
+    console.log('[SeniorCitizenRegistration] Has token:', !!token);
+    console.log('[SeniorCitizenRegistration] Token length:', token?.length || 0);
+    console.log('[SeniorCitizenRegistration] Token preview:', token ? `${token.substring(0, 20)}...` : 'null');
+    console.log('[SeniorCitizenRegistration] Plan type:', planType);
+    
+    // Verify token is available
+    if (!token) {
+      console.error('[SeniorCitizenRegistration] No token available! User needs to log in again.');
+      this.errorMessage = 'Authentication error. Please log in again.';
+      this.isLoading = false;
+      this.router.navigate(['/auth/login']);
+      return;
+    }
     
     // Create senior citizen
     this.organizationApi.createSeniorCitizen(seniorCitizen).pipe(
       switchMap(createdSeniorCitizen => {
         console.log('[SeniorCitizenRegistration] Senior citizen created:', createdSeniorCitizen);
         
-        // Validate that the created senior citizen has organizationId = 0 (security check)
-        if (createdSeniorCitizen.organizationId !== 0) {
-          console.error('[SeniorCitizenRegistration] Security violation: Created senior citizen has organizationId', createdSeniorCitizen.organizationId, 'instead of 0');
-          throw new Error('Invalid senior citizen configuration. Please contact support.');
-        }
+        // Note: The backend now assigns a default organization for relatives (organizationId = 0)
+        // The created senior citizen will have a real organizationId, but it belongs to the "Individual Users" organization
+        console.log('[SeniorCitizenRegistration] Senior citizen created with organizationId:', createdSeniorCitizen.organizationId);
         
         // Create relative entity with planType and seniorCitizenId
-        const relativeUrl = `${environment.platformProviderApiBaseUrl}/relatives`;
+        const relativeUrl = `${environment.platformProviderApiBaseUrl}${environment.platformProviderRelativesEndpointPath}`;
+        
+        // Extract name from email (e.g., "john.doe@example.com" -> "john.doe")
+        const emailName = currentUser?.email?.split('@')[0] || 'user';
+        const nameParts = emailName.split('.');
+        const firstName = nameParts[0] || emailName;
+        const lastName = nameParts.slice(1).join(' ') || 'N/A'; // Use "N/A" if no last name found
+        
         const relativeData = {
           userId: this.userId,
-          firstName: currentUser?.email?.split('@')[0] || '',
-          lastName: '',
-          email: currentUser?.email || '',
-          password: this.registrationFlowStore.password,
-          role: 'relative',
-          planType: planType,
-          creditCard: null,
-          expirationDate: null,
-          securityCode: null,
+          firstName: firstName,
+          lastName: lastName, // Backend requires non-empty lastName
+          phoneNumber: 'N/A', // Backend requires non-empty phoneNumber (can be updated later)
+          planType: planType.toUpperCase(), // Backend expects 'FREEMIUM' or 'PREMIUM'
           seniorCitizenId: createdSeniorCitizen.id
         };
         
+        console.log('[SeniorCitizenRegistration] Creating relative:', relativeData);
+        
         return this.http.post(relativeUrl, relativeData).pipe(
           map(() => {
+            console.log('[SeniorCitizenRegistration] Relative created successfully');
             // Clear registration flow store
             this.registrationFlowStore.clear();
             return createdSeniorCitizen;
@@ -177,7 +199,43 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
       },
       error: (error) => {
         console.error('[SeniorCitizenRegistration] Error registering senior citizen:', error);
-        this.errorMessage = 'Failed to register senior citizen. Please try again.';
+        console.error('[SeniorCitizenRegistration] Error details:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          error: error.error,
+          url: error.url
+        });
+        
+        // Provide more specific error message
+        let errorMsg = 'Failed to register senior citizen. Please try again.';
+        
+        // Check for duplicate deviceId error
+        const errorMessage = error.message || error.error?.message || error.error || '';
+        const errorStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage);
+        
+        // Check for duplicate entry errors (deviceId is unique in the database)
+        if (errorStr.includes('Duplicate entry') && (errorStr.includes('device_id') || errorStr.includes('deviceId') || errorStr.includes('senior_citizens'))) {
+          errorMsg = 'The device ID is already in use. Please use a different device ID.';
+        } else if (error.status === 401 || error.status === 403) {
+          errorMsg = 'Authentication error. Please log in again.';
+        } else if (error.status === 404) {
+          errorMsg = 'Service not found. Please contact support.';
+        } else if (error.status === 400) {
+          // Try to extract a more specific message from the backend
+          const backendMsg = error.error?.message || error.error || errorMessage;
+          if (typeof backendMsg === 'string' && backendMsg.length > 0) {
+            errorMsg = backendMsg;
+          } else {
+            errorMsg = 'Invalid data. Please check the form and try again.';
+          }
+        } else if (error.status === 500) {
+          errorMsg = 'Server error. Please try again later.';
+        } else if (error.error?.message) {
+          errorMsg = error.error.message;
+        }
+        
+        this.errorMessage = errorMsg;
         this.isLoading = false;
       }
     });

@@ -16,7 +16,8 @@
     "patientProfile": "Patient Profile",
     "seniorCitizenProfile": "Senior Citizen Profile",
     "statistics": "Statistics",
-    "alerts": "Alerts"
+    "alerts": "Alerts",
+    "logout": "Logout"
   },
     "footer": {
       "copyright": "© 2024 MediTrack. All rights reserved."

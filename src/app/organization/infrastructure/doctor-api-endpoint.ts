@@ -25,10 +25,10 @@ export class DoctorsApiEndpoint extends
 
   /**
    * Gets doctors by organizationId
-   * Uses query parameter for json-server: ?organizationId={organizationId}
+   * Uses path variable following backend endpoint pattern: /organization/{organizationId}
    */
   getByOrganizationId(organizationId: number) {
-    const url = `${this.endpointUrl}?organizationId=${organizationId}`;
+    const url = `${this.endpointUrl}/organization/${organizationId}`;
     console.log(`[API] Requesting doctors from: ${url} (organizationId=${organizationId})`);
     return this.http.get<DoctorResource[]>(url)
       .pipe(
@@ -44,21 +44,19 @@ export class DoctorsApiEndpoint extends
 
   /**
    * Gets a doctor by userId
-   * Uses query parameter for json-server: ?userId={userId}
+   * Uses path variable following backend endpoint pattern: /user/{userId}
    */
   getByUserId(userId: number) {
-    const url = `${this.endpointUrl}?userId=${userId}`;
+    const url = `${this.endpointUrl}/user/${userId}`;
     console.log(`[API] Requesting doctor from: ${url} (userId=${userId})`);
-    return this.http.get<DoctorResource[]>(url)
+    return this.http.get<DoctorResource>(url)
       .pipe(
         map(response => {
           console.log(`[API] Raw response from server:`, response);
-          // json-server returns an array, get the first element
-          const resource = response && response.length > 0 ? response[0] : null;
-          if (!resource) {
+          if (!response) {
             return null;
           }
-          const entity = this.assembler.toEntityFromResource(resource);
+          const entity = this.assembler.toEntityFromResource(response);
           console.log(`[API] Transformed entity:`, entity);
           return entity;
         })

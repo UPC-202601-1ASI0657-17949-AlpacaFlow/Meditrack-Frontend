@@ -44,6 +44,21 @@
       "id": 9,
       "email": "userp@123.com",
       "role": "relative"
+    },
+    {
+      "id": 10,
+      "email": "jose@user.com",
+      "role": "relative"
+    },
+    {
+      "id": 11,
+      "email": "jose@us.com",
+      "role": "relative"
+    },
+    {
+      "id": 12,
+      "email": "adad@123.com",
+      "role": "relative"
     }
   ],
   "credentials": [
@@ -91,6 +106,21 @@
       "userId": 9,
       "password": "123123",
       "id": 9
+    },
+    {
+      "userId": 10,
+      "password": "123123",
+      "id": 10
+    },
+    {
+      "userId": 11,
+      "password": "123123",
+      "id": 11
+    },
+    {
+      "userId": 12,
+      "password": "123123",
+      "id": 12
     }
   ],
   "doctors": [
@@ -221,6 +251,45 @@
       "assignedDoctorId": null,
       "assignedCaregiverId": null,
       "alerts": []
+    },
+    {
+      "organizationId": 0,
+      "firstName": "Angel",
+      "lastName": "",
+      "birthDate": "1933-11-15T00:00:00.000Z",
+      "gender": "male",
+      "weight": 79,
+      "dni": "123123",
+      "height": 75,
+      "imageUrl": "https://i.pinimg.com/736x/b3/d5/69/b3d569ad6a661cf5320b407be16c2250.jpg",
+      "deviceId": 13123123,
+      "id": 6
+    },
+    {
+      "organizationId": 0,
+      "firstName": "Angel",
+      "lastName": "",
+      "birthDate": "1938-11-15T00:00:00.000Z",
+      "gender": "male",
+      "weight": 90,
+      "dni": "123123123",
+      "height": 198,
+      "imageUrl": "https://i.pinimg.com/736x/b3/d5/69/b3d569ad6a661cf5320b407be16c2250.jpg",
+      "deviceId": 1231231233,
+      "id": 7
+    },
+    {
+      "organizationId": 0,
+      "firstName": "Angel",
+      "lastName": "Roman",
+      "birthDate": "1947-11-15T00:00:00.000Z",
+      "gender": "male",
+      "weight": 75,
+      "dni": "12312313",
+      "height": 177,
+      "imageUrl": "https://i.pinimg.com/736x/b3/d5/69/b3d569ad6a661cf5320b407be16c2250.jpg",
+      "deviceId": 123123,
+      "id": 8
     }
   ],
   "doctor-assignments": [
@@ -315,6 +384,34 @@
       "securityCode": null,
       "seniorCitizenId": 5,
       "id": 7
+    },
+    {
+      "userId": 11,
+      "firstName": "jose",
+      "lastName": "",
+      "email": "jose@us.com",
+      "password": "123123",
+      "role": "relative",
+      "planType": "premium",
+      "creditCard": null,
+      "expirationDate": null,
+      "securityCode": null,
+      "seniorCitizenId": 7,
+      "id": 8
+    },
+    {
+      "userId": 12,
+      "firstName": "adad",
+      "lastName": "",
+      "email": "adad@123.com",
+      "password": "123123",
+      "role": "relative",
+      "planType": "premium",
+      "creditCard": null,
+      "expirationDate": null,
+      "securityCode": null,
+      "seniorCitizenId": 8,
+      "id": 9
     }
   ]
 }

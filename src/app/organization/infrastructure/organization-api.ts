@@ -321,6 +321,17 @@ export class OrganizationApi extends BaseApi {
     );
   }
 
+  /**
+   * Fetches a caregiver by userId from the API.
+   * @param userId - The user ID to search for.
+   * @returns An Observable emitting the Caregiver entity or null if not found.
+   */
+  getCaregiverByUserId(userId: number): Observable<Caregiver | null> {
+    return this.caregiversEndpoint.getCaregiverByUserId(userId).pipe(
+      map((caregiver: Caregiver | null) => caregiver || null)
+    );
+  }
+
   getCaregiverByUserIdAndOrganizationId(userId: number, organizationId: number): Observable<Caregiver | null> {
     return this.caregiversEndpoint.getByUserIdAndOrganizationId(userId, organizationId).pipe(
         map((caregiver: Caregiver | null) => caregiver || null)

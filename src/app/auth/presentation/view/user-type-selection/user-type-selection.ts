@@ -38,6 +38,9 @@ export class UserTypeSelectionComponent {
     // - nursing-home or clinic -> 'admin'
     const role = userType === 'relative' ? 'relative' : 'admin';
     
+    console.log('[UserTypeSelection] Selected user type:', userType);
+    console.log('[UserTypeSelection] Mapped to role:', role);
+    
     // Navigate to signup with role as query parameter
     this.router.navigate(['signup'], { 
       relativeTo: this.route.parent,

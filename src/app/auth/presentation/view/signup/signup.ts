@@ -45,6 +45,8 @@ export class SignupComponent {
     // Get role from query params
     this.route.queryParams.subscribe(params => {
       this.selectedRole = params['role'] || 'user';
+      console.log('[SignupComponent] Role from query params:', params['role']);
+      console.log('[SignupComponent] Selected role set to:', this.selectedRole);
       
       // If no role is provided, redirect to user type selection
       if (!params['role']) {
@@ -96,18 +98,36 @@ export class SignupComponent {
 
     const { firstName, lastName, email, password } = this.signupForm.value;
 
+    // Normalize role to ensure consistency
+    const normalizedRole = (this.selectedRole || '').toLowerCase().trim();
+    console.log('[SignupComponent] Submitting form with role:', this.selectedRole);
+    console.log('[SignupComponent] Normalized role:', normalizedRole);
+    
     // Save all data temporarily - user is NOT created in DB until payment is completed
     // This prevents users from creating multiple organizations with the same name
-    this.registrationFlowStore.setUserData(email, password, this.selectedRole);
+    this.registrationFlowStore.setUserData(email, password, normalizedRole);
+    
+    // Verify the role was saved correctly
+    console.log('[SignupComponent] Role saved in store:', this.registrationFlowStore.role);
+    console.log('[SignupComponent] Full store state after save:', {
+      email: this.registrationFlowStore.email,
+      role: this.registrationFlowStore.role,
+      hasPassword: !!this.registrationFlowStore.password
+    });
     
     // If user is admin, save firstName and lastName for later admin creation
-    if (this.selectedRole === 'admin') {
+    if (normalizedRole === 'admin') {
       this.registrationFlowStore.setAdminData(firstName, lastName);
+      console.log('[SignupComponent] Admin data saved');
     }
     
     this.isLoading = false;
     // Redirect to subscription selection - user will be created when payment is completed
-    this.router.navigate(['subscription-selection'], { relativeTo: this.route.parent });
+    // Pass role as query param to ensure it's available even if store fails
+    this.router.navigate(['subscription-selection'], { 
+      relativeTo: this.route.parent,
+      queryParams: { role: normalizedRole }
+    });
   }
 
   navigateToSignIn(): void {

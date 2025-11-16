@@ -71,7 +71,15 @@ export class CaregiverDetail implements OnInit {
   ngOnInit(): void {
     const caregiverId = this.route.snapshot.paramMap.get('id');
     if (caregiverId) {
-      this.loadCaregiver(parseInt(caregiverId));
+      // Validate that the ID is numeric
+      const numericId = parseInt(caregiverId, 10);
+      if (isNaN(numericId) || caregiverId !== numericId.toString()) {
+        // Invalid ID (not a number), navigate to a non-existent route to trigger page-not-found
+        // Using a route that will definitely not match any existing route
+        this.router.navigate(['/invalid-route-404'], { skipLocationChange: false });
+        return;
+      }
+      this.loadCaregiver(numericId);
     }
   }
 

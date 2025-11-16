@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,43 +25,164 @@ export class SubscriptionSelectionComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private authStore = inject(AuthStore);
   private registrationFlowStore = inject(RegistrationFlowStore);
+  private cdr = inject(ChangeDetectorRef);
 
   userRole: string = '';
   isRelative: boolean = false;
   isAdmin: boolean = false;
 
-  ngOnInit(): void {
-    // Get user role from registration flow store (user not created in DB yet)
-    // If user is already logged in, get role from auth store
+  constructor() {
+    // Log immediately when component is constructed
+    console.log('🚀🚀🚀 [SubscriptionSelection] CONSTRUCTOR CALLED - Component instance created');
+    console.log('🚀🚀🚀 [SubscriptionSelection] Current URL:', window.location.href);
+  }
+
+  /**
+   * Get current role from store (always fresh)
+   */
+  private getCurrentRole(): string {
+    // Priority 1: Check query params (most reliable)
+    const snapshotParams = this.route.snapshot.queryParams;
+    if (snapshotParams['role']) {
+      const role = snapshotParams['role'].toLowerCase().trim();
+      console.log('🔍 [SubscriptionSelection] getCurrentRole from query params:', role);
+      return role;
+    }
+    
+    // Priority 2: Check auth store
     const currentUser = this.authStore.currentUser();
-    if (currentUser) {
-      this.userRole = currentUser.role;
-    } else {
-      // User not created yet, get role from registration flow
-      this.userRole = this.registrationFlowStore.role;
+    if (currentUser?.role) {
+      const role = currentUser.role.toLowerCase().trim();
+      console.log('🔍 [SubscriptionSelection] getCurrentRole from auth store:', role);
+      return role;
     }
-
-    if (!this.userRole) {
-      // If no role found, redirect to login
-      this.router.navigate(['login'], { relativeTo: this.route.parent });
-      return;
+    
+    // Priority 3: Check registration flow store
+    const storeRole = this.registrationFlowStore.role;
+    if (storeRole) {
+      const role = storeRole.toLowerCase().trim();
+      console.log('🔍 [SubscriptionSelection] getCurrentRole from registration flow store:', role);
+      return role;
     }
+    
+    // Priority 4: Fallback to instance variable
+    const fallbackRole = (this.userRole || '').toLowerCase().trim();
+    console.log('🔍 [SubscriptionSelection] getCurrentRole fallback:', fallbackRole || '(empty)');
+    return fallbackRole;
+  }
 
+  ngOnInit(): void {
+    // Force immediate log to verify component is loading
+    console.log('🔵🔵🔵 [SubscriptionSelection] ngOnInit CALLED - Component is initializing');
+    console.log('🔵🔵🔵 [SubscriptionSelection] Route:', this.route);
+    console.log('🔵🔵🔵 [SubscriptionSelection] Router:', this.router);
+    console.log('🔵🔵🔵 [SubscriptionSelection] AuthStore:', this.authStore);
+    console.log('🔵🔵🔵 [SubscriptionSelection] RegistrationFlowStore:', this.registrationFlowStore);
+    
+    try {
+      console.log('🔵 [SubscriptionSelection] ngOnInit - Starting initialization');
+      
+      // Priority 1: Check query params first (most reliable)
+      const snapshotParams = this.route.snapshot.queryParams;
+      console.log('🟡 [SubscriptionSelection] Snapshot query params:', snapshotParams);
+      
+      if (snapshotParams['role']) {
+        const roleFromQuery = snapshotParams['role'];
+        const normalizedQueryRole = roleFromQuery.toLowerCase().trim();
+        console.log('🟢 [SubscriptionSelection] Found role in query params:', roleFromQuery, '-> normalized:', normalizedQueryRole);
+        this.userRole = normalizedQueryRole;
+        
+        // Update the store with the role from query params if we have email
+        if (this.registrationFlowStore.email) {
+          console.log('🟡 [SubscriptionSelection] Updating store with role from query params');
+          this.registrationFlowStore.setUserData(
+            this.registrationFlowStore.email,
+            this.registrationFlowStore.password,
+            normalizedQueryRole
+          );
+        }
+      } else {
+        // Priority 2: Check registration flow store
+        this.userRole = this.registrationFlowStore.role;
+        console.log('🟡 [SubscriptionSelection] Got role from registration flow store:', this.userRole);
+        console.log('🟡 [SubscriptionSelection] Full registration flow store:', {
+          email: this.registrationFlowStore.email,
+          role: this.registrationFlowStore.role,
+          hasPassword: !!this.registrationFlowStore.password
+        });
+        
+        // Priority 3: Check auth store (if user is already logged in)
+        const currentUser = this.authStore.currentUser();
+        if (currentUser?.role) {
+          this.userRole = currentUser.role;
+          console.log('🟢 [SubscriptionSelection] Got role from auth store:', this.userRole);
+        }
+      }
+
+      if (!this.userRole) {
+        console.error('🔴 [SubscriptionSelection] No role found! Redirecting to login');
+        // If no role found, redirect to login
+        this.router.navigate(['login'], { relativeTo: this.route.parent });
+        return;
+      }
+
+      this.updateRoleFlags();
+      
+      console.log('🟢 [SubscriptionSelection] Final state - User role:', this.userRole);
+      console.log('🟢 [SubscriptionSelection] Final state - Is Relative:', this.isRelative);
+      console.log('🟢 [SubscriptionSelection] Final state - Is Admin:', this.isAdmin);
+      console.log('🟢 [SubscriptionSelection] Final state - Fremium disabled:', this.isPlanDisabled('fremium'));
+      console.log('🟢 [SubscriptionSelection] Final state - Premium disabled:', this.isPlanDisabled('premium'));
+      console.log('🟢 [SubscriptionSelection] Final state - Enterprise disabled:', this.isPlanDisabled('enterprise'));
+      
+      // Force change detection to ensure UI updates
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('🔴 [SubscriptionSelection] Error in ngOnInit:', error);
+    }
+  }
+
+  /**
+   * Update role flags based on current userRole
+   */
+  private updateRoleFlags(): void {
+    // Normalize role to lowercase for comparison
+    this.userRole = (this.userRole || '').toLowerCase().trim();
     this.isRelative = this.userRole === 'relative';
     this.isAdmin = this.userRole === 'admin';
+    console.log('🔄 [SubscriptionSelection] updateRoleFlags - role:', this.userRole, 'isRelative:', this.isRelative, 'isAdmin:', this.isAdmin);
   }
 
   /**
    * Check if a subscription plan button should be disabled
    */
   isPlanDisabled(planType: 'fremium' | 'premium' | 'enterprise'): boolean {
-    if (this.isRelative) {
-      // Relative users can only choose Fremium or Premium
-      return planType === 'enterprise';
-    } else if (this.isAdmin) {
-      // Admin users can only choose Enterprise
-      return planType === 'fremium' || planType === 'premium';
+    // Always get fresh role from store
+    const normalizedRole = this.getCurrentRole();
+    const isRelative = normalizedRole === 'relative';
+    const isAdmin = normalizedRole === 'admin';
+    
+    // Update instance variables for consistency
+    this.userRole = normalizedRole;
+    this.isRelative = isRelative;
+    this.isAdmin = isAdmin;
+    
+    console.log(`🔍 [SubscriptionSelection] isPlanDisabled(${planType}) - role: "${normalizedRole}", isRelative: ${isRelative}, isAdmin: ${isAdmin}`);
+    
+    if (isRelative) {
+      // Relative users can only choose Fremium or Premium (Enterprise is disabled)
+      const disabled = planType === 'enterprise';
+      console.log(`✅ [SubscriptionSelection] Relative user - ${planType} disabled: ${disabled}`);
+      return disabled;
+    } else if (isAdmin) {
+      // Admin users can only choose Enterprise (Fremium and Premium are disabled)
+      const disabled = planType === 'fremium' || planType === 'premium';
+      console.log(`✅ [SubscriptionSelection] Admin user - ${planType} disabled: ${disabled}`);
+      return disabled;
     }
+    
+    // Default: no restrictions (shouldn't happen in normal flow)
+    console.warn(`⚠️ [SubscriptionSelection] Unknown role "${normalizedRole}" - ${planType} disabled: false`);
     return false;
   }
 

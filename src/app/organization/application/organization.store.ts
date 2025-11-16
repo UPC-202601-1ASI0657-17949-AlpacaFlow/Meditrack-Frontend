@@ -138,7 +138,7 @@ export class OrganizationStore {
     console.warn(`Tip: Ensure the user is registered in the backend or use loadOrganizationDataByOrganizationId(organizationId, userId)`);
   }
 
-  private loadOrganizationDataWithId(userId: number, organizationId: number, role: string): void {
+  loadOrganizationDataWithId(userId: number, organizationId: number, role: string): void {
     this.currentUserIdSignal.set(userId);
     this.currentOrganizationIdSignal.set(organizationId);
     this.currentUserRoleSignal.set(role);
@@ -751,65 +751,42 @@ export class OrganizationStore {
 
   /**
    * Adds a new doctor.
-   * When a doctor is created, also creates a user account with the same email and password
-   * to allow the doctor to login to the system.
+   * The backend automatically creates a user account when a doctor is created (if userId is not provided).
    * @param doctor - The doctor to add.
    */
   addDoctor(doctor: Doctor): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
     
-    // Step 1: Create the doctor in the database
-    this.organizationApi.createDoctor(doctor).pipe(
-      retry(2),
-      switchMap(createdDoctor => {
-        // Step 2: Create a user account for the doctor with the same email
-        // The password will be the same as the email (or can be customized)
-        const password = doctor.email; // Use email as password for simplicity
-        
-        const user = new User({
-          email: doctor.email,
-          role: 'doctor'
-        });
-
-        // Create user and credentials
-        return this.authApi.register(user, password).pipe(
-          switchMap(userResponse => {
-            // Step 3: Update the doctor with the userId
-            const updatedDoctor = new Doctor({
-              id: createdDoctor.id,
-              organizationId: createdDoctor.organizationId,
-              userId: userResponse.user.id,
-              firstName: createdDoctor.firstName,
-              lastName: createdDoctor.lastName,
-              age: createdDoctor.age,
-              email: createdDoctor.email,
-              specialty: createdDoctor.specialty,
-              phoneNumber: createdDoctor.phoneNumber,
-              imageUrl: createdDoctor.imageUrl,
-              assignedSeniorIds: createdDoctor.assignedSeniorIds
-            });
-
-            // Update doctor with userId
-            return this.organizationApi.updateDoctor(updatedDoctor).pipe(
-              switchMap(updatedDoctorWithUserId => {
-                // Return the updated doctor
-                return of(updatedDoctorWithUserId);
-              })
-            );
-          })
-        );
-      })
+    // Create the doctor in the database
+    // The backend will automatically create a User with role "doctor" if userId is not provided
+    // We don't set userId here, so the backend will create it automatically
+    const doctorToCreate = new Doctor({
+      id: 0, // New doctor
+      organizationId: doctor.organizationId,
+      userId: null, // Let backend create the user automatically
+      firstName: doctor.firstName,
+      lastName: doctor.lastName,
+      age: doctor.age,
+      email: doctor.email,
+      specialty: doctor.specialty,
+      phoneNumber: doctor.phoneNumber,
+      imageUrl: doctor.imageUrl,
+      assignedSeniorIds: doctor.assignedSeniorIds || []
+    });
+    
+    this.organizationApi.createDoctor(doctorToCreate).pipe(
+      retry(2)
     ).subscribe({
       next: createdDoctor => {
         this.doctorsSignal.update(doctors => [...doctors, createdDoctor]);
         this.loadingSignal.set(false);
-        console.log(`[Store] Doctor created successfully with user account. Email: ${createdDoctor.email}, UserId: ${createdDoctor.userId}`);
+        console.log(`[Store] Doctor created successfully. Email: ${createdDoctor.email}, UserId: ${createdDoctor.userId || 'will be created by backend'}`);
       },
       error: err => {
         this.errorSignal.set(this.formatError(err, 'Failed to create doctor'));
         this.loadingSignal.set(false);
-        console.error('[Store] Error creating doctor or user account:', err);
+        console.error('[Store] Error creating doctor:', err);
       }
     });
   }
@@ -1244,19 +1221,41 @@ export class OrganizationStore {
 
   /**
    * Adds a new caregiver.
+   * The backend automatically creates a user account when a caregiver is created (if userId is not provided).
    * @param caregiver - The caregiver to add.
    */
   addCaregiver(caregiver: Caregiver): void {
     this.loadingSignal.set(true);
     this.errorSignal.set(null);
-    this.organizationApi.createCaregiver(caregiver).pipe(retry(2)).subscribe({
+    
+    // Create the caregiver in the database
+    // The backend will automatically create a User with role "caregiver" if userId is not provided
+    // We don't set userId here, so the backend will create it automatically
+    const caregiverToCreate = new Caregiver({
+      id: 0, // New caregiver
+      organizationId: caregiver.organizationId,
+      userId: null, // Let backend create the user automatically
+      firstName: caregiver.firstName,
+      lastName: caregiver.lastName,
+      age: caregiver.age,
+      email: caregiver.email,
+      phoneNumber: caregiver.phoneNumber,
+      imageUrl: caregiver.imageUrl,
+      assignedSeniorIds: caregiver.assignedSeniorIds || []
+    });
+    
+    this.organizationApi.createCaregiver(caregiverToCreate).pipe(
+      retry(2)
+    ).subscribe({
       next: createdCaregiver => {
         this.caregiversSignal.update(caregivers => [...caregivers, createdCaregiver]);
         this.loadingSignal.set(false);
+        console.log(`[Store] Caregiver created successfully. Email: ${createdCaregiver.email}, UserId: ${createdCaregiver.userId || 'will be created by backend'}`);
       },
       error: err => {
         this.errorSignal.set(this.formatError(err, 'Failed to create caregiver'));
         this.loadingSignal.set(false);
+        console.error('[Store] Error creating caregiver:', err);
       }
     });
   }

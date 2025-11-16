@@ -20,6 +20,8 @@ const seniorCitizenStatistic = () =>
     import('./views/senior-citizen-statistic/senior-citizen-statistic').then(m => m.SeniorCitizenStatistic);
 const support = () =>
     import('./views/support/support').then(m => m.Support);
+const pageNotFound = () =>
+    import('../../shared/presentation/views/page-not-found/page-not-found').then(m => m.PageNotFound);
 
 export const organizationRoutes: Routes = [
     {
@@ -35,7 +37,9 @@ export const organizationRoutes: Routes = [
             { path: 'senior-citizens/:id/alerts', loadComponent: seniorCitizenAlertList, data: { title: 'Senior Citizen Alerts' } },
             { path: 'senior-citizens/:id/statistics', loadComponent: seniorCitizenStatistic, data: { title: 'Senior Citizen Statistics' } },
             { path: 'senior-citizens/:id', redirectTo: 'senior-citizens/:id/profile', pathMatch: 'full' },
-            { path: 'support', loadComponent: support, data: { title: 'Support' } }
+            { path: 'support', loadComponent: support, data: { title: 'Support' } },
+            // Catch-all route for invalid paths within organization
+            { path: '**', loadComponent: pageNotFound, data: { title: 'Page Not Found' } }
         ]
     },
     {
@@ -51,7 +55,9 @@ export const organizationRoutes: Routes = [
             { path: 'senior-citizens/:id/alerts', loadComponent: seniorCitizenAlertList, data: { title: 'Senior Citizen Alerts' } },
             { path: 'senior-citizens/:id/statistics', loadComponent: seniorCitizenStatistic, data: { title: 'Senior Citizen Statistics' } },
             { path: 'senior-citizens/:id', redirectTo: 'senior-citizens/:id/profile', pathMatch: 'full' },
-            { path: 'support', loadComponent: support, data: { title: 'Support' } }
+            { path: 'support', loadComponent: support, data: { title: 'Support' } },
+            // Catch-all route for invalid paths within organization
+            { path: '**', loadComponent: pageNotFound, data: { title: 'Page Not Found' } }
         ]
     }
 ];

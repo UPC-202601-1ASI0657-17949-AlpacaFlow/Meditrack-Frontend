@@ -71,7 +71,15 @@ export class DoctorDetail implements OnInit {
   ngOnInit(): void {
     const doctorId = this.route.snapshot.paramMap.get('id');
     if (doctorId) {
-      this.loadDoctor(parseInt(doctorId));
+      // Validate that the ID is numeric
+      const numericId = parseInt(doctorId, 10);
+      if (isNaN(numericId) || doctorId !== numericId.toString()) {
+        // Invalid ID (not a number), navigate to a non-existent route to trigger page-not-found
+        // Using a route that will definitely not match any existing route
+        this.router.navigate(['/invalid-route-404'], { skipLocationChange: false });
+        return;
+      }
+      this.loadDoctor(numericId);
     }
   }
 

@@ -34,7 +34,7 @@ export class UserAssembler implements
         return new User({
             id: resource.id,
             email: resource.email,
-            role: resource.role,
+            role: resource.role ?? undefined,
             credentials: resource.credentials
                 ? this.credentialsAssembler.toEntityFromResource(resource.credentials)
                 : undefined
@@ -50,7 +50,7 @@ export class UserAssembler implements
         return {
             id: entity.id,
             email: entity.email,
-            role: entity.role,
+            role: entity.role ?? null,
             credentials: entity.credentials
                 ? this.credentialsAssembler.toResourceFromEntity(entity.credentials)
                 : undefined

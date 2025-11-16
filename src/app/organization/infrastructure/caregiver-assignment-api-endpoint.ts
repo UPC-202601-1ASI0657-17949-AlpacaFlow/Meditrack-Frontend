@@ -26,7 +26,7 @@ export interface AssignSeniorCitizenToCaregiverResource {
   providedIn: 'root'
 })
 export class CaregiverAssignmentApiEndpoint {
-  private readonly endpointUrl = `${environment.platformProviderApiBaseUrl}/caregiver-assignments`;
+  private readonly endpointUrl = `${environment.platformProviderApiBaseUrl}/api/v1/caregiver-assignments`;
   private readonly assembler = new SeniorCitizensAssembler();
 
   constructor(private http: HttpClient) {}

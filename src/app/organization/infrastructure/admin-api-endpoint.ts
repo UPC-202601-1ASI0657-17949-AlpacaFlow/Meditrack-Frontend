@@ -18,7 +18,7 @@ export class AdminsApiEndpoint extends
   constructor(http: HttpClient) {
     super(
         http,
-        `${environment.platformProviderApiBaseUrl}/admins`,
+        `${environment.platformProviderApiBaseUrl}${environment.platformProviderAdminsEndpointPath}`,
         new AdminsAssembler()
     );
   }
