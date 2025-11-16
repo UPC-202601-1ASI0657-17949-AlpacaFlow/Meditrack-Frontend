@@ -1,0 +1,13 @@
+<h2 mat-dialog-title>{{ 'senior-citizen.deleteSeniorCitizenDialog.title' | translate }}</h2>
+<mat-dialog-content>
+  <p>{{ 'senior-citizen.deleteSeniorCitizenDialog.message' | translate }}</p>
+  <p><strong>{{ data.seniorCitizen.fullName }}</strong></p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">
+    {{ 'senior-citizen.deleteSeniorCitizenDialog.cancel' | translate }}
+  </button>
+  <button mat-raised-button color="warn" (click)="onConfirm()">
+    {{ 'senior-citizen.deleteSeniorCitizenDialog.confirm' | translate }}
+  </button>
+</mat-dialog-actions>

@@ -10,13 +10,23 @@
   "navigation": {
     "doctor-list": "Lista de Doctores",
     "patient-list": "Lista de Pacientes",
-    "support": "Soporte"
+    "senior-citizen-list": "Lista de adultos mayores",
+    "caregiver-list": "Lista de cuidadores",
+    "support": "Soporte",
+    "patientProfile": "Perfil del Paciente",
+    "seniorCitizenProfile": "Perfil del Adulto Mayor",
+    "statistics": "Estadísticas",
+    "alerts": "Alertas",
+    "logout": "Cerrar Sesión"
   },
   "footer": {
     "copyright": "© 2024 MediTrack. Todos los derechos reservados."
   },
   "language": {
     "switch": "Cambiar Idioma"
+  },
+  "common": {
+    "loading": "Cargando..."
   },
   "page-not-found": {
     "title": "Página No Encontrada",
@@ -41,6 +51,7 @@
     "general": "Consulta General"
   },
   "doctor": {
+    "title": "Dr. ",
     "add": "Agregar Doctor",
     "empty": "No Hay Doctores Registrados",
     "edit": "Editar",
@@ -63,7 +74,42 @@
     "selectPatient": "Seleccionar Paciente",
     "doctorProfile": "Perfil del Doctor",
     "assignedPatients": "Pacientes Asignados",
-    "backToList": "Volver a la Lista"
+    "assignedSeniorCitizens": "Adultos Mayores Asignados",
+    "availableSeniorCitizens": "Adultos Mayores Disponibles",
+    "selectSeniorCitizen": "Seleccionar Adulto Mayor",
+    "unassignSeniorCitizen": "Desasignar Adulto Mayor",
+    "backToList": "Volver a la Lista",
+    "unassignPatient": "Desasignar Paciente",
+    "emailHint": "El correo se generará automáticamente con el dominio institucional",
+    "emailPlaceholderExample": "email@ejemplo.com",
+    "emailPlaceholder": "nombre.apellido",
+    "imageUrl": "URL de Imagen",
+    "imageUrlHint": "Ingrese una URL válida de imagen",
+    "imageUrlPlaceholder": "https://ejemplo.com/imagen.jpg",
+    "imageUrlError": "Debe ser una URL válida de imagen",
+    "photo": "Foto",
+    "clickToView": "Hacer clic para ver detalles, doble clic para abrir",
+    "assignedTo": "Asignado a",
+    "unassignPatientDialog": {
+      "title": "Desasignar Paciente",
+      "message": "¿Desea desasignar a este paciente del doctor? El paciente seguirá registrado en el sistema.",
+      "confirm": "Desasignar",
+      "cancel": "Cancelar"
+    },
+    "deleteDoctorDialog": {
+      "title": "Eliminar Doctor",
+      "message": "¿Está seguro de que desea eliminar este doctor? Esta acción no se puede deshacer.",
+      "confirm": "Eliminar",
+      "cancel": "Cancelar"
+    },
+    "errors": {
+      "required": "es requerido",
+      "requiredFemale": "es requerida",
+      "emailInvalid": "es requerido y debe ser válido",
+      "photoRequired": "La foto es requerida",
+      "cannotAssignToCaregiver": "Este adulto mayor ya está asignado a un cuidador. No se puede asignar a un doctor (exclusión mutua).",
+      "assignError": "Error al asignar adulto mayor"
+    }
   },
   "patient": {
     "firstName": "Nombres",
@@ -76,16 +122,328 @@
     "uploadPhoto": "Subir Foto",
     "dragFile": "Adjuntar archivo",
     "fullName": "Nombre completo",
-    "add": "Agregar paciente",
+    "add": "Agregar Paciente",
     "save": "Guardar",
     "cancel": "Cancelar",
     "preview": "vista previa",
-    "empty": "Sin pacientes",
-    "backToList": "Regresar a Lista"
-
-
+    "empty": "No Hay Pacientes Registrados",
+    "backToList": "Regresar a Lista",
+    "noDoctor": "Sin doctor asignado",
+    "detailTitle": "Detalles del Paciente",
+    "doctor": "Doctor",
+    "imageUrl": "Imagen Url",
+    "imageUrlHint": "Imagen Url vista",
+    "imageUrlError": "Error",
+    "deletePatientDialog": {
+      "title": "Eliminar Paciente",
+      "message": "¿Está seguro de que desea eliminar este paciente? Esta acción no se puede deshacer.",
+      "confirm": "Eliminar",
+      "cancel": "Cancelar"
+    },
+    "alert": {
+      "date": "Fecha",
+      "time": "Hora",
+      "dataRegistered": "Dato Registrado",
+      "reason": "Razón",
+      "noAlerts": "No hay alertas disponibles"
+    },
+    "statistics": {
+      "bloodPressure": "Presión Arterial (mmHg)",
+      "bloodPressureTitle": "Presión Arterial (Diastólica y Sistólica) - Últimos 7 Días",
+      "bloodPressureTooltip": "Diastólica: {{diastolic}}, Sistólica: {{systolic}}",
+      "heartRate": "Frecuencia Cardíaca (lpm)",
+      "heartRateTitle": "Frecuencia Cardíaca - Últimos 7 Días",
+      "oxygenSaturation": "Saturación de Oxígeno (%) - Últimos 7 Días",
+      "temperature": "Temperatura Corporal - Últimos 7 Días",
+      "dayOfWeek": "Día de la Semana",
+      "mmhg": "mmHg",
+      "bpm": "lpm",
+      "spO2": "SpO₂ (%)",
+      "temperatureUnit": "Temperatura (°C)",
+      "diastolic": "Diastólica",
+      "systolic": "Sistólica"
+    }
+  },
+  "senior-citizen": {
+    "fullName": "Nombre Completo",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "birthDate": "Fecha de Nacimiento",
+    "age": "Edad",
+    "gender": "Genero",
+    "weight": "Peso",
+    "height": "Altura",
+    "dni": "DNI",
+    "deviceId": "ID del Dispositivo",
+    "doctor": "Doctor",
+    "assignedTo": "Asignado a",
+    "notAssigned": "No asignado",
+    "empty": "Lista Vacia de Ciudadano Mayores",
+    "add": "Agregar Ciudadano Mayor",
+    "uploadPhoto": "Subir fotografia",
+    "dragFile": "Arrastrar Archivo",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "backToList": "Regresar a la lista",
+    "caregiver": "Cuidador",
+    "noCaregiver": "Sin cuidador asignado",
+    "imageUrl": "Imagen Url",
+    "imageUrlHint": "Imagen Url Adjunta",
+    "imageUrlPlaceholder": "https://ejemplo.com/imagen.jpg",
+    "imageUrlError": "Debe ser una URL válida de imagen",
+    "photo": "Foto",
+    "clickToView": "Hacer clic para ver detalles",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "preview": "Vista previa",
+    "deleteSeniorCitizenDialog": {
+      "title": "Eliminar Ciudadano Mayor",
+      "message": "¿Está seguro de que desea eliminar este ciudadano mayor? Esta acción no se puede deshacer.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    },
+    "unassignSeniorCitizenDialog": {
+      "title": "Desasignar Adulto Mayor",
+      "message": "¿Desea desasignar a este adulto mayor del cuidador? El adulto mayor seguirá registrado en el sistema.",
+      "cancel": "Cancelar",
+      "confirm": "Desasignar"
+    },
+    "units": {
+      "kg": "kg",
+      "cm": "cm"
+    },
+    "alert": {
+      "date": "Fecha",
+      "time": "Hora",
+      "dataRegistered": "Dato Registrado",
+      "reason": "Razón",
+      "noAlerts": "No hay alertas disponibles"
+    },
+    "statistics": {
+      "bloodPressure": "Presión Arterial (mmHg)",
+      "bloodPressureTitle": "Presión Arterial (Diastólica y Sistólica) - Últimos 7 Días",
+      "bloodPressureTooltip": "Diastólica: {{diastolic}}, Sistólica: {{systolic}}",
+      "heartRate": "Frecuencia Cardíaca (lpm)",
+      "heartRateTitle": "Frecuencia Cardíaca - Últimos 7 Días",
+      "oxygenSaturation": "Saturación de Oxígeno (%) - Últimos 7 Días",
+      "temperature": "Temperatura Corporal - Últimos 7 Días",
+      "dayOfWeek": "Día de la Semana",
+      "mmhg": "mmHg",
+      "bpm": "lpm",
+      "spO2": "SpO₂ (%)",
+      "temperatureUnit": "Temperatura (°C)",
+      "diastolic": "Diastólica",
+      "systolic": "Sistólica"
+    }
+  },
+  "caregiver": {
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "age": "Edad",
+    "email": "Correo electrónico",
+    "specialty": "Especialidad",
+    "phoneNumber": "Número de teléfono",
+    "uploadPhoto": "Subir foto",
+    "dragFile": "Arrastrar archivo",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "empty": "Lista Vacia de Cuidadores",
+    "add": "Agregar Cuidor",
+    "backToList": "Volver a la lista",
+    "selectSeniorCitizen": "Seleccione un adulto mayor",
+    "assignedSeniorCitizens": "Adultos mayores seleccionados",
+    "availableSeniorCitizens": "Adultos mayores disponibles",
+    "title": "Cuidador",
+    "emailHint": "El correo se generará automáticamente con el dominio institucional",
+    "emailPlaceholderExample": "email@ejemplo.com",
+    "emailPlaceholder": "nombre.apellido",
+    "imageUrl": "URL de Imagen",
+    "imageUrlHint": "Ingrese una URL válida de imagen",
+    "imageUrlPlaceholder": "https://ejemplo.com/imagen.jpg",
+    "imageUrlError": "Debe ser una URL válida de imagen",
+    "photo": "Foto",
+    "assignedTo": "Asignado a",
+    "errors": {
+      "required": "es requerido",
+      "requiredFemale": "es requerida",
+      "emailInvalid": "es requerido y debe ser válido",
+      "photoRequired": "La foto es requerida",
+      "cannotAssignToDoctor": "Este adulto mayor ya está asignado a un doctor. No se puede asignar a un cuidador (exclusión mutua).",
+      "assignError": "Error al asignar adulto mayor"
+    },
+    "deleteCaregiverDialog": {
+      "title": "Eliminar Cuidador",
+      "message": "¿Estás seguro de que quieres eliminar este cuidador?",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    },
+    "unassignSeniorCitizen": "Desasignar Adulto Mayor",
+    "clickToView": "Hacer clic para ver detalles"
+  },
+  "login": {
+    "welcome": "Bienvenido a MediTrack",
+    "email": "Dirección de correo",
+    "emailPlaceholder": "Ingresa tu correo",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Ingresa tu contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "loginButton": "Iniciar sesión",
+    "loggingIn": "Iniciando sesión...",
+    "noAccount": "¿No tienes una cuenta?",
+    "signUp": "Regístrate",
+    "togglePassword": "Mostrar/ocultar contraseña",
+    "errors": {
+      "emailRequired": "El correo es requerido y debe ser válido",
+      "passwordRequired": "La contraseña es requerida (mínimo 6 caracteres)",
+      "invalidCredentials": "Correo o contraseña inválidos. Por favor intenta de nuevo."
+    }
+  },
+  "signup": {
+    "title": "Crear una cuenta",
+    "firstName": "Nombre",
+    "firstNamePlaceholder": "Ingresa tu nombre",
+    "lastName": "Apellido",
+    "lastNamePlaceholder": "Ingresa tu apellido",
+    "email": "Dirección de correo",
+    "emailPlaceholder": "Ingresa tu correo",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Ingresa tu contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Confirma tu contraseña",
+    "continueButton": "Continuar",
+    "registering": "Creando cuenta...",
+    "haveAccount": "¿Ya tienes una cuenta?",
+    "signIn": "Iniciar sesión",
+    "togglePassword": "Mostrar/ocultar contraseña",
+    "toggleConfirmPassword": "Mostrar/ocultar confirmación de contraseña",
+    "errors": {
+      "firstNameRequired": "El nombre es requerido",
+      "lastNameRequired": "El apellido es requerido",
+      "emailRequired": "El correo es requerido y debe ser válido",
+      "passwordRequired": "La contraseña es requerida (mínimo 6 caracteres)",
+      "confirmPasswordRequired": "Por favor confirma tu contraseña",
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "registrationFailed": "Error al registrar. Por favor intenta de nuevo."
+    }
+  },
+  "userTypeSelection": {
+    "title": "Selecciona tu tipo de usuario",
+    "back": "Volver",
+    "relative": "Familiar",
+    "nursingHome": "Casa de Reposo",
+    "clinic": "Clínica"
+  },
+  "subscriptionSelection": {
+    "title": "Selecciona una suscripción",
+    "back": "Volver",
+    "fremium": "Fremium",
+    "premium": "Premium",
+    "enterprise": "Enterprise",
+    "free": "$0",
+    "custom": "Personalizado",
+    "month": "mes",
+    "recommended": "Recomendado",
+    "selectPlan": "Seleccionar Plan",
+    "contactUs": "Contáctanos",
+    "features": {
+      "vitalSigns": "Monitoreo de signos vitales",
+      "realTimeAlerts": "Alertas en tiempo real",
+      "webAccess": "Acceso a la plataforma web",
+      "downloadableReports": "Reportes descargables",
+      "prioritySupport": "Soporte prioritario",
+      "customReports": "Informes personalizados"
+    }
+  },
+  "billingInformation": {
+    "title": "Información de facturación",
+    "card": "Tarjeta",
+    "cardNumber": "Número de tarjeta",
+    "cardNumberPlaceholder": "Número de tarjeta",
+    "expirationDate": "Fecha de vencimiento",
+    "expirationDatePlaceholder": "Fecha de vencimiento",
+    "securityCode": "Código de seguridad",
+    "securityCodePlaceholder": "Código de seguridad",
+    "password": "Contraseña",
+    "passwordPlaceholder": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Confirmar contraseña",
+    "togglePassword": "Alternar visibilidad de contraseña",
+    "toggleConfirmPassword": "Alternar visibilidad de confirmación de contraseña",
+    "terms": "Al proporcionar la información de su tarjeta, permite que MediTrack cargue su tarjeta para pagos futuros de acuerdo con sus términos.",
+    "startButton": "Comenzar a usar MediTrack",
+    "errors": {
+      "cardNumberRequired": "El número de tarjeta es obligatorio",
+      "invalidCardNumber": "Número de tarjeta inválido",
+      "expirationDateRequired": "La fecha de vencimiento es obligatoria",
+      "invalidExpirationDate": "Formato de fecha de vencimiento inválido (MM/AA)",
+      "securityCodeRequired": "El código de seguridad es obligatorio",
+      "passwordRequired": "La contraseña es obligatoria (mínimo 6 caracteres)",
+      "confirmPasswordRequired": "Por favor confirme su contraseña",
+      "passwordMismatch": "Las contraseñas no coinciden"
+    }
+  },
+  "institutionDetails": {
+    "title": "Ingresa los detalles de tu institución",
+    "institutionName": "Nombre de la Institución",
+    "institutionNamePlaceholder": "Ingresa el nombre de la institución",
+    "institutionType": "Tipo de Institución",
+    "clinic": "Clínica",
+    "residence": "Casa de Reposo",
+    "startButton": "Comenzar a usar MediTrack",
+    "errors": {
+      "institutionNameRequired": "El nombre de la institución es obligatorio",
+      "institutionTypeRequired": "Por favor selecciona un tipo de institución"
+    }
+  },
+  "senior-citizen-registration": {
+    "title": "Registro de Adulto Mayor",
+    "subtitle": "Por favor completa el formulario para registrar a tu adulto mayor",
+    "personalDetails": "Detalles Personales",
+    "fullName": "Nombre Completo",
+    "fullNameRequired": "El nombre completo es requerido",
+    "age": "Edad",
+    "ageRequired": "La edad es requerida",
+    "gender": {
+      "label": "Género",
+      "male": "Masculino",
+      "female": "Femenino",
+      "other": "Otro"
+    },
+    "genderRequired": "El género es requerido",
+    "dni": "DNI",
+    "dniRequired": "El DNI es requerido",
+    "deviceId": "ID del Dispositivo",
+    "deviceIdRequired": "El ID del dispositivo es requerido",
+    "weight": "Peso",
+    "weightRequired": "El peso es requerido",
+    "height": "Estatura",
+    "heightRequired": "La estatura es requerida",
+    "uploadPhoto": "Subir una foto",
+    "dragFile": "Arrastra el archivo a este cuadro",
+    "browse": "Explorar",
+    "save": "Guardar",
+    "register": "Registrar"
+  },
+  "relative": {
+    "profile": {
+      "patientProfile": "Perfil del Paciente",
+      "photo": "Foto de perfil",
+      "age": "Edad",
+      "weight": "Peso",
+      "dni": "DNI",
+      "gender": "Género",
+      "height": "Estatura"
+    },
+    "alerts": {
+      "date": "Fecha",
+      "time": "Hora",
+      "dataRegistered": "Dato Registrado",
+      "reason": "Razón",
+      "noAlerts": "No hay alertas disponibles"
+    },
+    "statistics": {
+      "title": "Estadísticas",
+      "noData": "No hay datos de estadísticas disponibles"
+    }
   }
-
-
-
 }

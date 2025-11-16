@@ -2,16 +2,21 @@ import { BaseResource, BaseResponse } from '../../shared/infrastructure/base-res
 
 /**
  * Represents the API resource/DTO for a doctor
+ * This interface matches the backend JSON format (camelCase) following learning-center-platform pattern
  */
 export interface DoctorResource extends BaseResource {
+    organizationId: number;
+    userId?: number | null;
     firstName: string;
     lastName: string;
-    age: number;
-    email: string;
     specialty: string;
-    phoneNumber: string;
-    imageUrl: string;
-    organizationId: number;
+    age?: number;
+    email?: string;
+    phoneNumber?: string;
+    imageUrl?: string;
+    assignedSeniorIds?: number[];
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
 }
 
 /**

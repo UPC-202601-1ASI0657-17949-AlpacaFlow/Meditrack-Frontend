@@ -1,0 +1,44 @@
+.alert-list-container {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.alerts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.alert-card {
+    border-left: 5px solid #fb8c00;
+    border-radius: 16px;
+    background: #2c2c2c;
+    color: white;
+}
+
+.alert-title {
+    font-weight: bold;
+    color: #fff;
+}
+
+.alert-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+}
+
+.alert-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+}
+
+.no-alerts {
+    text-align: center;
+    color: #aaa;
+    font-style: italic;
+}
+

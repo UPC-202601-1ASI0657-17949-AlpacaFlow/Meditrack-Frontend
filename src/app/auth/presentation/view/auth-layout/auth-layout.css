@@ -1,0 +1,104 @@
+:host {
+    display: block;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.auth-layout-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+.auth-toolbar {
+    background-color: #0C7BB5;
+    color: white;
+    height: 64px;
+    padding: 0 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.app-title {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: white;
+}
+
+.language-switcher-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.auth-content {
+    margin-top: 64px;
+    height: calc(100vh - 64px);
+    width: 100%;
+    overflow-y: auto;
+    background-color: #0C7BB5;
+}
+
+/* Language switcher customization for toolbar */
+::ng-deep .auth-toolbar .language-switcher-wrapper .language-switcher {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 4px;
+}
+
+::ng-deep .auth-toolbar .language-switcher-wrapper .mat-button-toggle {
+    color: white;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+::ng-deep .auth-toolbar .language-switcher-wrapper .mat-button-toggle-label-content {
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+::ng-deep .auth-toolbar .language-switcher-wrapper .mat-button-toggle-checked .mat-button-toggle-label-content {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+::ng-deep .auth-toolbar .language-switcher-wrapper .mat-button-toggle:not(.mat-button-toggle-checked) .mat-button-toggle-label-content {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+::ng-deep .auth-toolbar .language-switcher-wrapper .mat-button-toggle:hover:not(.mat-button-toggle-disabled) .mat-button-toggle-label-content {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+::ng-deep .auth-toolbar .language-switcher-wrapper .mat-button-toggle:first-child .mat-button-toggle-label-content {
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+    padding-right: 8px;
+    margin-right: 0;
+}
+
+::ng-deep .auth-toolbar .language-switcher-wrapper .mat-button-toggle:last-child .mat-button-toggle-label-content {
+    padding-left: 8px;
+    margin-left: 0;
+}
+

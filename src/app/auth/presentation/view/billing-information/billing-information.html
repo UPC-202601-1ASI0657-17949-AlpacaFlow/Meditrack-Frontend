@@ -1,0 +1,135 @@
+<div class="billing-container">
+    <div class="billing-card">
+        <button mat-icon-button class="back-button" (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <h1 class="title">{{ 'billingInformation.title' | translate }}</h1>
+
+        <div class="card-section">
+            <mat-icon class="card-icon">credit_card</mat-icon>
+            <span class="card-label">{{ 'billingInformation.card' | translate }}</span>
+        </div>
+
+        <form [formGroup]="billingForm" (ngSubmit)="onSubmit()" class="billing-form">
+            <div class="form-field">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>{{ 'billingInformation.cardNumber' | translate }}</mat-label>
+                    <input matInput 
+                           type="text" 
+                           formControlName="cardNumber"
+                           [placeholder]="'billingInformation.cardNumberPlaceholder' | translate"
+                           maxlength="19"
+                           (input)="onCardNumberInput($event)">
+                    @if (billingForm.get('cardNumber')?.invalid && billingForm.get('cardNumber')?.touched) {
+                        <mat-error>
+                            @if (billingForm.get('cardNumber')?.hasError('required')) {
+                                {{ 'billingInformation.errors.cardNumberRequired' | translate }}
+                            } @else if (billingForm.get('cardNumber')?.hasError('invalidCardNumber')) {
+                                {{ 'billingInformation.errors.invalidCardNumber' | translate }}
+                            }
+                        </mat-error>
+                    }
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>{{ 'billingInformation.expirationDate' | translate }}</mat-label>
+                    <input matInput 
+                           type="text" 
+                           formControlName="expirationDate"
+                           [placeholder]="'billingInformation.expirationDatePlaceholder' | translate"
+                           maxlength="5"
+                           (input)="onExpirationDateInput($event)">
+                    @if (billingForm.get('expirationDate')?.invalid && billingForm.get('expirationDate')?.touched) {
+                        <mat-error>
+                            @if (billingForm.get('expirationDate')?.hasError('required')) {
+                                {{ 'billingInformation.errors.expirationDateRequired' | translate }}
+                            } @else if (billingForm.get('expirationDate')?.hasError('invalidExpirationDate')) {
+                                {{ 'billingInformation.errors.invalidExpirationDate' | translate }}
+                            }
+                        </mat-error>
+                    }
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>{{ 'billingInformation.securityCode' | translate }}</mat-label>
+                    <input matInput 
+                           type="text" 
+                           formControlName="securityCode"
+                           [placeholder]="'billingInformation.securityCodePlaceholder' | translate"
+                           maxlength="4">
+                    @if (billingForm.get('securityCode')?.invalid && billingForm.get('securityCode')?.touched) {
+                        <mat-error>
+                            {{ 'billingInformation.errors.securityCodeRequired' | translate }}
+                        </mat-error>
+                    }
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>{{ 'billingInformation.password' | translate }}</mat-label>
+                    <input matInput 
+                           [type]="hidePassword ? 'password' : 'text'"
+                           formControlName="password"
+                           [placeholder]="'billingInformation.passwordPlaceholder' | translate">
+                    <mat-icon matPrefix>lock</mat-icon>
+                    <button mat-icon-button 
+                            matSuffix 
+                            type="button"
+                            (click)="togglePasswordVisibility()"
+                            [attr.aria-label]="'billingInformation.togglePassword' | translate">
+                        <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                    </button>
+                    @if (billingForm.get('password')?.invalid && billingForm.get('password')?.touched) {
+                        <mat-error>
+                            {{ 'billingInformation.errors.passwordRequired' | translate }}
+                        </mat-error>
+                    }
+                </mat-form-field>
+            </div>
+
+            <div class="form-field">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>{{ 'billingInformation.confirmPassword' | translate }}</mat-label>
+                    <input matInput 
+                           [type]="hideConfirmPassword ? 'password' : 'text'"
+                           formControlName="confirmPassword"
+                           [placeholder]="'billingInformation.confirmPasswordPlaceholder' | translate">
+                    <mat-icon matPrefix>lock</mat-icon>
+                    <button mat-icon-button 
+                            matSuffix 
+                            type="button"
+                            (click)="toggleConfirmPasswordVisibility()"
+                            [attr.aria-label]="'billingInformation.toggleConfirmPassword' | translate">
+                        <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                    </button>
+                    @if (billingForm.get('confirmPassword')?.invalid && billingForm.get('confirmPassword')?.touched) {
+                        <mat-error>
+                            {{ 'billingInformation.errors.confirmPasswordRequired' | translate }}
+                        </mat-error>
+                    }
+                    @if (billingForm.hasError('passwordMismatch') && billingForm.get('confirmPassword')?.touched) {
+                        <mat-error>
+                            {{ 'billingInformation.errors.passwordMismatch' | translate }}
+                        </mat-error>
+                    }
+                </mat-form-field>
+            </div>
+
+            <p class="terms-text">{{ 'billingInformation.terms' | translate }}</p>
+
+            <button mat-raised-button 
+                    type="submit"
+                    class="start-button"
+                    [disabled]="billingForm.invalid">
+                {{ 'billingInformation.startButton' | translate }}
+            </button>
+        </form>
+    </div>
+</div>
+

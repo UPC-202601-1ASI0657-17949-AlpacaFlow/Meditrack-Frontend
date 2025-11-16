@@ -19,40 +19,52 @@ export class DoctorsAssembler implements
   }
 
   /**
-   * Converts a DoctorResource to a Doctor entity.
-   * @param resource - The resource to convert.
-   * @returns The converted Doctor entity.
+   * Converts a DoctorResource (backend JSON - camelCase) to a Doctor entity (domain - camelCase).
+   * Maps backend JSON property names to domain entity property names.
+   * @param resource - The resource to convert (from backend API, uses camelCase).
+   * @returns The converted Doctor entity (domain model, uses camelCase).
    */
   toEntityFromResource(resource: DoctorResource): Doctor {
+    // Convert userId from number | null | undefined to number | null (handle potential string from old API)
+    let userId: number | null | undefined = resource.userId;
+    if (typeof resource.userId === 'string') {
+      userId = resource.userId ? parseInt(resource.userId, 10) : null;
+    }
+    
     return new Doctor({
       id: resource.id,
+      organizationId: resource.organizationId,
+      userId: userId ?? null, // Optional, convert undefined to null
       firstName: resource.firstName,
       lastName: resource.lastName,
-      age: resource.age,
-      email: resource.email,
+      age: resource.age, // Optional
+      email: resource.email, // Optional
       specialty: resource.specialty,
-      phoneNumber: resource.phoneNumber,
-      imageUrl: resource.imageUrl,
-      organizationId: resource.organizationId
+      phoneNumber: resource.phoneNumber ?? '',
+      imageUrl: resource.imageUrl ?? '',
+      assignedSeniorIds: resource.assignedSeniorIds ?? [] // From Doctor_assignments table
     });
   }
 
   /**
-   * Converts a Doctor entity to a DoctorResource.
-   * @param entity - The entity to convert.
-   * @returns The converted DoctorResource.
+   * Converts a Doctor entity (domain - camelCase) to a DoctorResource (backend JSON - camelCase).
+   * Maps domain entity property names to backend JSON property names.
+   * @param entity - The entity to convert (domain model, uses camelCase).
+   * @returns The converted DoctorResource (for backend API, uses camelCase).
    */
   toResourceFromEntity(entity: Doctor): DoctorResource {
     return {
       id: entity.id,
+      organizationId: entity.organizationId,
+      userId: entity.userId || undefined, // Optional
       firstName: entity.firstName,
       lastName: entity.lastName,
-      age: entity.age,
-      email: entity.email,
       specialty: entity.specialty,
       phoneNumber: entity.phoneNumber,
-      imageUrl: entity.imageUrl,
-      organizationId: entity.organizationId
+      age: entity.age, // Optional
+      email: entity.email, // Optional
+      imageUrl: entity.imageUrl, // Optional
+      assignedSeniorIds: entity.assignedSeniorIds // For Doctor_assignments table
     } as DoctorResource;
   }
 }

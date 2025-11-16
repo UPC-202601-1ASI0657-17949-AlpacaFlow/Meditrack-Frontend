@@ -1,0 +1,171 @@
+:host {
+    display: block;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.header-toolbar {
+    background-color: #0C7BB5;
+    color: white;
+    height: 64px;
+    padding: 0 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.menu-button {
+    color: white;
+}
+
+.app-title {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: white;
+}
+
+.current-page-title {
+    font-size: 1rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.8);
+    margin-left: 16px;
+    padding-left: 16px;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.current-time {
+    font-size: 1rem;
+    font-weight: 400;
+    color: white;
+}
+
+.app-logo {
+    height: 47px;
+    width: auto;
+}
+
+.sidenav-container {
+    height: calc(100vh - 64px);
+    margin-top: 64px;
+}
+
+.sidenav {
+    height: 100%;
+    width: 250px;
+    background-color: white;
+    border-right: 1px solid #e0e0e0;
+    border-radius: 0 !important;
+}
+
+.nav-list {
+    padding-top: 24px;
+    padding-bottom: 24px;
+}
+
+.nav-item {
+    width: 100%;
+    min-height: 80px;
+    margin: 40px 0;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 0;
+}
+
+.nav-item:hover {
+    background-color: #f8f9fa;
+}
+
+.nav-item.active-route {
+    background-color: #e3f2fd;
+    border-left: 4px solid #0C7BB5;
+}
+
+.nav-item.active-route mat-icon,
+.nav-item.active-route span {
+    color: #0C7BB5;
+    font-weight: 600;
+}
+
+.nav-icon-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.nav-icon-text mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+}
+
+.nav-item mat-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+}
+
+.nav-item span {
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.language-switcher-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    padding: 0 16px;
+}
+
+.logout-button {
+    cursor: pointer;
+    color: #d32f2f;
+}
+
+.logout-button:hover {
+    background-color: #ffebee;
+}
+
+.logout-button .nav-icon-text mat-icon,
+.logout-button .nav-icon-text span {
+    color: #d32f2f;
+}
+
+mat-sidenav-content {
+    background-color: white;
+    padding: 24px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.main-content {
+    background-color: white;
+    min-height: 100%;
+    margin: 0;
+}

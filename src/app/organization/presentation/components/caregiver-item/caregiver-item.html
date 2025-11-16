@@ -1,0 +1,29 @@
+<div class="caregiver-card"
+     (click)="onCardClick()"
+     (dblclick)="onCardDoubleClick()"
+     [title]="'caregiver.clickToView' | translate">
+
+    <div class="caregiver-avatar">
+        <img [src]="caregiver.imageUrl || '/assets/default-caregiver.png'"
+             [alt]="caregiver.fullName"
+             class="avatar-image">
+    </div>
+
+    <div class="caregiver-info">
+        <div class="caregiver-name"> {{ caregiver.fullName }}</div>
+    </div>
+
+    <div class="caregiver-actions">
+        <button class="action-btn edit-btn"
+                (click)="onEdit($event)"
+                [title]="'caregiver.edit' | translate">
+            <mat-icon>edit</mat-icon>
+        </button>
+        <button class="action-btn delete-btn"
+                (click)="onRemove($event)"
+                [title]="'caregiver.delete' | translate">
+            <mat-icon>delete</mat-icon>
+        </button>
+    </div>
+</div>
+

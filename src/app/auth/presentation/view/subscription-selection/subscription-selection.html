@@ -1,0 +1,128 @@
+<div class="subscription-container">
+    <div class="subscription-card">
+        <button mat-icon-button 
+                class="back-button"
+                (click)="navigateBack()"
+                [attr.aria-label]="'subscriptionSelection.back' | translate">
+            <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <h1 class="selection-title">{{ 'subscriptionSelection.title' | translate }}</h1>
+
+        <div class="subscription-plans">
+            <!-- Fremium Plan -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <h2 class="plan-name">{{ 'subscriptionSelection.fremium' | translate }}</h2>
+                </div>
+                <div class="plan-price">
+                    <span class="price-amount">{{ 'subscriptionSelection.free' | translate }}</span>
+                    <span class="price-period">/{{ 'subscriptionSelection.month' | translate }}</span>
+                </div>
+                <ul class="plan-features">
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.vitalSigns' | translate }}</span>
+                    </li>
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.realTimeAlerts' | translate }}</span>
+                    </li>
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.webAccess' | translate }}</span>
+                    </li>
+                </ul>
+                <button mat-raised-button 
+                        class="select-plan-button"
+                        [disabled]="isPlanDisabled('fremium')"
+                        (click)="selectPlan('fremium')">
+                    {{ 'subscriptionSelection.selectPlan' | translate }}
+                </button>
+            </div>
+
+            <!-- Premium Plan -->
+            <div class="plan-card recommended">
+                <div class="plan-header">
+                    <h2 class="plan-name">{{ 'subscriptionSelection.premium' | translate }}</h2>
+                    <span class="recommended-badge">{{ 'subscriptionSelection.recommended' | translate }}</span>
+                </div>
+                <div class="plan-price">
+                    <span class="price-amount">$20</span>
+                    <span class="price-period">/{{ 'subscriptionSelection.month' | translate }}</span>
+                </div>
+                <ul class="plan-features">
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.vitalSigns' | translate }}</span>
+                    </li>
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.realTimeAlerts' | translate }}</span>
+                    </li>
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.webAccess' | translate }}</span>
+                    </li>
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.downloadableReports' | translate }}</span>
+                    </li>
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.prioritySupport' | translate }}</span>
+                    </li>
+                </ul>
+                <button mat-raised-button 
+                        class="select-plan-button"
+                        [disabled]="isPlanDisabled('premium')"
+                        (click)="selectPlan('premium')">
+                    {{ 'subscriptionSelection.selectPlan' | translate }}
+                </button>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div class="plan-card">
+                <div class="plan-header">
+                    <h2 class="plan-name">{{ 'subscriptionSelection.enterprise' | translate }}</h2>
+                </div>
+                <div class="plan-price">
+                    <span class="price-amount">{{ 'subscriptionSelection.custom' | translate }}</span>
+                </div>
+                <ul class="plan-features">
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.vitalSigns' | translate }}</span>
+                    </li>
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.realTimeAlerts' | translate }}</span>
+                    </li>
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.webAccess' | translate }}</span>
+                    </li>
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.customReports' | translate }}</span>
+                    </li>
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.prioritySupport' | translate }}</span>
+                    </li>
+                    <li class="feature-item">
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                        <span>{{ 'subscriptionSelection.features.downloadableReports' | translate }}</span>
+                    </li>
+                </ul>
+                <button mat-raised-button 
+                        class="select-plan-button"
+                        [disabled]="isPlanDisabled('enterprise')"
+                        (click)="contactUs()">
+                    {{ 'subscriptionSelection.contactUs' | translate }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+

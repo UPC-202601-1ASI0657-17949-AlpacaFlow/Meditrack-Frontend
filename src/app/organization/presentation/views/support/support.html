@@ -1,0 +1,76 @@
+<div class="support-container">
+  <div class="support-header">
+    <h1 class="support-title">{{ 'support.title' | translate }}</h1>
+    <p class="support-description">{{ 'support.description' | translate }}</p>
+  </div>
+
+  <mat-card class="support-form-card">
+    <form (ngSubmit)="onSubmit()" #supportFormRef="ngForm" class="support-form">
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>{{ 'support.fullName' | translate }}</mat-label>
+          <input matInput 
+                 [(ngModel)]="supportForm.fullName" 
+                 name="fullName" 
+                 required>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>{{ 'support.email' | translate }}</mat-label>
+          <input matInput 
+                 type="email" 
+                 [(ngModel)]="supportForm.email" 
+                 name="email" 
+                 required>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>{{ 'support.phone' | translate }}</mat-label>
+          <input matInput 
+                 type="tel" 
+                 [(ngModel)]="supportForm.phone" 
+                 name="phone">
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>{{ 'support.problemType' | translate }}</mat-label>
+          <mat-select [(ngModel)]="supportForm.problemType" name="problemType" required>
+            <mat-option value="">{{ 'support.selectCategory' | translate }}</mat-option>
+            @for (type of problemTypes; track type.value) {
+              <mat-option [value]="type.value">{{ type.label | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline" class="form-field description-field">
+          <mat-label>{{ 'support.problemDescription' | translate }}</mat-label>
+          <textarea matInput 
+                    [(ngModel)]="supportForm.description" 
+                    name="description" 
+                    rows="4" 
+                    required
+                    [placeholder]="'support.describeProblem' | translate">
+          </textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="form-actions">
+        <button mat-raised-button 
+                color="primary" 
+                type="submit" 
+                [disabled]="!supportFormRef.form.valid"
+                class="submit-button">
+          {{ 'support.submitClaim' | translate }}
+        </button>
+      </div>
+    </form>
+  </mat-card>
+</div>

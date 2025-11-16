@@ -1,0 +1,76 @@
+<div class="form-container">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="senior-citizen-form">
+        <div class="form-grid">
+            <div class="form-field">
+                <label>{{ 'senior-citizen.firstName' | translate }}:</label>
+                <input formControlName="firstName" class="form-input" />
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'senior-citizen.lastName' | translate }}:</label>
+                <input formControlName="lastName" class="form-input" />
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'senior-citizen.birthDate' | translate }}:</label>
+                <input type="date" formControlName="birthDate" class="form-input" />
+            </div>
+
+
+            <div class="form-field">
+                <label>{{ 'senior-citizen.gender' | translate }}:</label>
+                <input formControlName="gender" class="form-input" />
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'senior-citizen.weight' | translate }}:</label>
+                <input type="number" formControlName="weight" class="form-input" />
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'senior-citizen.height' | translate }}:</label>
+                <input type="number" formControlName="height" class="form-input" />
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'senior-citizen.dni' | translate }}:</label>
+                <input formControlName="dni" class="form-input" />
+            </div>
+
+            <div class="form-field">
+                <label>{{ 'senior-citizen.deviceId' | translate }}:</label>
+                <input type="number" formControlName="deviceId" class="form-input" />
+            </div>
+    </div>
+    <!-- URL de imagen -->
+        <div class="photo-upload">
+            <div class="form-field">
+                <label>{{ 'senior-citizen.imageUrl' | translate }} ({{ 'senior-citizen.imageUrlHint' | translate }}):</label>
+                <input type="url" formControlName="imageUrl" class="form-input" [placeholder]="'senior-citizen.imageUrlPlaceholder' | translate" />
+                @if (form.get('imageUrl')?.invalid && form.get('imageUrl')?.touched) {
+                    <div class="error-message">
+                        {{ 'senior-citizen.imageUrlError' | translate }}
+                    </div>
+                }
+            </div>
+
+            @if (form.get('imageUrl')?.value && form.get('imageUrl')?.valid) {
+                <div class="preview">
+                    <p class="preview-title">{{ 'senior-citizen.preview' | translate }}</p>
+                    <img [src]="form.get('imageUrl')?.value" [alt]="'senior-citizen.photo' | translate" class="preview-image" 
+                         (error)="$event.target.src='/assets/default-senior-citizen.png'" />
+                </div>
+            }
+        </div>
+
+        <!-- Botones -->
+        <div class="form-actions">
+            <button type="submit" [disabled]="form.invalid" class="save-btn">
+                {{ 'senior-citizen.save' | translate }}
+            </button>
+            <button type="button" (click)="onCancel()" class="cancel-btn">
+                {{ 'senior-citizen.cancel' | translate }}
+            </button>
+        </div>
+    </form>
+</div>

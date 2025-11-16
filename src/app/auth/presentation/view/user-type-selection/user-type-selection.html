@@ -1,0 +1,51 @@
+<div class="user-type-container">
+    <div class="user-type-card">
+        <button mat-icon-button 
+                class="back-button"
+                (click)="navigateBack()"
+                [attr.aria-label]="'userTypeSelection.back' | translate">
+            <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <h1 class="selection-title">{{ 'userTypeSelection.title' | translate }}</h1>
+
+        <div class="user-type-options">
+            <div class="user-type-card-option" 
+                 (click)="selectUserType('relative')"
+                 role="button"
+                 tabindex="0"
+                 (keydown.enter)="selectUserType('relative')"
+                 (keydown.space)="selectUserType('relative'); $event.preventDefault()">
+                <div class="option-icon">
+                    <mat-icon class="option-icon-large">people</mat-icon>
+                </div>
+                <span class="option-label">{{ 'userTypeSelection.relative' | translate }}</span>
+            </div>
+
+            <div class="user-type-card-option" 
+                 (click)="selectUserType('nursing-home')"
+                 role="button"
+                 tabindex="0"
+                 (keydown.enter)="selectUserType('nursing-home')"
+                 (keydown.space)="selectUserType('nursing-home'); $event.preventDefault()">
+                <div class="option-icon">
+                    <mat-icon class="option-icon-large">home</mat-icon>
+                </div>
+                <span class="option-label">{{ 'userTypeSelection.nursingHome' | translate }}</span>
+            </div>
+
+            <div class="user-type-card-option" 
+                 (click)="selectUserType('clinic')"
+                 role="button"
+                 tabindex="0"
+                 (keydown.enter)="selectUserType('clinic')"
+                 (keydown.space)="selectUserType('clinic'); $event.preventDefault()">
+                <div class="option-icon">
+                    <mat-icon class="option-icon-large">local_hospital</mat-icon>
+                </div>
+                <span class="option-label">{{ 'userTypeSelection.clinic' | translate }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -20,4 +20,13 @@ export class RelativesApi {
     getRelativeById(id: number): Observable<Relative> {
         return this.relativesEndpoint.getById(id);
     }
+
+    /**
+     * Gets a relative by userId
+     * @param userId - The user ID to search for
+     * @returns An Observable emitting the Relative entity
+     */
+    getRelativeByUserId(userId: number): Observable<Relative> {
+        return this.relativesEndpoint.getByUserId(userId);
+    }
 }

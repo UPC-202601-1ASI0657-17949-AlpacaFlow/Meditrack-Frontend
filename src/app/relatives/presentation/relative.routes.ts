@@ -16,6 +16,7 @@ export const relativesRoutes: Routes = [
         path: 'relative/:id',
         loadComponent: relativeLayout,
         children: [
+            { path: '', redirectTo: 'profile', pathMatch: 'full' },
             { path: 'alerts', loadComponent: alertList, data: { title: 'Alerts' } },
             { path: 'profile', loadComponent: profile, data: { title: 'Profile' } },
             { path: 'statistics', loadComponent: statistic, data: { title: 'Statistics' } },

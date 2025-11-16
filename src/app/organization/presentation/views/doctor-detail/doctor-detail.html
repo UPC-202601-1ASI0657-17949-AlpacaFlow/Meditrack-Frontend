@@ -2,29 +2,22 @@
   <!-- Doctor Profile Section -->
   <div class="doctor-profile-section">
     <div class="doctor-avatar">
-      <img [src]="doctor?.imageUrl || '/assets/default-doctor.png'" 
-           [alt]="doctor?.fullName"
+      <img [src]="doctor()?.imageUrl || '/assets/default-doctor.png'" 
+           [alt]="doctor()?.fullName"
            class="avatar-image">
     </div>
     
     <div class="doctor-info">
-      <h2 class="doctor-name">{{ doctor?.fullName }}</h2>
+      <h2 class="doctor-name">{{ 'doctor.title' | translate }} {{ doctor()?.fullName }}</h2>
       <div class="doctor-details">
         <div class="detail-item">
-          <span class="label">{{ 'doctor.age' | translate }}:</span>
-          <span class="value">{{ doctor?.age }}</span>
+          <span class="value">{{ 'doctor.age' | translate }}: {{ doctor()?.age }} {{ 'doctor.phoneNumber' | translate }}: {{ doctor()?.phoneNumber }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">{{ 'doctor.phoneNumber' | translate }}:</span>
-          <span class="value">{{ doctor?.phoneNumber }}</span>
+          <span class="value">{{ 'doctor.specialty' | translate }}: {{ doctor()?.specialty }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">{{ 'doctor.specialty' | translate }}:</span>
-          <span class="value">{{ doctor?.specialty }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">{{ 'doctor.email' | translate }}:</span>
-          <span class="value">{{ doctor?.email }}</span>
+          <span class="value">{{ 'doctor.email' | translate }}: {{ doctor()?.email }}</span>
         </div>
       </div>
     </div>
@@ -33,47 +26,66 @@
   <!-- Divider Line -->
   <div class="divider"></div>
 
-  <!-- Assigned Patients Section -->
-  <div class="assigned-patients-section">
-    <h3 class="section-title">{{ 'doctor.assignedPatients' | translate }}</h3>
+  <!-- Assigned Senior Citizens Section -->
+  <div class="assigned-senior-citizens-section">
+    <h3 class="section-title">{{ 'doctor.assignedSeniorCitizens' | translate }}</h3>
     
-    <div *ngIf="assignedPatients.length === 0" class="no-patients">
-      <p class="no-patients-text">{{ 'doctor.noPatientsAssigned' | translate }}</p>
-    </div>
-    
-    <div *ngIf="assignedPatients.length > 0" class="patients-list">
-      <div *ngFor="let patient of assignedPatients" class="patient-card">
-        <div class="patient-avatar">
-          <img [src]="patient.imageUrl || '/assets/default-patient.png'" 
-               [alt]="patient.lastName"
-               class="patient-avatar-image">
-        </div>
-        <div class="patient-name">{{ patient.lastName }}</div>
+    @if (assignedSeniorCitizens().length === 0) {
+      <div class="no-senior-citizens">
+        <p class="no-senior-citizens-text">{{ 'senior-citizen.empty' | translate }}</p>
       </div>
-    </div>
+    }
+    
+    @if (assignedSeniorCitizens().length > 0) {
+      <div class="assigned-senior-citizens-grid">
+        @for (seniorCitizen of assignedSeniorCitizens(); track seniorCitizen.id) {
+          <div class="assigned-senior-citizen-card">
+            <div class="senior-citizen-avatar">
+              <img [src]="seniorCitizen.imageUrl || '/assets/default-senior-citizen.png'" 
+                   [alt]="getSeniorCitizenFullName(seniorCitizen)"
+                   class="avatar-image">
+            </div>
+            <div class="senior-citizen-info">
+              <div class="senior-citizen-name">{{ getSeniorCitizenFullName(seniorCitizen) }}</div>
+            </div>
+            <div class="senior-citizen-actions">
+              <button class="action-btn delete-btn"
+                      (click)="onUnassignSeniorCitizen(seniorCitizen, $event)"
+                      [title]="'doctor.unassignSeniorCitizen' | translate">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
   </div>
 
-  <!-- Available Patients Section -->
-  <div class="available-patients-section">
-    <h3 class="section-title">{{ 'doctor.availablePatients' | translate }}</h3>
+  <!-- Available Senior Citizens Section -->
+  <div class="available-senior-citizens-section">
+    <h3 class="section-title">{{ 'doctor.availableSeniorCitizens' | translate }}</h3>
     
-    <div class="patients-selector">
-      <select class="patient-select" 
-              [(ngModel)]="selectedPatientId"
-              (change)="onPatientSelect($any($event.target).value)">
-        <option value="">{{ 'doctor.selectPatient' | translate }}</option>
-        <option *ngFor="let patient of availablePatients" 
-                [value]="patient.id">
-          {{ patient.lastName }}
-        </option>
+    <div class="senior-citizens-selector">
+      <select class="senior-citizen-select" 
+              [(ngModel)]="selectedSeniorCitizenId"
+              (change)="onSeniorCitizenSelect($any($event.target).value)">
+        <option value="">{{ 'doctor.selectSeniorCitizen' | translate }}</option>
+        @for (seniorCitizen of availableSeniorCitizens(); track seniorCitizen.id) {
+          <option [value]="seniorCitizen.id" [disabled]="seniorCitizen.assignedCaregiverId !== null">
+            {{ getSeniorCitizenFullName(seniorCitizen) }}
+            @if (getAssignedPersonName(seniorCitizen)) {
+              - ({{ 'doctor.assignedTo' | translate }}: {{ getAssignedPersonName(seniorCitizen) }})
+            }
+          </option>
+        }
       </select>
       
       <button mat-raised-button 
               color="primary" 
               class="assign-button"
-              [disabled]="!selectedPatientId"
-              (click)="onAssignPatient()">
-        {{ 'doctor.selectPatient' | translate }}
+              [disabled]="!selectedSeniorCitizenId || !canAssignSelectedSeniorCitizen()"
+              (click)="onAssignSeniorCitizen()">
+        {{ 'doctor.selectSeniorCitizen' | translate }}
       </button>
     </div>
   </div>

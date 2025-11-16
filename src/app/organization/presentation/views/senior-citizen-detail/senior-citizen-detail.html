@@ -1,0 +1,71 @@
+@if (seniorCitizen()) {
+  <div class="senior-citizen-detail-container">
+    <!-- Imagen del senior citizen -->
+    <div class="senior-citizen-image-container">
+      <img [src]="seniorCitizen()!.imageUrl || '/assets/default-senior-citizen.png'" 
+           [alt]="seniorCitizen()!.fullName" 
+           class="senior-citizen-image">
+    </div>
+    
+    <!-- Nombre del senior citizen -->
+    <h1 class="senior-citizen-name">{{ seniorCitizen()!.fullName }}</h1>
+    
+    <!-- Información del senior citizen -->
+    <div class="senior-citizen-info-grid">
+      <div class="info-column">
+        <div class="info-item">
+          <span class="info-label">{{ 'senior-citizen.age' | translate }}:</span>
+          <span class="info-value">{{ seniorCitizen()!.age }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">{{ 'senior-citizen.weight' | translate }}:</span>
+          <span class="info-value">{{ seniorCitizen()!.weight }} {{ 'senior-citizen.units.kg' | translate }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">{{ 'senior-citizen.dni' | translate }}:</span>
+          <span class="info-value">{{ seniorCitizen()!.dni }}</span>
+        </div>
+      </div>
+      
+      <div class="info-column">
+        <div class="info-item">
+          <span class="info-label">{{ 'senior-citizen.gender' | translate }}:</span>
+          <span class="info-value">{{ seniorCitizen()!.gender }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">{{ 'senior-citizen.height' | translate }}:</span>
+          <span class="info-value">{{ seniorCitizen()!.height }} {{ 'senior-citizen.units.cm' | translate }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">{{ 'senior-citizen.deviceId' | translate }}:</span>
+          <span class="info-value">{{ seniorCitizen()!.deviceId }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">
+            @if (assignedPerson()?.type === 'doctor') {
+              {{ 'senior-citizen.doctor' | translate }}:
+            } @else if (assignedPerson()?.type === 'caregiver') {
+              {{ 'senior-citizen.caregiver' | translate }}:
+            } @else {
+              {{ 'senior-citizen.assignedTo' | translate }}:
+            }
+          </span>
+          <span class="info-value">
+            @if (assignedPerson()) {
+              {{ assignedPerson()!.name }}
+            } @else {
+              {{ 'senior-citizen.notAssigned' | translate }}
+            }
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Botón de regreso -->
+    <div class="back-button-container">
+      <button mat-raised-button color="primary" (click)="onBackToList()">
+        {{ 'senior-citizen.backToList' | translate }}
+      </button>
+    </div>
+  </div>
+}

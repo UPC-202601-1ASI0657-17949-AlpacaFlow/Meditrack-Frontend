@@ -46,13 +46,41 @@ export abstract class BaseApiEndpoint<
    */
   protected handleError(operation: string) {
     return (error: HttpErrorResponse): Observable<never> =>{
+      console.error(`[BaseApiEndpoint] ${operation} - Error details:`, {
+        status: error.status,
+        statusText: error.statusText,
+        message: error.message,
+        error: error.error,
+        url: error.url,
+        headers: error.headers
+      });
+      
       let errorMessage = operation;
       if (error.status === 404) {
         errorMessage = `${operation}: Resource not found`;
+      } else if (error.status === 401 || error.status === 403) {
+        errorMessage = `${operation}: Authentication failed. Please log in again.`;
+      } else if (error.status === 400) {
+        // Try to extract a more specific error message from the backend
+        const backendMessage = error.error?.message || error.error?.error || error.error;
+        if (typeof backendMessage === 'string') {
+          errorMessage = `${operation}: ${backendMessage}`;
+        } else if (backendMessage && typeof backendMessage === 'object') {
+          // Try to extract message from nested error object
+          const nestedMessage = backendMessage.message || backendMessage.error || JSON.stringify(backendMessage);
+          errorMessage = `${operation}: ${nestedMessage}`;
+        } else {
+          errorMessage = `${operation}: Invalid data. Please check all fields are correct.`;
+        }
+      } else if (error.status === 500) {
+        const backendMessage = error.error?.message || error.error?.error || error.error;
+        errorMessage = `${operation}: Server error. ${typeof backendMessage === 'string' ? backendMessage : 'Please try again later.'}`;
       } else if (error.error instanceof ErrorEvent) {
         errorMessage = `${operation}: ${error.error.message}`;
+      } else if (error.error?.message) {
+        errorMessage = `${operation}: ${error.error.message}`;
       } else {
-        errorMessage = `${operation}: ${error.statusText || 'Unexpected error'}`;
+        errorMessage = `${operation}: ${error.statusText || error.message || 'Unexpected error'}`;
       }
       return  throwError(()=> new Error(errorMessage));
     };

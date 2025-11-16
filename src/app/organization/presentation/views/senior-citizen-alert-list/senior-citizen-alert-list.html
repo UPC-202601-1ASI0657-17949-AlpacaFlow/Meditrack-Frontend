@@ -1,0 +1,35 @@
+<div class="alert-list-container">
+    @if (seniorCitizen()?.alerts?.length) {
+        <div class="alerts-grid">
+            @for (alert of seniorCitizen()?.alerts; track alert.id) {
+                <mat-card class="alert-card mat-elevation-z4">
+                    <mat-card-header>
+                        <mat-card-title class="alert-title">
+                            {{ alert.alertTitle }}
+                        </mat-card-title>
+                    </mat-card-header>
+
+                    <mat-card-content>
+                        <div class="alert-content">
+                            <div class="alert-row">
+                                <strong>{{ 'senior-citizen.alert.date' | translate }}:</strong> {{ formatDate(alert.date) }}
+                            </div>
+                            <div class="alert-row">
+                                <strong>{{ 'senior-citizen.alert.time' | translate }}:</strong> {{ alert.time }}
+                            </div>
+                            <div class="alert-row">
+                                <strong>{{ 'senior-citizen.alert.dataRegistered' | translate }}:</strong> {{ alert.dataRegistered }}
+                            </div>
+                            <div class="alert-row">
+                                <strong>{{ 'senior-citizen.alert.reason' | translate }}:</strong> {{ alert.reason }}
+                            </div>
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+            }
+        </div>
+    } @else {
+        <div class="no-alerts">{{ 'senior-citizen.alert.noAlerts' | translate }}</div>
+    }
+</div>
+

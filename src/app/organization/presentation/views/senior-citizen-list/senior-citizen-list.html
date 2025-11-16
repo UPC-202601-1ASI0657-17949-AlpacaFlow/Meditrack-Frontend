@@ -1,0 +1,65 @@
+<!-- Lista de senior citizens -->
+@if (!showForm) {
+    <div class="senior-citizen-list-container">
+            <!-- Estado de carga -->
+            @if (organizationStore.loading()) {
+                <div class="loading-state">
+                    <mat-icon class="spinner-icon">hourglass_empty</mat-icon>
+                    <p class="loading-text">{{ 'common.loading' | translate }}</p>
+                </div>
+            }
+            
+            <!-- Error al cargar (solo si hay un error real, no un 404) -->
+            @if (!organizationStore.loading() && organizationStore.seniorCitizensError()) {
+                <div class="error-state">
+                    <mat-icon>error</mat-icon>
+                    <p class="error-text">{{ organizationStore.seniorCitizensError() }}</p>
+                </div>
+            }
+            
+            <!-- Estado vacío (solo si no hay error y no está cargando) -->
+            @if (!organizationStore.loading() && organizationStore.filteredSeniorCitizens().length === 0 && !organizationStore.seniorCitizensError()) {
+                <div class="empty-state">
+                    <div class="empty-content">
+                        <p class="empty-text">{{ 'senior-citizen.empty' | translate }}</p>
+                        @if (getUserRole() === 'admin') {
+                            <button mat-raised-button color="primary" class="add-senior-citizen-btn" (click)="openAddSeniorCitizenForm()">
+                                {{ 'senior-citizen.add' | translate }}
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Lista de items -->
+            @if (!organizationStore.loading() && organizationStore.filteredSeniorCitizens().length > 0) {
+                <div class="senior-citizen-items">
+                    @for (seniorCitizen of organizationStore.filteredSeniorCitizens(); track trackById($index, seniorCitizen)) {
+                        <app-senior-citizen-item
+                                [seniorCitizen]="seniorCitizen"
+                                (edit)="openEditSeniorCitizenForm($event)"
+                                (remove)="onSeniorCitizenRemoved($event)">
+                        </app-senior-citizen-item>
+                    }
+                </div>
+            }
+
+            <!-- Botón de agregar cuando hay senior citizens (solo para admin) -->
+            @if (!organizationStore.loading() && organizationStore.filteredSeniorCitizens().length > 0 && getUserRole() === 'admin') {
+                <div class="add-button">
+                    <button mat-raised-button color="primary" (click)="openAddSeniorCitizenForm()">
+                        {{ 'senior-citizen.add' | translate }}
+                    </button>
+                </div>
+            }
+    </div>
+}
+
+<!-- Formulario de crear/editar -->
+@if (showForm) {
+    <app-senior-citizen-form
+            [seniorCitizen]="editingSeniorCitizen"
+            (saved)="onSeniorCitizenSaved($event)"
+            (cancel)="closeForm()">
+    </app-senior-citizen-form>
+}

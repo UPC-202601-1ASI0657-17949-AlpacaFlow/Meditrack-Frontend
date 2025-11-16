@@ -1,32 +1,97 @@
 import { BaseAssembler } from "../../shared/infrastructure/base-assembler";
 import { Relative } from "../domain/model/relative.entity";
-import { RelativeResource, RelativeResponse } from "./relatives-response";
+import { RelativeResource, RelativeResponse, SeniorCitizenResource } from "./relatives-response";
 import { RelativeFreemium } from "../domain/model/relativeFreemium.entity";
 import { RelativePremium } from "../domain/model/relativePremium.entity";
+import { SeniorCitizen } from "../domain/model/seniorCitizen.entity";
 
 export class RelativesAssembler
     implements BaseAssembler<Relative, RelativeResource, RelativeResponse>
 {
     toEntityFromResource(resource: RelativeResource): Relative {
         if (!resource) return null as any;
-        return resource.planType === "premium"
-            ? new RelativePremium(resource)
-            : new RelativeFreemium(resource);
+        
+        // Normalize planType: backend returns 'FREEMIUM' or 'PREMIUM', frontend expects lowercase
+        const normalizedPlanType = (resource.planType || '').toLowerCase();
+        
+        // Transform seniorCitizen from backend format to frontend format
+        let seniorCitizen = null;
+        if (resource.seniorCitizen) {
+            const backendSc = resource.seniorCitizen as any;
+            
+            // Calculate age from birthDate
+            let age = 0;
+            if (backendSc.birthDate) {
+                const birthDate = new Date(backendSc.birthDate);
+                const today = new Date();
+                age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+            }
+            
+            seniorCitizen = new SeniorCitizen({
+                firstName: backendSc.firstName || '',
+                lastName: backendSc.lastName || '',
+                age: age,
+                dni: backendSc.dni || '',
+                gender: backendSc.gender || '',
+                height: backendSc.height || 0,
+                weight: backendSc.weight || 0,
+                image: backendSc.profileImage || '',
+                signalVitals: {},
+                alerts: []
+            });
+        }
+        
+        // Create entity with backend data mapped to frontend structure
+        const entityData = {
+            id: resource.id,
+            firstName: resource.firstName || '',
+            lastName: resource.lastName || '',
+            email: resource.email || '', // May not be in backend response
+            password: resource.password || '', // May not be in backend response
+            role: resource.role || 'relative', // May not be in backend response
+            planType: normalizedPlanType || 'freemium',
+            creditCard: resource.creditCard || null, // May not be in backend response
+            expirationDate: resource.expirationDate || null, // May not be in backend response
+            securityCode: resource.securityCode || null, // May not be in backend response
+            seniorCitizen: seniorCitizen
+        };
+        
+        return normalizedPlanType === "premium"
+            ? new RelativePremium(entityData)
+            : new RelativeFreemium(entityData);
     }
 
     toResourceFromEntity(entity: Relative): RelativeResource {
+        // Transform frontend entity to backend resource format
         return {
             id: entity.id,
+            planType: (entity.planType || 'freemium').toUpperCase(), // Backend expects 'FREEMIUM' or 'PREMIUM'
             firstName: entity.firstName,
             lastName: entity.lastName,
+            phoneNumber: '', // Backend expects phoneNumber, but frontend entity may not have it
+            seniorCitizen: entity.seniorCitizen ? {
+                id: 0, // Will be set by backend
+                firstName: entity.seniorCitizen.firstName,
+                lastName: entity.seniorCitizen.lastName,
+                dni: entity.seniorCitizen.dni,
+                gender: entity.seniorCitizen.gender,
+                height: entity.seniorCitizen.height,
+                birthDate: '', // Will need to be converted from Date if available
+                weight: entity.seniorCitizen.weight,
+                profileImage: entity.seniorCitizen.image,
+                deviceId: '' // Will need to be provided
+            } : null,
+            // Legacy fields for frontend compatibility
             email: entity.email,
             password: entity.password,
             role: entity.role,
-            planType: entity.planType,
             creditCard: entity.creditCard,
             expirationDate: entity.expirationDate,
-            securityCode: entity.securityCode,
-            seniorCitizen: entity.seniorCitizen,
+            securityCode: entity.securityCode
         };
     }
 

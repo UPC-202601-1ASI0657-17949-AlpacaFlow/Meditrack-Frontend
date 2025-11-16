@@ -1,0 +1,62 @@
+<div class="institution-container">
+    <div class="institution-card">
+        <button mat-icon-button class="back-button" (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <h1 class="title">{{ 'institutionDetails.title' | translate }}</h1>
+
+        <form [formGroup]="institutionForm" (ngSubmit)="onSubmit()" class="institution-form">
+            <div class="form-field">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>{{ 'institutionDetails.institutionName' | translate }}</mat-label>
+                    <input matInput 
+                           type="text" 
+                           formControlName="institutionName"
+                           [placeholder]="'institutionDetails.institutionNamePlaceholder' | translate">
+                    <mat-icon matPrefix>business</mat-icon>
+                    @if (institutionForm.get('institutionName')?.invalid && institutionForm.get('institutionName')?.touched) {
+                        <mat-error>
+                            {{ 'institutionDetails.errors.institutionNameRequired' | translate }}
+                        </mat-error>
+                    }
+                </mat-form-field>
+            </div>
+
+            <div class="institution-type-section">
+                <label class="institution-type-label">{{ 'institutionDetails.institutionType' | translate }}</label>
+                <div class="institution-type-options">
+                    <button mat-raised-button 
+                            type="button"
+                            class="institution-type-button"
+                            [class.selected]="selectedInstitutionType === 'clinic'"
+                            (click)="selectInstitutionType('clinic')">
+                        <mat-icon>local_hospital</mat-icon>
+                        {{ 'institutionDetails.clinic' | translate }}
+                    </button>
+                    <button mat-raised-button 
+                            type="button"
+                            class="institution-type-button"
+                            [class.selected]="selectedInstitutionType === 'resident'"
+                            (click)="selectInstitutionType('resident')">
+                        <mat-icon>home</mat-icon>
+                        {{ 'institutionDetails.residence' | translate }}
+                    </button>
+                </div>
+                @if (institutionForm.get('institutionType')?.invalid && institutionForm.get('institutionType')?.touched) {
+                    <div class="error-message">
+                        {{ 'institutionDetails.errors.institutionTypeRequired' | translate }}
+                    </div>
+                }
+            </div>
+
+            <button mat-raised-button 
+                    type="submit"
+                    class="start-button"
+                    [disabled]="institutionForm.invalid">
+                {{ 'institutionDetails.startButton' | translate }}
+            </button>
+        </form>
+    </div>
+</div>
+

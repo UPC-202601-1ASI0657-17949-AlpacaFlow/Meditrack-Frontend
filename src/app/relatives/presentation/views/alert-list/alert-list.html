@@ -12,16 +12,16 @@
                     <mat-card-content>
                         <div class="alert-content">
                             <div class="alert-row">
-                                <strong>Date:</strong> {{ formatDate(alert.date) }}
+                                <strong>{{ 'relative.alerts.date' | translate }}:</strong> {{ formatDate(alert.date) }}
                             </div>
                             <div class="alert-row">
-                                <strong>Time:</strong> {{ alert.time }}
+                                <strong>{{ 'relative.alerts.time' | translate }}:</strong> {{ alert.time }}
                             </div>
                             <div class="alert-row">
-                                <strong>Data Registered:</strong> {{ alert.dataRegistered }}
+                                <strong>{{ 'relative.alerts.dataRegistered' | translate }}:</strong> {{ alert.dataRegistered }}
                             </div>
                             <div class="alert-row">
-                                <strong>Reason:</strong> {{ alert.reason }}
+                                <strong>{{ 'relative.alerts.reason' | translate }}:</strong> {{ alert.reason }}
                             </div>
                         </div>
                     </mat-card-content>
@@ -29,6 +29,6 @@
             }
         </div>
     } @else {
-        <div class="no-alerts">No alerts available.</div>
+        <div class="no-alerts">{{ 'relative.alerts.noAlerts' | translate }}</div>
     }
 </div>

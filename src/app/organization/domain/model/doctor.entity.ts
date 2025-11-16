@@ -2,6 +2,8 @@ import { BaseEntity } from '../../../shared/infrastructure/base-entity';
 
 export class Doctor implements BaseEntity {
     private _id: number;
+    private _organizationId: number;
+    private _userId: number | null = null;
     private _firstName: string;
     private _lastName: string;
     private _age: number;
@@ -9,10 +11,12 @@ export class Doctor implements BaseEntity {
     private _specialty: string;
     private _phoneNumber: string;
     private _imageUrl: string;
-    private _organizationId: number;
+    private _assignedSeniorIds: number[];
 
     constructor(doctor: {
         id?: number;
+        organizationId: number;
+        userId?: number | null;
         firstName?: string;
         lastName?: string;
         age?: number;
@@ -20,9 +24,11 @@ export class Doctor implements BaseEntity {
         specialty?: string;
         phoneNumber?: string;
         imageUrl?: string;
-        organizationId: number;
+        assignedSeniorIds?: number[];
     }) {
         this._id = doctor.id ?? 0;
+        this._organizationId = doctor.organizationId;
+        this._userId = doctor.userId ?? null;
         this._firstName = doctor.firstName ?? '';
         this._lastName = doctor.lastName ?? '';
         this._age = doctor.age ?? 0;
@@ -30,7 +36,7 @@ export class Doctor implements BaseEntity {
         this._specialty = doctor.specialty ?? '';
         this._phoneNumber = doctor.phoneNumber ?? '';
         this._imageUrl = doctor.imageUrl ?? '';
-        this._organizationId = doctor.organizationId;
+        this._assignedSeniorIds = doctor.assignedSeniorIds ?? [];
     }
 
     get organizationId(): number {
@@ -38,6 +44,13 @@ export class Doctor implements BaseEntity {
     }
     set organizationId(value: number) {
         this._organizationId = value;
+    }
+
+    get userId(): number | null {
+        return this._userId;
+    }
+    set userId(value: number | null) {
+        this._userId = value;
     }
 
     get id(): number {
@@ -98,5 +111,28 @@ export class Doctor implements BaseEntity {
 
     get fullName(): string {
         return `${this._firstName} ${this._lastName}`;
+    }
+
+    get assignedSeniorIds(): number[] {
+        return this._assignedSeniorIds;
+    }
+    set assignedSeniorIds(value: number[]) {
+        this._assignedSeniorIds = value;
+    }
+
+    /**
+     * Domain logic: Assigns a senior citizen to this doctor
+     */
+    assignToSenior(seniorId: number): void {
+        if (!this._assignedSeniorIds.includes(seniorId)) {
+            this._assignedSeniorIds.push(seniorId);
+        }
+    }
+
+    /**
+     * Domain logic: Unassigns a senior citizen from this doctor
+     */
+    unassignFromSenior(seniorId: number): void {
+        this._assignedSeniorIds = this._assignedSeniorIds.filter(id => id !== seniorId);
     }
 }

@@ -4,20 +4,30 @@
             <mat-card-header>
                 <div mat-card-avatar class="profile-avatar">
                     @if (senior.image) {
-                        <img [src]="senior.image" alt="Profile photo" />
+                        <img [src]="senior.image" [alt]="'relative.profile.photo' | translate" />
                     }
                 </div>
                 <mat-card-title>{{ senior.firstName }} {{ senior.lastName }}</mat-card-title>
-                <mat-card-subtitle>Patient Profile</mat-card-subtitle>
+                <mat-card-subtitle>{{ 'relative.profile.patientProfile' | translate }}</mat-card-subtitle>
             </mat-card-header>
 
             <mat-card-content>
                 <mat-list>
-                    <mat-list-item><strong>Age:</strong> {{ senior.age }}</mat-list-item>
-                    <mat-list-item><strong>Weight:</strong> {{ senior.weight }}kg</mat-list-item>
-                    <mat-list-item><strong>DNI:</strong> {{ senior.dni }}</mat-list-item>
-                    <mat-list-item><strong>Gender:</strong> {{ senior.gender }}</mat-list-item>
-                    <mat-list-item><strong>Height:</strong> {{ senior.height }}cm</mat-list-item>
+                    <mat-list-item>
+                        <strong>{{ 'relative.profile.age' | translate }}:</strong> {{ senior.age }}
+                    </mat-list-item>
+                    <mat-list-item>
+                        <strong>{{ 'relative.profile.weight' | translate }}:</strong> {{ senior.weight }}{{ 'senior-citizen.units.kg' | translate }}
+                    </mat-list-item>
+                    <mat-list-item>
+                        <strong>{{ 'relative.profile.dni' | translate }}:</strong> {{ senior.dni }}
+                    </mat-list-item>
+                    <mat-list-item>
+                        <strong>{{ 'relative.profile.gender' | translate }}:</strong> {{ senior.gender }}
+                    </mat-list-item>
+                    <mat-list-item>
+                        <strong>{{ 'relative.profile.height' | translate }}:</strong> {{ senior.height }}{{ 'senior-citizen.units.cm' | translate }}
+                    </mat-list-item>
                 </mat-list>
             </mat-card-content>
         </mat-card>
