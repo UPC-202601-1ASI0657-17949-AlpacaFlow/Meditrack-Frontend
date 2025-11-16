@@ -6,7 +6,7 @@ export const environment = {
   platformProviderSeniorCitizensEndpointPath: '/api/v1/senior-citizens',
   platformProviderOrganizationsEndpointPath: '/api/v1/organizations',
   platformProviderAdminsEndpointPath: '/api/v1/admins',
-  platformProviderApiBaseUrl: 'http://localhost:8080',
+  platformProviderApiBaseUrl: 'https://meditrack-platform-springboot.azurewebsites.net',
   platformProviderRelativesEndpointPath: '/api/v1/relatives',
   platformProviderUsersEndpointPath: '/users',
   platformProviderCredentialsEndpointPath: '/credentials',
