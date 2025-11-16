@@ -221,51 +221,47 @@ export class BillingInformationComponent {
       return;
     }
 
-    // Step 1: Create user in DB
+    // Step 1: Create user in DB with all required data
     const user = new User({
       email: email,
       role: role
     });
 
-    this.authStore.register(user, password).pipe(
-      switchMap((userResponse) => {
-        // Step 2: After user is created, create organization
-        const organization = new Organization({
-          name: institutionName,
-          type: institutionType
+    // Prepare additional data for backend (organization and admin info)
+    const additionalData = {
+      firstName: adminFirstName,
+      lastName: adminLastName,
+      organizationName: institutionName,
+      organizationType: institutionType
+    };
+
+    this.authStore.register(user, password, additionalData).subscribe({
+      next: (userResponse) => {
+        // Backend created user, organization, and admin in one transaction
+        // Set auth state with created user
+        this.authStore.setAuth(userResponse.token, userResponse.user);
+        
+        // Clear temporary registration data
+        this.registrationFlowStore.clear();
+        
+        // Fetch admin details to get organization ID for redirect
+        this.organizationApi.getAdminByUserId(userResponse.user.id.toString()).subscribe({
+          next: (admin) => {
+            if (admin) {
+              // Redirect to organization routes with userId and role
+              // Format: /organization/:organizationId/:userRole/:userId
+              this.router.navigate(['/organization', admin.organizationId, 'admin', userResponse.user.id]);
+            } else {
+              // If admin not found, log error and redirect to login
+              console.error('Admin record not found after registration');
+              this.router.navigate(['/auth/login']);
+            }
+          },
+          error: (err) => {
+            console.error('Error fetching admin details after registration:', err);
+            this.router.navigate(['/auth/login']);
+          }
         });
-
-        return this.organizationApi.createOrganization(organization).pipe(
-          switchMap((createdOrganization) => {
-            // Step 3: After organization is created, create the admin
-            const admin = new Admin({
-              organizationId: createdOrganization.id,
-              userId: userResponse.user.id,
-              firstName: adminFirstName,
-              lastName: adminLastName
-            });
-
-            return this.organizationApi.createAdmin(admin).pipe(
-              switchMap((createdAdmin) => {
-                // Set auth state with created user
-                this.authStore.setAuth(userResponse.token, userResponse.user);
-                
-                // Clear temporary registration data
-                this.registrationFlowStore.clear();
-                
-                // Return both organization and user for final redirect
-                // The organization layout will handle routing based on institution type
-                return of({ organization: createdOrganization, userId: userResponse.user.id });
-              })
-            );
-          })
-        );
-      })
-    ).subscribe({
-      next: (result) => {
-        // Redirect to organization routes with userId and role
-        // Format: /organization/:organizationId/:userRole/:userId
-        this.router.navigate(['/organization', result.organization.id, 'admin', result.userId]);
       },
       error: (error) => {
         console.error('Error creating user, organization and admin:', error);

@@ -137,10 +137,16 @@ export class AuthStore {
      * Register - registra un nuevo usuario usando AuthApi
      * @param user - La entidad User a registrar
      * @param password - La contraseña del usuario
+     * @param additionalData - Optional data for admin registration (firstName, lastName, organizationName, organizationType)
      * @returns Observable que emite un objeto con token y user
      */
-    register(user: User, password: string): Observable<{ token: string; user: User }> {
-        return this.authApi.register(user, password);
+    register(user: User, password: string, additionalData?: { 
+        firstName?: string; 
+        lastName?: string; 
+        organizationName?: string; 
+        organizationType?: string;
+    }): Observable<{ token: string; user: User }> {
+        return this.authApi.register(user, password, additionalData);
     }
 
     /**

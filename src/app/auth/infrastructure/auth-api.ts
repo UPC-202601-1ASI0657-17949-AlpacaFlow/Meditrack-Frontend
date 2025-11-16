@@ -93,10 +93,16 @@ export class AuthApi extends BaseApi {
    * Register - registers a new user.
    * @param user - The User entity to register.
    * @param password - The user's password.
+   * @param additionalData - Optional data for admin registration (firstName, lastName, organizationName, organizationType)
    * @returns An Observable emitting an object with token and user.
    */
-  register(user: User, password: string): Observable<{ token: string; user: User }> {
-    return this.usersEndpoint.register(user, password);
+  register(user: User, password: string, additionalData?: { 
+    firstName?: string; 
+    lastName?: string; 
+    organizationName?: string; 
+    organizationType?: string;
+  }): Observable<{ token: string; user: User }> {
+    return this.usersEndpoint.register(user, password, additionalData);
   }
 
   /**

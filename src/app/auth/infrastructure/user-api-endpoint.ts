@@ -133,9 +133,17 @@ export class UserApiEndpoint extends
     /**
      * Register - registra un nuevo usuario
      * Usa el endpoint de autenticación del backend Spring Boot o mock para json-server
+     * @param user - User entity with email and role
+     * @param password - User password
+     * @param additionalData - Optional data for admin registration (firstName, lastName, organizationName, organizationType)
      */
-    register(user: User, password: string) {
-        console.log('[UserApiEndpoint] Register attempt:', { email: user.email, role: user.role });
+    register(user: User, password: string, additionalData?: { 
+        firstName?: string; 
+        lastName?: string; 
+        organizationName?: string; 
+        organizationType?: string;
+    }) {
+        console.log('[UserApiEndpoint] Register attempt:', { email: user.email, role: user.role, hasAdditionalData: !!additionalData });
         
         // Detectar si estamos usando json-server (puerto 3000) o backend Spring Boot (puerto 8080)
         const isJsonServer = environment.platformProviderApiBaseUrl.includes('localhost:3000');
@@ -186,13 +194,26 @@ export class UserApiEndpoint extends
             const authUrl = `${environment.platformProviderApiBaseUrl}/api/v1/authentication/sign-up`;
             console.log('[UserApiEndpoint] Using Spring Boot authentication endpoint:', authUrl);
             
+            // Build request payload
+            const payload: any = { 
+                email: user.email, 
+                password: password,
+                role: user.role 
+            };
+            
+            // Add additional data if provided (for admin registration)
+            if (additionalData) {
+                if (additionalData.firstName) payload.firstName = additionalData.firstName;
+                if (additionalData.lastName) payload.lastName = additionalData.lastName;
+                if (additionalData.organizationName) payload.organizationName = additionalData.organizationName;
+                if (additionalData.organizationType) payload.organizationType = additionalData.organizationType;
+            }
+            
+            console.log('[UserApiEndpoint] Request payload:', payload);
+            
             return this.http.post<{ id: number; email: string; role: string; token: string }>(
                 authUrl,
-                { 
-                    email: user.email, 
-                    password: password,
-                    role: user.role 
-                }
+                payload
             ).pipe(
                 map((response) => {
                     console.log('[UserApiEndpoint] User created and authenticated:', response);
