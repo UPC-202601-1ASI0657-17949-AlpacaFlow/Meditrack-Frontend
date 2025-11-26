@@ -1,4 +1,4 @@
-import {Component, Input, AfterViewInit, OnDestroy, ViewChild, ElementRef, inject} from '@angular/core';
+import {Component, Input, AfterViewInit, OnDestroy, OnChanges, ViewChild, ElementRef, inject} from '@angular/core';
 import { Chart, ChartConfiguration, ChartTypeRegistry, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 import {TranslateService} from "@ngx-translate/core";
 
@@ -10,7 +10,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, L
     template: `<canvas #chartCanvas height="300"></canvas>`,
     styleUrls: ['./blood-pressure.css']
 })
-export class BloodPressure implements AfterViewInit, OnDestroy {
+export class BloodPressure implements AfterViewInit, OnDestroy, OnChanges {
 
     private translateService = inject(TranslateService);
 

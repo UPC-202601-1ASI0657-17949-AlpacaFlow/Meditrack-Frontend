@@ -1,20 +1,25 @@
-import {Component, computed, inject, OnInit, OnDestroy} from '@angular/core';
+import {Component, computed, inject, OnInit, OnDestroy, effect} from '@angular/core';
 import {OrganizationStore} from "../../../application/organization.store";
+import {DeviceStore} from "../../../application/device.store";
 import {BloodPressure} from "../../components/blood-pressure/blood-pressure";
 import {HeartRate} from "../../components/heart-rate/heart-rate";
 import {OxygenSaturation} from "../../components/oxygen-saturation/oxygen-saturation";
 import {TemperatureRate} from "../../components/temperature-rate/temperature-rate";
 import {ActivatedRoute} from "@angular/router";
 import {Subscription} from "rxjs";
+import {CommonModule} from "@angular/common";
+import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 
 @Component({
   selector: 'app-senior-citizen-statistic',
   standalone: true,
   imports: [
+    CommonModule,
     BloodPressure,
     HeartRate,
     OxygenSaturation,
-    TemperatureRate
+    TemperatureRate,
+    MatProgressSpinnerModule
   ],
   templateUrl: './senior-citizen-statistic.html',
   styleUrl: './senior-citizen-statistic.css'
@@ -22,25 +27,112 @@ import {Subscription} from "rxjs";
 export class SeniorCitizenStatistic implements OnInit, OnDestroy {
 
     private organizationStore = inject(OrganizationStore);
+    private deviceStore = inject(DeviceStore);
     private route = inject(ActivatedRoute);
     private routeSubscription?: Subscription;
 
-    seniorCitizen = computed(() => this.organizationStore.selectedSeniorCitizen())
+    seniorCitizen = computed(() => this.organizationStore.selectedSeniorCitizen());
+    deviceId = computed(() => this.seniorCitizen()?.deviceId ?? 0);
 
-    bloodPressure = computed<[number, number][]>(() => {
-        const bp = this.seniorCitizen()?.signalVitals?.bloodPressure;
-        if (!bp) return [];
-        return bp.map(arr => [arr[0] ?? 0, arr[1] ?? 0] as [number, number]);
+    // Loading state
+    loading = computed(() => this.deviceStore.loadingMeasurements());
+
+    // Real-time measurements from device API
+    bloodPressureMeasurements = computed(() => {
+        const deviceId = this.deviceId();
+        if (!deviceId) return [];
+        return this.deviceStore.getBloodPressureMeasurementsForDevice(deviceId)();
     });
 
-    heartRate = computed<number[]>(
-        () => this.seniorCitizen()?.signalVitals?.heartRate ?? []);
+    heartRateMeasurements = computed(() => {
+        const deviceId = this.deviceId();
+        if (!deviceId) return [];
+        return this.deviceStore.getHeartRateMeasurementsForDevice(deviceId)();
+    });
 
-    oxigenLevel = computed<any[]>(
-        () => this.seniorCitizen()?.signalVitals?.oxygenLevel ?? []);
+    temperatureMeasurements = computed(() => {
+        const deviceId = this.deviceId();
+        if (!deviceId) return [];
+        return this.deviceStore.getTemperatureMeasurementsForDevice(deviceId)();
+    });
 
-    temperature = computed<number[]>(
-        () => this.seniorCitizen()?.signalVitals?.temperature ?? []);
+    oxygenMeasurements = computed(() => {
+        const deviceId = this.deviceId();
+        if (!deviceId) return [];
+        return this.deviceStore.getOxygenMeasurementsForDevice(deviceId)();
+    });
+
+    // Transform measurements to format expected by chart components
+    bloodPressure = computed<[number, number][]>(() => {
+        const measurements = this.bloodPressureMeasurements();
+        const bp = measurements.map(m => [m.systolic, m.diastolic] as [number, number]);
+        // Si no hay datos del backend, usar datos de fallback del senior citizen
+        if (bp.length === 0) {
+            const sc = this.seniorCitizen();
+            const bpData = sc?.signalVitals?.bloodPressure;
+            if (!bpData) return [];
+            return bpData.map(arr => [arr[0] ?? 0, arr[1] ?? 0] as [number, number]);
+        }
+        return bp;
+    });
+
+    heartRate = computed<number[]>(() => {
+        const measurements = this.heartRateMeasurements();
+        const hr = measurements.map(m => m.bpm);
+        // Si no hay datos del backend, usar datos de fallback del senior citizen
+        if (hr.length === 0) {
+            const sc = this.seniorCitizen();
+            return sc?.signalVitals?.heartRate ?? [];
+        }
+        return hr;
+    });
+
+    temperature = computed<number[]>(() => {
+        const measurements = this.temperatureMeasurements();
+        const temps = measurements.map(m => m.temperature);
+        // Si no hay datos del backend, usar datos de fallback del senior citizen
+        if (temps.length === 0) {
+            const sc = this.seniorCitizen();
+            return sc?.signalVitals?.temperature ?? [];
+        }
+        return temps;
+    });
+
+    oxygenLevel = computed<number[]>(() => {
+        const measurements = this.oxygenMeasurements();
+        const oxygen = measurements.map(m => m.saturation);
+        // Si no hay datos del backend, usar datos de fallback del senior citizen
+        if (oxygen.length === 0) {
+            const sc = this.seniorCitizen();
+            const oxygenData = sc?.signalVitals?.oxygenLevel ?? [];
+            // Convertir de { ox: number }[] a number[]
+            if (oxygenData.length > 0 && typeof oxygenData[0] === 'object') {
+                return oxygenData.map((item: any) => item.ox ?? item);
+            }
+            return oxygenData;
+        }
+        return oxygen;
+    });
+
+    constructor() {
+        // Effect to automatically load measurements when deviceId changes
+        effect(() => {
+            const deviceId = this.deviceId();
+            if (deviceId && deviceId > 0) {
+                console.log('📊 SeniorCitizenStatistic: Loading measurements for device', deviceId);
+                this.deviceStore.loadAllMeasurementsForDevice(deviceId);
+            }
+        });
+
+        // Debug effect to log data
+        effect(() => {
+            console.log('🔍 Debug - Blood Pressure:', this.bloodPressure());
+            console.log('🔍 Debug - Heart Rate:', this.heartRate());
+            console.log('🔍 Debug - Temperature:', this.temperature());
+            console.log('🔍 Debug - Oxygen Level:', this.oxygenLevel());
+            console.log('🔍 Debug - Loading:', this.loading());
+        });
+    }
 
     ngOnInit() {
         // Load senior citizen on init
@@ -58,7 +150,7 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
     private loadSeniorCitizen(): void {
         const seniorCitizenId = this.route.snapshot.paramMap.get('id');
         if (seniorCitizenId) {
-            console.log(`SeniorCitizenStatistic: Loading senior citizen ${seniorCitizenId}`);
+            console.log(`📊 SeniorCitizenStatistic: Loading senior citizen ${seniorCitizenId}`);
             this.organizationStore.loadSeniorCitizenById(Number(seniorCitizenId));
         }
     }

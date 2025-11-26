@@ -16,7 +16,7 @@ export class OxygenSaturation implements AfterViewInit, OnDestroy, OnChanges {
 
     @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
-    @Input() oxygenLevel: { ox: number }[] = [];
+    @Input() oxygenLevel: number[] | { ox: number }[] = [];
 
     private chartInstance?: Chart<keyof ChartTypeRegistry, (number | null)[], unknown>;
 
@@ -28,9 +28,19 @@ export class OxygenSaturation implements AfterViewInit, OnDestroy, OnChanges {
 
     ngOnChanges() {
         if (this.chartInstance) {
-            this.chartInstance.data.datasets[0].data = this.oxygenLevel?.map(d => d.ox) ?? [];
+            this.chartInstance.data.datasets[0].data = this.getOxygenData();
             this.chartInstance.update();
         }
+    }
+
+    private getOxygenData(): number[] {
+        if (!this.oxygenLevel || this.oxygenLevel.length === 0) return [];
+        
+        // Check if it's an array of objects or numbers
+        if (typeof this.oxygenLevel[0] === 'object' && 'ox' in this.oxygenLevel[0]) {
+            return (this.oxygenLevel as { ox: number }[]).map(d => d.ox);
+        }
+        return this.oxygenLevel as number[];
     }
 
     ngOnDestroy() {
@@ -43,7 +53,7 @@ export class OxygenSaturation implements AfterViewInit, OnDestroy, OnChanges {
         const ctx = this.chartCanvas.nativeElement.getContext('2d');
         if (!ctx) return;
 
-        const data = this.oxygenLevel?.map(d => d.ox) ?? [];
+        const data = this.getOxygenData();
         const oxygenSaturationTitle = this.translateService.instant('senior-citizen.statistics.oxygenSaturation');
         const dayOfWeekLabel = this.translateService.instant('senior-citizen.statistics.dayOfWeek');
         const spO2Label = this.translateService.instant('senior-citizen.statistics.spO2');

@@ -11,6 +11,8 @@ export const environment = {
   platformProviderUsersEndpointPath: '/users',
   platformProviderCredentialsEndpointPath: '/credentials',
   platformProviderAuthEndpointPath: '/auth',
+  platformProviderDevicesEndpointPath: '/api/v1/devices',
+  platformProviderAlertsEndpointPath: '/api/v1/alerts',
 
   appName: 'MediTrack'
 };

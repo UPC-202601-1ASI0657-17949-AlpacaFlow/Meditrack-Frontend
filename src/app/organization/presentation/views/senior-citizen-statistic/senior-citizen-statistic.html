@@ -1,16 +1,43 @@
-@if (bloodPressure().length) {
-    <app-blood-pressure [bloodPressure]="bloodPressure()"></app-blood-pressure>
-}
+<div class="statistics-container">
+    @if (loading()) {
+        <div class="loading-container">
+            <mat-spinner diameter="50"></mat-spinner>
+            <p>Cargando estadísticas...</p>
+        </div>
+    } @else {
+        <div class="charts-grid">
+            <!-- Blood Pressure Chart -->
+            <div class="chart-wrapper">
+                <app-blood-pressure [bloodPressure]="bloodPressure()"></app-blood-pressure>
+                @if (!bloodPressure().length) {
+                    <div class="no-data-message">No hay datos de presión arterial disponibles</div>
+                }
+            </div>
 
-@if (seniorCitizen()?.signalVitals?.heartRate) {
-    <app-heart-rate [heartRate]="heartRate()"></app-heart-rate>
-}
+            <!-- Heart Rate Chart -->
+            <div class="chart-wrapper">
+                <app-heart-rate [heartRate]="heartRate()"></app-heart-rate>
+                @if (!heartRate().length) {
+                    <div class="no-data-message">No hay datos de ritmo cardíaco disponibles</div>
+                }
+            </div>
 
-@if (seniorCitizen()?.signalVitals?.oxygenLevel) {
-    <app-oxygen-saturation [oxygenLevel]="oxigenLevel()"></app-oxygen-saturation>
-}
+            <!-- Oxygen Saturation Chart -->
+            <div class="chart-wrapper">
+                <app-oxygen-saturation [oxygenLevel]="oxygenLevel()"></app-oxygen-saturation>
+                @if (!oxygenLevel().length) {
+                    <div class="no-data-message">No hay datos de saturación de oxígeno disponibles</div>
+                }
+            </div>
 
-@if (seniorCitizen()?.signalVitals?.temperature) {
-    <app-temperature-rate [temperature]="temperature()"></app-temperature-rate>
-}
+            <!-- Temperature Chart -->
+            <div class="chart-wrapper">
+                <app-temperature-rate [temperature]="temperature()"></app-temperature-rate>
+                @if (!temperature().length) {
+                    <div class="no-data-message">No hay datos de temperatura disponibles</div>
+                }
+            </div>
+        </div>
+    }
+</div>
 
