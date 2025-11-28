@@ -129,3 +129,20 @@ export class AlertApiEndpoint {
     return `${this.baseUrl}${this.alertsPath}/device/${deviceId}`;
   }
 }
+
+/**
+ * Alternative device-based alert endpoints
+ * Following the pattern: /api/v1/devices/{deviceId}/alerts
+ */
+export class DeviceAlertApiEndpoint {
+  private static baseUrl = environment.platformProviderApiBaseUrl;
+  private static devicesPath = environment.platformProviderDevicesEndpointPath;
+
+  /**
+   * Get all alerts by device ID (alternative endpoint pattern)
+   * GET /api/v1/devices/{deviceId}/alerts
+   */
+  static getAlertsByDeviceId(deviceId: number): string {
+    return `${this.baseUrl}${this.devicesPath}/${deviceId}/alerts`;
+  }
+}

@@ -84,12 +84,13 @@ export class DoctorDetail implements OnInit {
   }
 
   loadDoctor(id: number): void {
-    // Get doctor from store
-    const doctor = this.organizationStore.doctors().find(d => d.id === id);
-    if (doctor) {
-      this.doctor.set(doctor);
-      // No need to manually load lists - computed signals will update automatically
-    }
+    this.organizationStore.loadDoctorById(id).then(doctor => {
+      if (doctor) {
+        this.doctor.set(doctor);
+      } else {
+        this.doctor.set(null);
+      }
+    }).catch(() => this.doctor.set(null));
   }
 
   /**

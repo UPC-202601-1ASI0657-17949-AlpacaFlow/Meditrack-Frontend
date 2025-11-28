@@ -4,6 +4,17 @@
             <mat-spinner diameter="50"></mat-spinner>
             <p>Cargando estadísticas...</p>
         </div>
+    } @else if (!seniorCitizen()) {
+        <div class="error-container">
+            <p style="color: orange;">⚠️ Cargando información del senior citizen...</p>
+        </div>
+    } @else if (!deviceId() || deviceId() === 0) {
+        <div class="error-container">
+            <p style="color: red;">❌ No se encontró un dispositivo asociado a este senior citizen.</p>
+            <p>Senior Citizen ID: {{ seniorCitizen()?.id }}</p>
+            <p>Device ID: {{ seniorCitizen()?.deviceId ?? 'No asignado' }}</p>
+            <p>Por favor, asegúrate de que el senior citizen tenga un dispositivo asignado.</p>
+        </div>
     } @else {
         <div class="charts-grid">
             <!-- Blood Pressure Chart -->

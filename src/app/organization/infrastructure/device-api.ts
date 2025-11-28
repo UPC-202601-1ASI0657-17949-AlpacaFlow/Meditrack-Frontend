@@ -10,7 +10,7 @@ import {
   OxygenMeasurement 
 } from '../domain/model/measurement.entity';
 import { Alert } from '../domain/model/alert.entity';
-import { DeviceApiEndpoint, AlertApiEndpoint } from './device-api-endpoint';
+import { DeviceApiEndpoint, AlertApiEndpoint, DeviceAlertApiEndpoint } from './device-api-endpoint';
 import { DeviceResponse, CreateDeviceRequest } from './device-response';
 import { AlertResponse } from './alert-response';
 import {
@@ -45,14 +45,38 @@ export class DeviceApi {
   /**
    * Handle HTTP errors
    */
-  private handleError(error: HttpErrorResponse): Observable<never> {
+  private handleError(error: HttpErrorResponse | any): Observable<never> {
     let errorMessage = 'An error occurred';
-    if (error.error instanceof ErrorEvent) {
+    
+    // Handle network errors (status 0) or connection refused
+    if (error.status === 0 || error.status === undefined) {
+      errorMessage = `Network Error: Unable to connect to the server. Please check if the backend is running at ${error.url || 'the configured URL'}`;
+      console.error('❌ Network Error Details:', {
+        url: error.url,
+        message: error.message,
+        status: error.status,
+        error: error.error
+      });
+    } else if (error.error instanceof ErrorEvent) {
+      // Client-side error
       errorMessage = `Error: ${error.error.message}`;
+      console.error('❌ Client Error:', error.error);
     } else {
+      // Server-side error
       errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+      if (error.error) {
+        errorMessage += `\nDetails: ${JSON.stringify(error.error)}`;
+      }
+      console.error('❌ Server Error:', {
+        status: error.status,
+        statusText: error.statusText,
+        message: error.message,
+        url: error.url,
+        error: error.error
+      });
     }
-    console.error(errorMessage);
+    
+    console.error('Full error object:', error);
     return throwError(() => new Error(errorMessage));
   }
 
@@ -245,13 +269,61 @@ export class DeviceApi {
 
   /**
    * Get all alerts by device ID
+   * Tries the standard endpoint first, then falls back to device-based endpoint if needed
    */
   getAllAlertsByDeviceId(deviceId: number): Observable<Alert[]> {
-    return this.http.get<AlertResponse[]>(AlertApiEndpoint.getAllAlertsByDeviceId(deviceId))
+    // Try standard endpoint: /api/v1/alerts/device/{deviceId}
+    const standardUrl = AlertApiEndpoint.getAllAlertsByDeviceId(deviceId);
+    console.log(`📡 DeviceApi: Requesting alerts for device ${deviceId} from URL: ${standardUrl}`);
+    
+    return this.http.get<AlertResponse[]>(standardUrl)
       .pipe(
         retry(2),
-        map(responses => AlertAssembler.toEntityList(responses)),
-        catchError(this.handleError)
+        map(responses => {
+          console.log(`✅ DeviceApi: Received ${responses.length} alerts for device ${deviceId} from standard endpoint`);
+          return AlertAssembler.toEntityList(responses);
+        }),
+        catchError((error: HttpErrorResponse | any) => {
+          // Check if it's a network error (status 0 or undefined, or error message indicates network issue)
+          const isNetworkError = error.status === 0 || 
+                                error.status === undefined || 
+                                (error.message && (error.message.includes('Http failure') || error.message.includes('0 undefined')));
+          
+          console.error(`❌ DeviceApi: Standard endpoint failed for device ${deviceId}:`, {
+            url: standardUrl,
+            status: error.status,
+            message: error.message,
+            error: error
+          });
+          
+          // If standard endpoint fails with network error, try alternative endpoint
+          if (isNetworkError) {
+            const alternativeUrl = DeviceAlertApiEndpoint.getAlertsByDeviceId(deviceId);
+            console.warn(`⚠️ DeviceApi: Standard endpoint failed with network error, trying alternative: ${alternativeUrl}`);
+            
+            return this.http.get<AlertResponse[]>(alternativeUrl)
+              .pipe(
+                retry(1),
+                map(responses => {
+                  console.log(`✅ DeviceApi: Received ${responses.length} alerts for device ${deviceId} from alternative endpoint`);
+                  return AlertAssembler.toEntityList(responses);
+                }),
+                catchError((altError) => {
+                  console.error(`❌ DeviceApi: Both endpoints failed for device ${deviceId}:`, {
+                    standardUrl: standardUrl,
+                    alternativeUrl: alternativeUrl,
+                    standardError: error,
+                    alternativeError: altError
+                  });
+                  return this.handleError(altError);
+                })
+              );
+          } else {
+            // For other errors (4xx, 5xx), don't try alternative
+            console.error(`❌ DeviceApi: HTTP error (not network), not trying alternative endpoint`);
+            return this.handleError(error);
+          }
+        })
       );
   }
 }

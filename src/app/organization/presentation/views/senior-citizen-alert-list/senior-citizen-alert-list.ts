@@ -58,10 +58,24 @@ export class SeniorCitizenAlertList implements OnInit, OnDestroy {
     constructor() {
         // Effect to automatically load alerts when deviceId changes
         effect(() => {
+            const seniorCitizen = this.seniorCitizen();
             const deviceId = this.deviceId();
+            
+            console.log('🚨 SeniorCitizenAlertList Effect:', {
+                seniorCitizen: seniorCitizen ? { id: seniorCitizen.id, name: seniorCitizen.fullName, deviceId: seniorCitizen.deviceId } : null,
+                deviceId: deviceId
+            });
+            
             if (deviceId && deviceId > 0) {
                 console.log('🚨 SeniorCitizenAlertList: Loading alerts for device', deviceId);
                 this.deviceStore.loadAlertsByDeviceId(deviceId);
+            } else if (seniorCitizen && !deviceId) {
+                console.warn('⚠️ SeniorCitizenAlertList: Senior citizen loaded but deviceId is missing or 0', {
+                    seniorCitizenId: seniorCitizen.id,
+                    deviceId: seniorCitizen.deviceId
+                });
+            } else if (!seniorCitizen) {
+                console.warn('⚠️ SeniorCitizenAlertList: Senior citizen not loaded yet');
             }
         });
     }
@@ -82,8 +96,20 @@ export class SeniorCitizenAlertList implements OnInit, OnDestroy {
     private loadSeniorCitizen(): void {
         const seniorCitizenId = this.route.snapshot.paramMap.get('id');
         if (seniorCitizenId) {
-            console.log(`🚨 SeniorCitizenAlertList: Loading senior citizen ${seniorCitizenId}`);
-            this.organizationStore.loadSeniorCitizenById(Number(seniorCitizenId));
+            const id = Number(seniorCitizenId);
+            console.log(`🚨 SeniorCitizenAlertList: Loading senior citizen ${id}`);
+            this.organizationStore.loadSeniorCitizenById(id);
+            
+            // Log after a short delay to see if senior citizen was loaded
+            setTimeout(() => {
+                const loaded = this.seniorCitizen();
+                console.log('🚨 SeniorCitizenAlertList: After loadSeniorCitizenById:', {
+                    requestedId: id,
+                    loaded: loaded ? { id: loaded.id, name: loaded.fullName, deviceId: loaded.deviceId } : null
+                });
+            }, 100);
+        } else {
+            console.error('❌ SeniorCitizenAlertList: No senior citizen ID found in route');
         }
     }
 

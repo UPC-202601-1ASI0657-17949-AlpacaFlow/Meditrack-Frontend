@@ -58,8 +58,14 @@
         <div class="no-alerts">
             <mat-card class="mat-elevation-z2">
                 <mat-card-content>
-                    <p>{{ 'senior-citizen.alert.noAlerts' | translate }}</p>
-                    @if (deviceId()) {
+                    @if (!seniorCitizen()) {
+                        <p style="color: orange;">⚠️ Cargando información del senior citizen...</p>
+                    } @else if (!deviceId() || deviceId() === 0) {
+                        <p style="color: red;">❌ No se encontró un dispositivo asociado a este senior citizen.</p>
+                        <p class="device-info-text">Senior Citizen ID: {{ seniorCitizen()?.id }}</p>
+                        <p class="device-info-text">Device ID: {{ seniorCitizen()?.deviceId ?? 'No asignado' }}</p>
+                    } @else {
+                        <p>{{ 'senior-citizen.alert.noAlerts' | translate }}</p>
                         <p class="device-info-text">Device ID: {{ deviceId() }}</p>
                     }
                 </mat-card-content>

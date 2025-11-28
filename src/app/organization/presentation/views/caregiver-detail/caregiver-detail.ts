@@ -84,12 +84,13 @@ export class CaregiverDetail implements OnInit {
   }
 
   loadCaregiver(id: number): void {
-    // Get caregiver from store
-    const caregiver = this.organizationStore.caregivers().find(k => k.id === id);
-    if (caregiver) {
-      this.caregiver.set(caregiver);
-      // No need to manually load lists - computed signals handle automatic updates
-    }
+    this.organizationStore.loadCaregiverById(id).then(caregiver => {
+      if (caregiver) {
+        this.caregiver.set(caregiver);
+      } else {
+        this.caregiver.set(null);
+      }
+    }).catch(() => this.caregiver.set(null));
   }
 
   /**

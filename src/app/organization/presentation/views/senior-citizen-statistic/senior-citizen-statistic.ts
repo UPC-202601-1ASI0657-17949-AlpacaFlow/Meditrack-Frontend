@@ -117,10 +117,24 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
     constructor() {
         // Effect to automatically load measurements when deviceId changes
         effect(() => {
+            const seniorCitizen = this.seniorCitizen();
             const deviceId = this.deviceId();
+            
+            console.log('📊 SeniorCitizenStatistic Effect:', {
+                seniorCitizen: seniorCitizen ? { id: seniorCitizen.id, name: seniorCitizen.fullName, deviceId: seniorCitizen.deviceId } : null,
+                deviceId: deviceId
+            });
+            
             if (deviceId && deviceId > 0) {
                 console.log('📊 SeniorCitizenStatistic: Loading measurements for device', deviceId);
                 this.deviceStore.loadAllMeasurementsForDevice(deviceId);
+            } else if (seniorCitizen && !deviceId) {
+                console.warn('⚠️ SeniorCitizenStatistic: Senior citizen loaded but deviceId is missing or 0', {
+                    seniorCitizenId: seniorCitizen.id,
+                    deviceId: seniorCitizen.deviceId
+                });
+            } else if (!seniorCitizen) {
+                console.warn('⚠️ SeniorCitizenStatistic: Senior citizen not loaded yet');
             }
         });
 
@@ -150,8 +164,20 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
     private loadSeniorCitizen(): void {
         const seniorCitizenId = this.route.snapshot.paramMap.get('id');
         if (seniorCitizenId) {
-            console.log(`📊 SeniorCitizenStatistic: Loading senior citizen ${seniorCitizenId}`);
-            this.organizationStore.loadSeniorCitizenById(Number(seniorCitizenId));
+            const id = Number(seniorCitizenId);
+            console.log(`📊 SeniorCitizenStatistic: Loading senior citizen ${id}`);
+            this.organizationStore.loadSeniorCitizenById(id);
+            
+            // Log after a short delay to see if senior citizen was loaded
+            setTimeout(() => {
+                const loaded = this.seniorCitizen();
+                console.log('📊 SeniorCitizenStatistic: After loadSeniorCitizenById:', {
+                    requestedId: id,
+                    loaded: loaded ? { id: loaded.id, name: loaded.fullName, deviceId: loaded.deviceId } : null
+                });
+            }, 100);
+        } else {
+            console.error('❌ SeniorCitizenStatistic: No senior citizen ID found in route');
         }
     }
 

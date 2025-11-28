@@ -171,6 +171,8 @@ export class DeviceStore {
     this.loadingAlertsSignal.set(true);
     this.errorSignal.set(null);
 
+    console.log(`📡 DeviceStore: Attempting to load alerts for device ${deviceId}`);
+    
     this.deviceApi.getAllAlertsByDeviceId(deviceId).subscribe({
       next: (alerts) => {
         // Store in the map
@@ -183,9 +185,22 @@ export class DeviceStore {
         console.log('✅ DeviceStore: Loaded', alerts.length, 'alerts for device', deviceId);
       },
       error: (error) => {
-        this.errorSignal.set('Error loading alerts: ' + error.message);
+        const errorMsg = error?.message || 'Unknown error';
+        this.errorSignal.set('Error loading alerts: ' + errorMsg);
         this.loadingAlertsSignal.set(false);
-        console.error('❌ DeviceStore: Error loading alerts for device:', error);
+        console.error('❌ DeviceStore: Error loading alerts for device', deviceId, ':', {
+          error: error,
+          message: errorMsg,
+          stack: error?.stack
+        });
+        
+        // If it's a network error, provide helpful message
+        if (errorMsg.includes('Network Error') || errorMsg.includes('Unable to connect')) {
+          console.warn('⚠️ DeviceStore: Backend connection issue. Please verify:');
+          console.warn('  1. Backend server is running');
+          console.warn('  2. Backend URL is correct in environment configuration');
+          console.warn('  3. CORS is properly configured on the backend');
+        }
       }
     });
   }
@@ -448,6 +463,7 @@ export class DeviceStore {
    * Load all measurements for a device
    */
   loadAllMeasurementsForDevice(deviceId: number): void {
+    console.log(`📡 DeviceStore: Attempting to load all measurements for device ${deviceId}`);
     this.loadBloodPressureMeasurements(deviceId);
     this.loadHeartRateMeasurements(deviceId);
     this.loadTemperatureMeasurements(deviceId);

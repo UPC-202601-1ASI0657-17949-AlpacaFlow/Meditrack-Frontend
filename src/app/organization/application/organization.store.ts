@@ -707,20 +707,84 @@ export class OrganizationStore {
     });
   }
 
+  /**
+   * Loads a doctor by ID.
+   * First checks the local list, then fetches from API if not found.
+   * Updates the doctorsSignal when fetched from API.
+   * @param doctorId - The doctor ID to load
+   * @returns A Promise that resolves with the Doctor or null if not found
+   */
+  loadDoctorById(doctorId: number): Promise<Doctor | null> {
+    const doctor = this.doctors().find(d => d.id === doctorId);
+    if (doctor) return Promise.resolve(doctor);
+    return new Promise((resolve, reject) => {
+      this.organizationApi.getDoctorById(doctorId).pipe(take(1)).subscribe({
+        next: fetched => {
+          if (fetched) {
+            const list = this.doctors();
+            const idx = list.findIndex(d => d.id === fetched.id);
+            idx >= 0 ? this.doctorsSignal.set(list.map((d, i) => i === idx ? fetched : d))
+                     : this.doctorsSignal.set([...list, fetched]);
+          }
+          resolve(fetched);
+        },
+        error: err => reject(err)
+      });
+    });
+  }
+
+  /**
+   * Loads a caregiver by ID.
+   * First checks the local list, then fetches from API if not found.
+   * Updates the caregiversSignal when fetched from API.
+   * @param caregiverId - The caregiver ID to load
+   * @returns A Promise that resolves with the Caregiver or null if not found
+   */
+  loadCaregiverById(caregiverId: number): Promise<Caregiver | null> {
+    const caregiver = this.caregivers().find(k => k.id === caregiverId);
+    if (caregiver) return Promise.resolve(caregiver);
+    return new Promise((resolve, reject) => {
+      this.organizationApi.getCaregiverById(caregiverId).pipe(take(1)).subscribe({
+        next: fetched => {
+          if (fetched) {
+            const list = this.caregivers();
+            const idx = list.findIndex(k => k.id === fetched.id);
+            idx >= 0 ? this.caregiversSignal.set(list.map((k, i) => i === idx ? fetched : k))
+                     : this.caregiversSignal.set([...list, fetched]);
+          }
+          resolve(fetched);
+        },
+        error: err => reject(err)
+      });
+    });
+  }
+
 
   /**
    * Loads and selects a senior citizen by ID.
+   * First checks the local list, then fetches from API if not found.
    * @param seniorCitizenId - The senior citizen ID to load
    */
   loadSeniorCitizenById(seniorCitizenId: number): void {
     const seniorCitizen = this.seniorCitizens().find(sc => sc.id === seniorCitizenId);
     if (seniorCitizen) {
-      console.log(`Senior Citizen loaded: ${seniorCitizen.fullName} (id: ${seniorCitizen.id})`);
       this.selectedSeniorCitizenSignal.set(seniorCitizen);
-    } else {
-      console.error(`Senior Citizen with id ${seniorCitizenId} not found`);
-      this.selectedSeniorCitizenSignal.set(null);
+      return;
     }
+    this.organizationApi.getSeniorCitizenById(seniorCitizenId).pipe(take(1)).subscribe({
+      next: fetched => {
+        if (fetched) {
+          const current = this.seniorCitizens();
+          const idx = current.findIndex(sc => sc.id === fetched.id);
+          idx >= 0 ? this.seniorCitizensSignal.set(current.map((sc, i) => i === idx ? fetched : sc))
+                   : this.seniorCitizensSignal.set([...current, fetched]);
+          this.selectedSeniorCitizenSignal.set(fetched);
+        } else {
+          this.selectedSeniorCitizenSignal.set(null);
+        }
+      },
+      error: () => this.selectedSeniorCitizenSignal.set(null)
+    });
   }
 
   /**
