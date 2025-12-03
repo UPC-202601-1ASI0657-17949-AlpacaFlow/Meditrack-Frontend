@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { OrganizationStore } from '../../../application/organization.store';
 import { SeniorCitizen } from "../../../domain/model/senior-citizen.entity";
 
@@ -19,10 +19,12 @@ export class SeniorCitizenForm implements OnChanges {
   @Output() cancel = new EventEmitter<void>();
 
   form: FormGroup;
+  localError: string | null = null;
 
   constructor(
     private fb: FormBuilder, 
-    public organizationStore: OrganizationStore
+    public organizationStore: OrganizationStore,
+    private translate: TranslateService
   ) {
     // Get organizationId from store (patrón de relatives)
     const organizationId = this.organizationStore.getCurrentOrganizationId() || 0;
@@ -35,7 +37,7 @@ export class SeniorCitizenForm implements OnChanges {
       height: [null, [Validators.required, Validators.min(0)]],
       dni: ['', Validators.required],
       imageUrl: ['', [Validators.required, Validators.pattern(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)]],
-      deviceId: [null, [Validators.required, Validators.min(0)]],
+      deviceId: [null, [Validators.required, Validators.min(1)]],
       organizationId: [organizationId] // Get from store (patrón de relatives)
     });
   }
@@ -67,6 +69,9 @@ export class SeniorCitizenForm implements OnChanges {
   }
 
   onSubmit(): void {
+    // Clear any previous errors
+    this.localError = null;
+    
     if (this.form.invalid) {
       // Marcar todos los campos como touched para mostrar errores
       this.form.markAllAsTouched();
@@ -77,7 +82,24 @@ export class SeniorCitizenForm implements OnChanges {
     // Patrón de relatives: userId → organizationId (a través del store)
     const organizationId = this.organizationStore.getCurrentOrganizationId();
     if (!organizationId || organizationId === 0) {
-      console.error('Cannot create senior citizen: No user selected or invalid organizationId');
+      this.localError = 'Cannot create senior citizen: No organization context available. Please select an organization.';
+      console.error(this.localError);
+      return;
+    }
+
+    // Validate deviceId before creating SeniorCitizen entity
+    const deviceId = Number(this.form.value.deviceId);
+    const MAX_SAFE_INTEGER = 9007199254740991; // Number.MAX_SAFE_INTEGER
+    
+    if (isNaN(deviceId) || deviceId <= 0) {
+      this.localError = 'Device ID must be a positive number';
+      return;
+    }
+    
+    if (deviceId > MAX_SAFE_INTEGER) {
+      this.localError = this.translate.instant('senior-citizen.deviceIdTooLarge', {
+        maxValue: MAX_SAFE_INTEGER.toLocaleString()
+      });
       return;
     }
 
@@ -93,7 +115,7 @@ export class SeniorCitizenForm implements OnChanges {
       height: Number(this.form.value.height),
       dni: this.form.value.dni,
       imageUrl: this.form.value.imageUrl || '/assets/default-senior-citizen.png',
-      deviceId: Number(this.form.value.deviceId)
+      deviceId: deviceId
     });
 
     // Log para verificar que el organizationId se está estableciendo correctamente
@@ -115,6 +137,7 @@ export class SeniorCitizenForm implements OnChanges {
   }
 
   onCancel(): void {
+    this.localError = null;
     this.cancel.emit();
   }
 }

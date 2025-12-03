@@ -4,7 +4,7 @@ import { SeniorCitizenResource, SeniorCitizensResponse } from './senior-citizen-
 import { SeniorCitizensAssembler } from './senior-citizen-assembler';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { map, catchError } from 'rxjs';
+import { map, catchError, throwError } from 'rxjs';
 
 /**
  * API endpoint for managing senior citizens.
@@ -90,18 +90,38 @@ export class SeniorCitizensApiEndpoint extends BaseApiEndpoint<
      * @returns An Observable emitting the created SeniorCitizen entity.
      */
     override create(seniorCitizen: SeniorCitizen) {
-        // Use the create-specific resource format (only required fields, proper date format)
-        const createResource = this.assembler.toCreateResourceFromEntity(seniorCitizen);
+        // Wrap in try-catch to handle synchronous errors from assembler
+        let createResource: {
+            organizationId: number;
+            firstName: string;
+            lastName: string;
+            birthDate: string;
+            gender: string;
+            weight: number;
+            dni: string;
+            height: number;
+            imageUrl: string;
+            deviceId: number;
+        };
         
-        // Validate all numeric values are within safe integer range
-        if (createResource.deviceId > Number.MAX_SAFE_INTEGER || createResource.deviceId < Number.MIN_SAFE_INTEGER) {
-            console.error('[SeniorCitizensApiEndpoint] deviceId out of safe integer range:', createResource.deviceId);
-            throw new Error(`Device ID ${createResource.deviceId} is out of safe integer range`);
-        }
-        
-        if (createResource.organizationId > Number.MAX_SAFE_INTEGER || createResource.organizationId < Number.MIN_SAFE_INTEGER) {
-            console.error('[SeniorCitizensApiEndpoint] organizationId out of safe integer range:', createResource.organizationId);
-            throw new Error(`Organization ID ${createResource.organizationId} is out of safe integer range`);
+        try {
+            // Use the create-specific resource format (only required fields, proper date format)
+            createResource = this.assembler.toCreateResourceFromEntity(seniorCitizen);
+            
+            // Validate all numeric values are within safe integer range
+            if (createResource.deviceId > Number.MAX_SAFE_INTEGER || createResource.deviceId < Number.MIN_SAFE_INTEGER) {
+                console.error('[SeniorCitizensApiEndpoint] deviceId out of safe integer range:', createResource.deviceId);
+                return throwError(() => new Error(`Device ID ${createResource.deviceId} is out of safe integer range. Maximum allowed value is ${Number.MAX_SAFE_INTEGER}`));
+            }
+            
+            if (createResource.organizationId > Number.MAX_SAFE_INTEGER || createResource.organizationId < Number.MIN_SAFE_INTEGER) {
+                console.error('[SeniorCitizensApiEndpoint] organizationId out of safe integer range:', createResource.organizationId);
+                return throwError(() => new Error(`Organization ID ${createResource.organizationId} is out of safe integer range`));
+            }
+        } catch (error: any) {
+            // Catch any synchronous errors from the assembler (like deviceId out of range)
+            console.error('[SeniorCitizensApiEndpoint] Error in assembler:', error);
+            return throwError(() => error instanceof Error ? error : new Error(error?.message || 'Failed to prepare senior citizen data'));
         }
         
         console.log('[SeniorCitizensApiEndpoint] Creating senior citizen with resource:', createResource);

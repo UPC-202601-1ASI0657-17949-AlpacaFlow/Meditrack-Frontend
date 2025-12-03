@@ -41,7 +41,13 @@
                                 <mat-label>{{ 'senior-citizen-registration.deviceId' | translate }}</mat-label>
                                 <input matInput type="number" formControlName="deviceId" />
                                 @if (form.get('deviceId')?.invalid && form.get('deviceId')?.touched) {
-                                    <mat-error>{{ 'senior-citizen-registration.deviceIdRequired' | translate }}</mat-error>
+                                    @if (form.get('deviceId')?.hasError('required')) {
+                                        <mat-error>{{ 'senior-citizen-registration.deviceIdRequired' | translate }}</mat-error>
+                                    } @else if (form.get('deviceId')?.hasError('min')) {
+                                        <mat-error>{{ 'senior-citizen-registration.deviceIdMin' | translate }}</mat-error>
+                                    } @else {
+                                        <mat-error>{{ 'senior-citizen-registration.deviceIdRequired' | translate }}</mat-error>
+                                    }
                                 }
                             </mat-form-field>
                         </div>

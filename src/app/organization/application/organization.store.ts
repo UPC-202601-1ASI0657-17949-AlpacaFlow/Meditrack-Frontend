@@ -1823,14 +1823,83 @@ export class OrganizationStore {
 
   /**
    * Formats error messages for user-friendly display.
-   * @param error - The error object.
+   * @param error - The error object (can be Error, HttpErrorResponse, or any).
    * @param fallback - The fallback error message.
    * @returns A formatted error message.
    */
   private formatError(error: any, fallback: string): string {
+    // Helper function to extract and clean error message
+    const extractErrorMessage = (err: any): string => {
+      // Try different sources for the error message
+      let msg = err?.error?.message || err?.error || err?.message || '';
+      
+      // If error.error is a string (plain text response from backend)
+      if (typeof err?.error === 'string') {
+        msg = err.error;
+      }
+      
+      // If error.message contains the backend message, extract it
+      if (typeof err?.message === 'string' && err.message.includes(':')) {
+        // Extract message after the last colon (removes prefixes like "Failed to create senior citizen: ")
+        const parts = err.message.split(':');
+        if (parts.length > 1) {
+          msg = parts.slice(1).join(':').trim();
+        }
+      }
+      
+      // Clean common prefixes from backend error messages
+      if (typeof msg === 'string') {
+        // Remove "Invalid request: " prefix
+        msg = msg.replace(/^Invalid request:\s*/i, '');
+        // Remove "Failed to create senior citizen: " prefix if still present
+        msg = msg.replace(/^Failed to create senior citizen:\s*/i, '');
+        // Remove "Failed to update senior citizen: " prefix
+        msg = msg.replace(/^Failed to update senior citizen:\s*/i, '');
+        // Remove "Failed to delete senior citizen: " prefix
+        msg = msg.replace(/^Failed to delete senior citizen:\s*/i, '');
+        // Remove "Failed to load senior citizens: " prefix
+        msg = msg.replace(/^Failed to load senior citizens:\s*/i, '');
+        // Remove other common operation prefixes
+        msg = msg.replace(/^Failed to [^:]+:\s*/i, '');
+        // Trim whitespace
+        msg = msg.trim();
+      }
+      
+      return msg || '';
+    };
+    
+    // Handle Error instances
     if (error instanceof Error) {
-      return error.message.includes('Resource not found') ? `${fallback}: Not found` : error.message;
+      const cleanedMsg = extractErrorMessage(error);
+      if (cleanedMsg) {
+        return cleanedMsg;
+      }
+      // If it's a "Resource not found" error, provide a more user-friendly message
+      if (error.message.includes('Resource not found')) {
+        return `${fallback}: Not found`;
+      }
+      return error.message || fallback;
     }
+    
+    // Handle HttpErrorResponse or similar objects
+    if (error && typeof error === 'object') {
+      const cleanedMsg = extractErrorMessage(error);
+      if (cleanedMsg) {
+        return cleanedMsg;
+      }
+      
+      // Try to extract from status codes
+      if (error.status === 400) {
+        return cleanedMsg || `${fallback}: Invalid data provided`;
+      } else if (error.status === 401 || error.status === 403) {
+        return `${fallback}: Authentication required`;
+      } else if (error.status === 404) {
+        return `${fallback}: Not found`;
+      } else if (error.status === 500) {
+        return cleanedMsg || `${fallback}: Server error`;
+      }
+    }
+    
     return fallback;
   }
 }

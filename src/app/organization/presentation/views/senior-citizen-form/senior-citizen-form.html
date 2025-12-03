@@ -1,45 +1,103 @@
 <div class="form-container">
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="senior-citizen-form">
+        <!-- Error del backend o local -->
+        @if (organizationStore.seniorCitizensError() || localError) {
+            <div class="error-message-backend">
+                {{ localError || organizationStore.seniorCitizensError() }}
+            </div>
+        }
+        
         <div class="form-grid">
             <div class="form-field">
                 <label>{{ 'senior-citizen.firstName' | translate }}:</label>
-                <input formControlName="firstName" class="form-input" />
+                <input formControlName="firstName" class="form-input" [class.error]="form.get('firstName')?.invalid && form.get('firstName')?.touched" />
+                @if (form.get('firstName')?.invalid && form.get('firstName')?.touched) {
+                    <div class="error-message">
+                        {{ 'senior-citizen.firstNameRequired' | translate }}
+                    </div>
+                }
             </div>
 
             <div class="form-field">
                 <label>{{ 'senior-citizen.lastName' | translate }}:</label>
-                <input formControlName="lastName" class="form-input" />
+                <input formControlName="lastName" class="form-input" [class.error]="form.get('lastName')?.invalid && form.get('lastName')?.touched" />
+                @if (form.get('lastName')?.invalid && form.get('lastName')?.touched) {
+                    <div class="error-message">
+                        {{ 'senior-citizen.lastNameRequired' | translate }}
+                    </div>
+                }
             </div>
 
             <div class="form-field">
                 <label>{{ 'senior-citizen.birthDate' | translate }}:</label>
-                <input type="date" formControlName="birthDate" class="form-input" />
+                <input type="date" formControlName="birthDate" class="form-input" [class.error]="form.get('birthDate')?.invalid && form.get('birthDate')?.touched" />
+                @if (form.get('birthDate')?.invalid && form.get('birthDate')?.touched) {
+                    <div class="error-message">
+                        {{ 'senior-citizen.birthDateRequired' | translate }}
+                    </div>
+                }
             </div>
-
 
             <div class="form-field">
                 <label>{{ 'senior-citizen.gender' | translate }}:</label>
-                <input formControlName="gender" class="form-input" />
+                <input formControlName="gender" class="form-input" [class.error]="form.get('gender')?.invalid && form.get('gender')?.touched" />
+                @if (form.get('gender')?.invalid && form.get('gender')?.touched) {
+                    <div class="error-message">
+                        {{ 'senior-citizen.genderRequired' | translate }}
+                    </div>
+                }
             </div>
 
             <div class="form-field">
                 <label>{{ 'senior-citizen.weight' | translate }}:</label>
-                <input type="number" formControlName="weight" class="form-input" />
+                <input type="number" formControlName="weight" class="form-input" [class.error]="form.get('weight')?.invalid && form.get('weight')?.touched" />
+                @if (form.get('weight')?.invalid && form.get('weight')?.touched) {
+                    <div class="error-message">
+                        @if (form.get('weight')?.hasError('required')) {
+                            {{ 'senior-citizen.weightRequired' | translate }}
+                        } @else if (form.get('weight')?.hasError('min')) {
+                            {{ 'senior-citizen.weightMin' | translate }}
+                        }
+                    </div>
+                }
             </div>
 
             <div class="form-field">
                 <label>{{ 'senior-citizen.height' | translate }}:</label>
-                <input type="number" formControlName="height" class="form-input" />
+                <input type="number" formControlName="height" class="form-input" [class.error]="form.get('height')?.invalid && form.get('height')?.touched" />
+                @if (form.get('height')?.invalid && form.get('height')?.touched) {
+                    <div class="error-message">
+                        @if (form.get('height')?.hasError('required')) {
+                            {{ 'senior-citizen.heightRequired' | translate }}
+                        } @else if (form.get('height')?.hasError('min')) {
+                            {{ 'senior-citizen.heightMin' | translate }}
+                        }
+                    </div>
+                }
             </div>
 
             <div class="form-field">
                 <label>{{ 'senior-citizen.dni' | translate }}:</label>
-                <input formControlName="dni" class="form-input" />
+                <input formControlName="dni" class="form-input" [class.error]="form.get('dni')?.invalid && form.get('dni')?.touched" />
+                @if (form.get('dni')?.invalid && form.get('dni')?.touched) {
+                    <div class="error-message">
+                        {{ 'senior-citizen.dniRequired' | translate }}
+                    </div>
+                }
             </div>
 
             <div class="form-field">
                 <label>{{ 'senior-citizen.deviceId' | translate }}:</label>
-                <input type="number" formControlName="deviceId" class="form-input" />
+                <input type="number" formControlName="deviceId" class="form-input" [class.error]="form.get('deviceId')?.invalid && form.get('deviceId')?.touched" />
+                @if (form.get('deviceId')?.invalid && form.get('deviceId')?.touched) {
+                    <div class="error-message">
+                        @if (form.get('deviceId')?.hasError('required')) {
+                            {{ 'senior-citizen.deviceIdRequired' | translate }}
+                        } @else if (form.get('deviceId')?.hasError('min')) {
+                            {{ 'senior-citizen-registration.deviceIdMin' | translate }}
+                        }
+                    </div>
+                }
             </div>
     </div>
     <!-- URL de imagen -->
