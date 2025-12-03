@@ -5,7 +5,9 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, L
 
 @Component({
     selector: 'app-blood-preasure',
-    template: `<canvas #chartCanvas height="300"></canvas>`,
+    template: `
+        <canvas #chartCanvas height="300"></canvas>`,
+    standalone: true,
     styleUrls: ['./blood-preasure.css']
 })
 export class BloodPreasure implements AfterViewInit, OnDestroy {

@@ -1,34 +1,75 @@
 <div class="alert-list-container">
-    @if (relative()?.seniorCitizen?.alerts?.length) {
+    <!-- Loading spinner -->
+    @if (loading()) {
+        <div class="loading-container">
+            <mat-spinner diameter="50"></mat-spinner>
+            <p>{{ 'relative.alerts.loading' | translate }}</p>
+        </div>
+    }
+    
+    <!-- Alerts list -->
+    @else if (sortedAlerts().length) {
         <div class="alerts-grid">
-            @for (alert of relative()?.seniorCitizen?.alerts; track alert.id) {
-                <mat-card class="alert-card mat-elevation-z4">
+            @for (alert of sortedAlerts(); track alert.id) {
+                <mat-card class="alert-card mat-elevation-z4" [ngClass]="getAlertSeverityClass(alert.alertType)">
                     <mat-card-header>
                         <mat-card-title class="alert-title">
-                            {{ alert.alertTitle }}
+                            {{ alert.alertTitle || alert.alertType || 'Alert' }}
                         </mat-card-title>
+                        <div class="alert-type-chip">
+                            <mat-chip [ngClass]="getAlertSeverityClass(alert.alertType)">
+                                {{ alert.alertType || 'INFO' }}
+                            </mat-chip>
+                        </div>
                     </mat-card-header>
 
                     <mat-card-content>
                         <div class="alert-content">
                             <div class="alert-row">
-                                <strong>{{ 'relative.alerts.date' | translate }}:</strong> {{ formatDate(alert.date) }}
+                                <strong>{{ 'relative.alerts.date' | translate }}:</strong> 
+                                {{ alert.registeredAt ? formatDate(alert.registeredAt) : formatDate(alert.date) }}
                             </div>
                             <div class="alert-row">
-                                <strong>{{ 'relative.alerts.time' | translate }}:</strong> {{ alert.time }}
+                                <strong>{{ 'relative.alerts.time' | translate }}:</strong> 
+                                {{ alert.registeredAt ? formatTime(alert.registeredAt) : alert.time }}
                             </div>
                             <div class="alert-row">
-                                <strong>{{ 'relative.alerts.dataRegistered' | translate }}:</strong> {{ alert.dataRegistered }}
+                                <strong>{{ 'relative.alerts.dataRegistered' | translate }}:</strong> 
+                                <span class="data-value">{{ alert.dataRegistered }}</span>
                             </div>
-                            <div class="alert-row">
-                                <strong>{{ 'relative.alerts.reason' | translate }}:</strong> {{ alert.reason }}
+                            <div class="alert-row reason">
+                                <strong>{{ 'relative.alerts.reason' | translate }}:</strong> 
+                                {{ alert.reason || '-' }}
                             </div>
+                            @if (alert.deviceId) {
+                                <div class="alert-row device-info">
+                                    <strong>Device ID:</strong> {{ alert.deviceId }}
+                                </div>
+                            }
                         </div>
                     </mat-card-content>
                 </mat-card>
             }
         </div>
-    } @else {
-        <div class="no-alerts">{{ 'relative.alerts.noAlerts' | translate }}</div>
+    } 
+    
+    <!-- No alerts message -->
+    @else if (!loading()) {
+        <div class="no-alerts">
+            <mat-card class="mat-elevation-z2">
+                <mat-card-content>
+                    @if (!relative()) {
+                        <p style="color: orange;">⚠️ Cargando información del relative...</p>
+                    } @else if (!deviceId() || deviceId() === 0) {
+                        <p style="color: red;">❌ No se encontró un dispositivo asociado a este senior citizen.</p>
+                        <p class="device-info-text">Relative ID: {{ relative()?.id }}</p>
+                        <p class="device-info-text">Device ID: {{ relative()?.seniorCitizen?.deviceId ?? 'No asignado' }}</p>
+                    } @else {
+                        <p>{{ 'relative.alerts.noAlerts' | translate }}</p>
+                        <p class="device-info-text">Device ID: {{ deviceId() }}</p>
+                    }
+                </mat-card-content>
+            </mat-card>
+        </div>
     }
 </div>

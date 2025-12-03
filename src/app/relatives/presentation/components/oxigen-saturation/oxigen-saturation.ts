@@ -5,7 +5,9 @@ Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearS
 
 @Component({
     selector: 'app-oxygen-saturation',
-    template: `<canvas #chartCanvas height="300"></canvas>`,
+    template: `
+        <canvas #chartCanvas height="300"></canvas>`,
+    standalone: true,
     styleUrls: ['oxigen-saturation.css']
 })
 export class OxygenSaturation implements AfterViewInit, OnDestroy, OnChanges {

@@ -6,10 +6,11 @@ Chart.register(...registerables);
 @Component({
     selector: 'app-temperature-rate',
     template: `
-    <div class="p-4">
-      <canvas #chartCanvas height="300"></canvas>
-    </div>
-  `,
+        <div class="p-4">
+            <canvas #chartCanvas height="300"></canvas>
+        </div>
+    `,
+    standalone: true,
     styleUrls: ['./temperature-rate.css']
 })
 export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {

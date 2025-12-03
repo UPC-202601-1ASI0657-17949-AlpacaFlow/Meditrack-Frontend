@@ -231,21 +231,45 @@ export class SubscriptionSelectionComponent implements OnInit {
 
     this.authStore.register(user, password).subscribe({
       next: (response) => {
+        console.log('[SubscriptionSelection] User registered successfully:', response);
+        
         // Set auth state
         this.authStore.setAuth(response.token, response.user);
+        console.log('[SubscriptionSelection] Auth state set. User:', response.user);
         
         // Store planType in registration flow store for later use
         this.registrationFlowStore.setPlanType('freemium');
+        console.log('[SubscriptionSelection] Plan type set to freemium');
         
         // Clear temporary registration data (except planType)
         // Don't clear planType yet, we'll need it
         // this.registrationFlowStore.clear();
         
         // Redirect to senior citizen registration form
-        this.router.navigate(['senior-citizen-registration'], { relativeTo: this.route.parent });
+        // Use absolute path to ensure navigation works correctly
+        console.log('[SubscriptionSelection] Navigating to senior-citizen-registration...');
+        const navigationPromise = this.router.navigate(['/auth/senior-citizen-registration']);
+        navigationPromise.then(
+          (success) => {
+            if (success) {
+              console.log('[SubscriptionSelection] ✅ Successfully navigated to senior-citizen-registration');
+            } else {
+              console.error('[SubscriptionSelection] ❌ Navigation to senior-citizen-registration failed');
+              // Fallback: try relative navigation
+              console.log('[SubscriptionSelection] Trying relative navigation as fallback...');
+              this.router.navigate(['senior-citizen-registration'], { relativeTo: this.route.parent });
+            }
+          },
+          (error) => {
+            console.error('[SubscriptionSelection] ❌ Navigation error:', error);
+            // Fallback: try relative navigation
+            console.log('[SubscriptionSelection] Trying relative navigation as fallback...');
+            this.router.navigate(['senior-citizen-registration'], { relativeTo: this.route.parent });
+          }
+        );
       },
       error: (error) => {
-        console.error('Error creating user:', error);
+        console.error('[SubscriptionSelection] Error creating user:', error);
         this.router.navigate(['/auth/login']);
       }
     });

@@ -5,7 +5,9 @@ Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearS
 
 @Component({
     selector: 'app-heart-rate',
-    template: `<canvas #chartCanvas height="300"></canvas>`,
+    template: `
+        <canvas #chartCanvas height="300"></canvas>`,
+    standalone: true,
     styleUrls: ['hear-rate.css']
 })
 export class HeartRate implements AfterViewInit, OnDestroy, OnChanges {

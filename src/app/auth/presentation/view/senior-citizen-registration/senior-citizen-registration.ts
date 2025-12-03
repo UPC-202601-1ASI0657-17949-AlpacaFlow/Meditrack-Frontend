@@ -57,7 +57,7 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
   constructor() {
     this.form = this.fb.group({
       fullName: ['', Validators.required],
-      age: [null, [Validators.required, Validators.min(0), Validators.max(150)]],
+      birthDate: ['', Validators.required],
       gender: ['', Validators.required],
       dni: ['', Validators.required],
       deviceId: [null, [Validators.required, Validators.min(0)]],
@@ -71,11 +71,43 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
     // Get userId from auth store
     const currentUser = this.authStore.currentUser();
     if (!currentUser) {
-      console.error('No user found in auth store');
+      console.error('[SeniorCitizenRegistration] No user found in auth store');
       this.router.navigate(['/auth/login']);
       return;
     }
     this.userId = currentUser.id;
+    console.log('[SeniorCitizenRegistration] Component initialized for userId:', this.userId);
+    
+    // Check if user already has a relative with senior citizen registered
+    // Only redirect if they already have a senior citizen (registration is complete)
+    // If they don't have a relative yet (404) or don't have a senior citizen, show the form
+    this.relativesApi.getRelativeByUserId(this.userId).subscribe({
+      next: (relative) => {
+        console.log('[SeniorCitizenRegistration] Relative found:', relative);
+        if (relative && relative.seniorCitizen) {
+          console.log('[SeniorCitizenRegistration] User already has a relative and senior citizen registered. Redirecting to profile.');
+          // User already completed registration, redirect to their profile
+          this.router.navigate(['/relative/relative', this.userId]);
+        } else if (relative && !relative.seniorCitizen) {
+          console.log('[SeniorCitizenRegistration] User has a relative but no senior citizen yet. Showing registration form.');
+          // User has a relative entity but no senior citizen - show form to complete registration
+        } else {
+          console.log('[SeniorCitizenRegistration] User does not have a relative yet. Showing registration form.');
+          // User doesn't have a relative yet, show the form
+        }
+      },
+      error: (error) => {
+        // If error is 404, it means the user doesn't have a relative yet, which is expected during registration
+        // This is the normal case for new users - show the form so they can register
+        if (error.status === 404) {
+          console.log('[SeniorCitizenRegistration] No relative found for user (404). This is expected for new registrations. Showing registration form.');
+        } else {
+          console.error('[SeniorCitizenRegistration] Error checking for existing relative:', error);
+          // On other errors, still show the form (user can try to register)
+          console.log('[SeniorCitizenRegistration] Showing registration form despite error.');
+        }
+      }
+    });
   }
 
   onSubmit(): void {
@@ -98,10 +130,99 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
     // If no lastName provided, use "N/A" as default (backend requires non-empty lastName)
     const lastName = fullNameParts.slice(1).join(' ').trim() || 'N/A';
     
-    // Calculate birthDate from age
+    // Get birthDate from form (already in YYYY-MM-DD format from date input)
+    const birthDateString = this.form.value.birthDate;
+    
+    // Validate birthDate is provided
+    if (!birthDateString) {
+      this.errorMessage = 'Birth date is required';
+      this.isLoading = false;
+      return;
+    }
+    
+    // Parse birthDate string to Date object
+    const birthDateObj = new Date(birthDateString + 'T00:00:00.000Z'); // Add time to avoid timezone issues
+    
+    // Validate the date is valid
+    if (isNaN(birthDateObj.getTime())) {
+      this.errorMessage = 'Invalid birth date';
+      this.isLoading = false;
+      return;
+    }
+    
+    // Validate birthDate is not in the future
     const today = new Date();
-    const birthYear = today.getFullYear() - Number(this.form.value.age);
-    const birthDate = new Date(birthYear, today.getMonth(), today.getDate()).toISOString().split('T')[0];
+    if (birthDateObj > today) {
+      this.errorMessage = 'Birth date cannot be in the future';
+      this.isLoading = false;
+      return;
+    }
+    
+    // Validate birthDate is reasonable (not too old)
+    const minYear = 1900;
+    if (birthDateObj.getFullYear() < minYear) {
+      this.errorMessage = `Birth date must be after ${minYear}`;
+      this.isLoading = false;
+      return;
+    }
+    
+    // Calculate age from birthDate (same logic as in SeniorCitizen entity)
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const monthDiff = today.getMonth() - birthDateObj.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+      age--;
+    }
+    
+    // Validate calculated age is reasonable
+    if (age < 0 || age > 150) {
+      this.errorMessage = 'Invalid birth date: age would be out of range';
+      this.isLoading = false;
+      return;
+    }
+    
+    // Ensure birthDate is in YYYY-MM-DD format (from date input it should already be)
+    const birthDate = birthDateString;
+    
+    console.log('[SeniorCitizenRegistration] Using birthDate from form:', {
+      birthDateString: birthDate,
+      birthDateObj: birthDateObj,
+      calculatedAge: age
+    });
+    
+    // Ensure all numeric values are proper numbers (not strings or scientific notation)
+    const deviceId = Math.floor(Number(this.form.value.deviceId));
+    const weight = Number(this.form.value.weight);
+    const height = Number(this.form.value.height);
+    const ageNum = Math.floor(age);
+    
+    // Validate numeric values
+    if (isNaN(deviceId) || deviceId <= 0) {
+      this.errorMessage = 'Device ID must be a positive number';
+      this.isLoading = false;
+      return;
+    }
+    
+    if (isNaN(weight) || weight <= 0) {
+      this.errorMessage = 'Weight must be a positive number';
+      this.isLoading = false;
+      return;
+    }
+    
+    if (isNaN(height) || height <= 0) {
+      this.errorMessage = 'Height must be a positive number';
+      this.isLoading = false;
+      return;
+    }
+    
+    console.log('[SeniorCitizenRegistration] Creating senior citizen with values:', {
+      birthDate: birthDate,
+      birthDateType: typeof birthDate,
+      calculatedAge: ageNum,
+      deviceId: deviceId,
+      deviceIdType: typeof deviceId,
+      weight: weight,
+      height: height
+    });
     
     // Create senior citizen with organizationId = 0 (special case for relatives)
     // This ensures that senior-citizens of relatives are always distinguished from those of organizations
@@ -111,14 +232,14 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
       organizationId: 0, // Always 0 for relatives - this is enforced for security
       firstName: firstName,
       lastName: lastName,
-      birthDate: birthDate,
-      age: Number(this.form.value.age),
+      birthDate: birthDate, // Pass as string YYYY-MM-DD
+      age: ageNum,
       gender: this.form.value.gender,
-      weight: Number(this.form.value.weight),
-      height: Number(this.form.value.height),
+      weight: weight,
+      height: height,
       dni: this.form.value.dni,
       imageUrl: this.form.value.imageUrl || '/assets/default-senior-citizen.png',
-      deviceId: Number(this.form.value.deviceId)
+      deviceId: deviceId
     });
     
     // Validate that organizationId is 0 (security check)
@@ -130,7 +251,22 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
     }
 
     console.log('[SeniorCitizenRegistration] Creating senior citizen:', seniorCitizen);
-    console.log('[SeniorCitizenRegistration] Senior citizen data:', JSON.stringify(seniorCitizen, null, 2));
+    // Don't use JSON.stringify on the entity directly as it will serialize Date objects incorrectly
+    // Instead, log the important fields
+    console.log('[SeniorCitizenRegistration] Senior citizen data:', {
+      id: seniorCitizen.id,
+      organizationId: seniorCitizen.organizationId,
+      firstName: seniorCitizen.firstName,
+      lastName: seniorCitizen.lastName,
+      birthDate: seniorCitizen.birthDate instanceof Date ? seniorCitizen.birthDate.toISOString() : seniorCitizen.birthDate,
+      age: seniorCitizen.age,
+      gender: seniorCitizen.gender,
+      weight: seniorCitizen.weight,
+      height: seniorCitizen.height,
+      dni: seniorCitizen.dni,
+      imageUrl: seniorCitizen.imageUrl,
+      deviceId: seniorCitizen.deviceId
+    });
     
     // Get planType from registration flow store
     const planType = this.registrationFlowStore.planType || 'freemium';

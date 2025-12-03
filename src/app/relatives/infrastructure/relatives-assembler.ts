@@ -19,27 +19,31 @@ export class RelativesAssembler
         if (resource.seniorCitizen) {
             const backendSc = resource.seniorCitizen as any;
             
-            // Calculate age from birthDate
-            let age = 0;
+            // Parse birthDate from backend (can be string or Date)
+            let birthDate: Date | string | null = null;
             if (backendSc.birthDate) {
-                const birthDate = new Date(backendSc.birthDate);
-                const today = new Date();
-                age = today.getFullYear() - birthDate.getFullYear();
-                const monthDiff = today.getMonth() - birthDate.getMonth();
-                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                    age--;
-                }
+                birthDate = backendSc.birthDate instanceof Date 
+                    ? backendSc.birthDate 
+                    : new Date(backendSc.birthDate);
             }
+            
+            // Convert deviceId from string to number (backend sends it as string)
+            const deviceId = backendSc.deviceId 
+                ? (typeof backendSc.deviceId === 'string' 
+                    ? parseInt(backendSc.deviceId, 10) 
+                    : Number(backendSc.deviceId))
+                : 0;
             
             seniorCitizen = new SeniorCitizen({
                 firstName: backendSc.firstName || '',
                 lastName: backendSc.lastName || '',
-                age: age,
+                birthDate: birthDate, // Pass birthDate, entity will calculate age automatically
                 dni: backendSc.dni || '',
                 gender: backendSc.gender || '',
                 height: backendSc.height || 0,
                 weight: backendSc.weight || 0,
                 image: backendSc.profileImage || '',
+                deviceId: deviceId,
                 signalVitals: {},
                 alerts: []
             });
@@ -80,10 +84,12 @@ export class RelativesAssembler
                 dni: entity.seniorCitizen.dni,
                 gender: entity.seniorCitizen.gender,
                 height: entity.seniorCitizen.height,
-                birthDate: '', // Will need to be converted from Date if available
+                birthDate: entity.seniorCitizen.birthDate instanceof Date 
+                    ? entity.seniorCitizen.birthDate.toISOString().split('T')[0] // Format: YYYY-MM-DD
+                    : (entity.seniorCitizen.birthDate ? String(entity.seniorCitizen.birthDate) : ''),
                 weight: entity.seniorCitizen.weight,
                 profileImage: entity.seniorCitizen.image,
-                deviceId: '' // Will need to be provided
+                deviceId: entity.seniorCitizen.deviceId ? String(entity.seniorCitizen.deviceId) : ''
             } : null,
             // Legacy fields for frontend compatibility
             email: entity.email,
