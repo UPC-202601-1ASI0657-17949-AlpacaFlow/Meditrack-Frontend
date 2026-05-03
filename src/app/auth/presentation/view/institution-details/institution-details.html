@@ -15,9 +15,13 @@
                            formControlName="institutionName"
                            [placeholder]="'institutionDetails.institutionNamePlaceholder' | translate">
                     <mat-icon matPrefix>business</mat-icon>
-                    @if (institutionForm.get('institutionName')?.invalid && institutionForm.get('institutionName')?.touched) {
+                    @if (institutionForm.get('institutionName')?.invalid && (institutionForm.get('institutionName')?.touched || institutionForm.get('institutionName')?.dirty)) {
                         <mat-error>
-                            {{ 'institutionDetails.errors.institutionNameRequired' | translate }}
+                            @if (institutionForm.get('institutionName')?.hasError('required')) {
+                                {{ 'institutionDetails.errors.institutionNameRequired' | translate }}
+                            } @else if (institutionForm.get('institutionName')?.hasError('institutionNameTaken')) {
+                                {{ 'institutionDetails.errors.institutionNameTaken' | translate }}
+                            }
                         </mat-error>
                     }
                 </mat-form-field>
@@ -53,7 +57,7 @@
             <button mat-raised-button 
                     type="submit"
                     class="start-button"
-                    [disabled]="institutionForm.invalid">
+                    [disabled]="institutionForm.invalid || institutionForm.pending">
                 {{ 'institutionDetails.startButton' | translate }}
             </button>
         </form>

@@ -1,5 +1,5 @@
 import { computed, Injectable, Signal, signal, inject } from '@angular/core';
-import { retry, take, switchMap, of } from 'rxjs';
+import { Observable, retry, take, switchMap, of, tap } from 'rxjs';
 
 import { Doctor } from '../domain/model/doctor.entity';
 import { Caregiver } from '../domain/model/caregiver.entity';
@@ -817,18 +817,17 @@ export class OrganizationStore {
    * Adds a new doctor.
    * The backend automatically creates a user account when a doctor is created (if userId is not provided).
    * @param doctor - The doctor to add.
+   * @returns Observable of the created doctor (HTTP success). Caller should handle errors (e.g. duplicate email/name).
    */
-  addDoctor(doctor: Doctor): void {
-    this.loadingSignal.set(true);
+  addDoctor(doctor: Doctor): Observable<Doctor> {
+    // No usar loadingSignal aquí: organization-layout oculta todo el router-outlet mientras loading()
+    // es true, lo que destruye el formulario de médico y parece un fallo del sistema en errores 409.
     this.errorSignal.set(null);
-    
-    // Create the doctor in the database
-    // The backend will automatically create a User with role "doctor" if userId is not provided
-    // We don't set userId here, so the backend will create it automatically
+
     const doctorToCreate = new Doctor({
-      id: 0, // New doctor
+      id: 0,
       organizationId: doctor.organizationId,
-      userId: null, // Let backend create the user automatically
+      userId: null,
       firstName: doctor.firstName,
       lastName: doctor.lastName,
       age: doctor.age,
@@ -838,42 +837,31 @@ export class OrganizationStore {
       imageUrl: doctor.imageUrl,
       assignedSeniorIds: doctor.assignedSeniorIds || []
     });
-    
-    this.organizationApi.createDoctor(doctorToCreate).pipe(
-      retry(2)
-    ).subscribe({
-      next: createdDoctor => {
+
+    return this.organizationApi.createDoctor(doctorToCreate).pipe(
+      retry(2),
+      tap(createdDoctor => {
         this.doctorsSignal.update(doctors => [...doctors, createdDoctor]);
-        this.loadingSignal.set(false);
-        console.log(`[Store] Doctor created successfully. Email: ${createdDoctor.email}, UserId: ${createdDoctor.userId || 'will be created by backend'}`);
-      },
-      error: err => {
-        this.errorSignal.set(this.formatError(err, 'Failed to create doctor'));
-        this.loadingSignal.set(false);
-        console.error('[Store] Error creating doctor:', err);
-      }
-    });
+        console.log(
+          `[Store] Doctor created successfully. Email: ${createdDoctor.email}, UserId: ${createdDoctor.userId ?? 'n/a'}`
+        );
+      })
+    );
   }
 
   /**
    * Updates an existing doctor.
    * @param updatedDoctor - The doctor to update.
+   * @returns Observable of the updated doctor. Caller should handle errors (e.g. duplicate email/name).
    */
-  updateDoctor(updatedDoctor: Doctor): void {
-    this.loadingSignal.set(true);
+  updateDoctor(updatedDoctor: Doctor): Observable<Doctor> {
     this.errorSignal.set(null);
-    this.organizationApi.updateDoctor(updatedDoctor).pipe(retry(2)).subscribe({
-      next: doctor => {
-        this.doctorsSignal.update(doctors =>
-          doctors.map(d => d.id === doctor.id ? doctor : d)
-        );
-        this.loadingSignal.set(false);
-      },
-      error: err => {
-        this.errorSignal.set(this.formatError(err, 'Failed to update doctor'));
-        this.loadingSignal.set(false);
-      }
-    });
+    return this.organizationApi.updateDoctor(updatedDoctor).pipe(
+      retry(2),
+      tap(doctor => {
+        this.doctorsSignal.update(doctors => doctors.map(d => (d.id === doctor.id ? doctor : d)));
+      })
+    );
   }
 
   /**
@@ -1287,18 +1275,15 @@ export class OrganizationStore {
    * Adds a new caregiver.
    * The backend automatically creates a user account when a caregiver is created (if userId is not provided).
    * @param caregiver - The caregiver to add.
+   * @returns Observable of the created caregiver (HTTP success). Caller should handle errors (e.g. duplicate email/name).
    */
-  addCaregiver(caregiver: Caregiver): void {
-    this.loadingSignal.set(true);
+  addCaregiver(caregiver: Caregiver): Observable<Caregiver> {
     this.errorSignal.set(null);
-    
-    // Create the caregiver in the database
-    // The backend will automatically create a User with role "caregiver" if userId is not provided
-    // We don't set userId here, so the backend will create it automatically
+
     const caregiverToCreate = new Caregiver({
-      id: 0, // New caregiver
+      id: 0,
       organizationId: caregiver.organizationId,
-      userId: null, // Let backend create the user automatically
+      userId: null,
       firstName: caregiver.firstName,
       lastName: caregiver.lastName,
       age: caregiver.age,
@@ -1307,42 +1292,31 @@ export class OrganizationStore {
       imageUrl: caregiver.imageUrl,
       assignedSeniorIds: caregiver.assignedSeniorIds || []
     });
-    
-    this.organizationApi.createCaregiver(caregiverToCreate).pipe(
-      retry(2)
-    ).subscribe({
-      next: createdCaregiver => {
+
+    return this.organizationApi.createCaregiver(caregiverToCreate).pipe(
+      retry(2),
+      tap(createdCaregiver => {
         this.caregiversSignal.update(caregivers => [...caregivers, createdCaregiver]);
-        this.loadingSignal.set(false);
-        console.log(`[Store] Caregiver created successfully. Email: ${createdCaregiver.email}, UserId: ${createdCaregiver.userId || 'will be created by backend'}`);
-      },
-      error: err => {
-        this.errorSignal.set(this.formatError(err, 'Failed to create caregiver'));
-        this.loadingSignal.set(false);
-        console.error('[Store] Error creating caregiver:', err);
-      }
-    });
+        console.log(
+          `[Store] Caregiver created successfully. Email: ${createdCaregiver.email}, UserId: ${createdCaregiver.userId ?? 'n/a'}`
+        );
+      })
+    );
   }
 
   /**
    * Updates an existing caregiver.
    * @param updatedCaregiver - The caregiver to update.
+   * @returns Observable of the updated caregiver. Caller should handle errors (e.g. duplicate email/name).
    */
-  updateCaregiver(updatedCaregiver: Caregiver): void {
-    this.loadingSignal.set(true);
+  updateCaregiver(updatedCaregiver: Caregiver): Observable<Caregiver> {
     this.errorSignal.set(null);
-    this.organizationApi.updateCaregiver(updatedCaregiver).pipe(retry(2)).subscribe({
-      next: caregiver => {
-        this.caregiversSignal.update(caregivers =>
-          caregivers.map(k => k.id === caregiver.id ? caregiver : k)
-        );
-        this.loadingSignal.set(false);
-      },
-      error: err => {
-        this.errorSignal.set(this.formatError(err, 'Failed to update caregiver'));
-        this.loadingSignal.set(false);
-      }
-    });
+    return this.organizationApi.updateCaregiver(updatedCaregiver).pipe(
+      retry(2),
+      tap(caregiver => {
+        this.caregiversSignal.update(caregivers => caregivers.map(k => (k.id === caregiver.id ? caregiver : k)));
+      })
+    );
   }
 
   /**
@@ -1380,14 +1354,13 @@ export class OrganizationStore {
    * @param seniorCitizen - The senior citizen to add.
    * @throws Error if senior citizen doesn't belong to the current organization.
    */
-  addSeniorCitizen(seniorCitizen: SeniorCitizen): void {
+  addSeniorCitizen(seniorCitizen: SeniorCitizen): Observable<SeniorCitizen> {
     const currentOrganizationId = this.getCurrentOrganizationId();
-    
-    // Validate organizationId matches current organization
+
     if (currentOrganizationId === 0) {
       throw new Error('Cannot create senior citizen: No organization context available');
     }
-    
+
     if (seniorCitizen.organizationId !== currentOrganizationId) {
       throw new Error(
         `Cannot create senior citizen: organizationId mismatch. ` +
@@ -1395,12 +1368,12 @@ export class OrganizationStore {
         `A senior citizen can only be created for the current organization.`
       );
     }
-    
-    this.loadingSignal.set(true);
-    this.seniorCitizensErrorSignal.set(null); // Limpiar error específico de senior citizens
-    this.organizationApi.createSeniorCitizen(seniorCitizen).pipe(retry(2)).subscribe({
-      next: createdSeniorCitizen => {
-        // Validate that the created senior citizen belongs to the current organization
+
+    // No loadingSignal: el layout oculta el router-outlet y el formulario desaparece (igual que doctores).
+    this.seniorCitizensErrorSignal.set(null);
+    return this.organizationApi.createSeniorCitizen(seniorCitizen).pipe(
+      retry(2),
+      tap(createdSeniorCitizen => {
         if (createdSeniorCitizen.organizationId === currentOrganizationId) {
           this.seniorCitizensSignal.update(seniorCitizens => [...seniorCitizens, createdSeniorCitizen]);
         } else {
@@ -1409,16 +1382,9 @@ export class OrganizationStore {
             `than current (${currentOrganizationId}). Not adding to list.`
           );
         }
-        this.loadingSignal.set(false);
-        this.seniorCitizensErrorSignal.set(null); // Asegurar que no hay error
-      },
-      error: err => {
-        // Usar el signal de error específico de senior citizens en lugar del errorSignal global
-        // Esto evita que el error se muestre en el layout como error de organización
-        this.seniorCitizensErrorSignal.set(this.formatError(err, 'Failed to create senior citizen'));
-        this.loadingSignal.set(false);
-      }
-    });
+        this.seniorCitizensErrorSignal.set(null);
+      })
+    );
   }
 
   /**
@@ -1427,14 +1393,13 @@ export class OrganizationStore {
    * @param updatedSeniorCitizen - The senior citizen to update.
    * @throws Error if senior citizen doesn't belong to the current organization or organizationId is changed.
    */
-  updateSeniorCitizen(updatedSeniorCitizen: SeniorCitizen): void {
+  updateSeniorCitizen(updatedSeniorCitizen: SeniorCitizen): Observable<SeniorCitizen> {
     const currentOrganizationId = this.getCurrentOrganizationId();
-    
-    // Validate organizationId matches current organization
+
     if (currentOrganizationId === 0) {
       throw new Error('Cannot update senior citizen: No organization context available');
     }
-    
+
     if (updatedSeniorCitizen.organizationId !== currentOrganizationId) {
       throw new Error(
         `Cannot update senior citizen: organizationId mismatch. ` +
@@ -1442,8 +1407,7 @@ export class OrganizationStore {
         `A senior citizen can only be updated within its organization.`
       );
     }
-    
-    // Find existing senior citizen to ensure organizationId doesn't change
+
     const existingSeniorCitizen = this.seniorCitizens().find(sc => sc.id === updatedSeniorCitizen.id);
     if (existingSeniorCitizen && existingSeniorCitizen.organizationId !== updatedSeniorCitizen.organizationId) {
       throw new Error(
@@ -1452,33 +1416,23 @@ export class OrganizationStore {
         `A senior citizen cannot be moved to a different organization.`
       );
     }
-    
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
-    this.organizationApi.updateSeniorCitizen(updatedSeniorCitizen).pipe(retry(2)).subscribe({
-      next: seniorCitizen => {
-        // Validate that the updated senior citizen still belongs to the current organization
+
+    return this.organizationApi.updateSeniorCitizen(updatedSeniorCitizen).pipe(
+      retry(2),
+      tap(seniorCitizen => {
         if (seniorCitizen.organizationId === currentOrganizationId) {
           this.seniorCitizensSignal.update(seniorCitizens =>
-            seniorCitizens.map(sc => sc.id === seniorCitizen.id ? seniorCitizen : sc)
+            seniorCitizens.map(sc => (sc.id === seniorCitizen.id ? seniorCitizen : sc))
           );
         } else {
-          // If organizationId changed (shouldn't happen), remove from list
           console.warn(
             `Updated senior citizen has different organizationId (${seniorCitizen.organizationId}) ` +
             `than current (${currentOrganizationId}). Removing from list.`
           );
-          this.seniorCitizensSignal.update(seniorCitizens =>
-            seniorCitizens.filter(sc => sc.id !== seniorCitizen.id)
-          );
+          this.seniorCitizensSignal.update(seniorCitizens => seniorCitizens.filter(sc => sc.id !== seniorCitizen.id));
         }
-        this.loadingSignal.set(false);
-      },
-      error: err => {
-        this.errorSignal.set(this.formatError(err, 'Failed to update senior citizen'));
-        this.loadingSignal.set(false);
-      }
-    });
+      })
+    );
   }
 
   /**

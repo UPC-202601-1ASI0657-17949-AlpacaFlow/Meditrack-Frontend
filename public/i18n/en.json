@@ -64,6 +64,9 @@
     "specialty": "Specialty",
     "email": "Institution's Email",
     "phoneNumber": "Phone Number",
+    "phoneHint": "Digits only; you may use spaces, +, hyphens, and parentheses.",
+    "specialtyHint": "Letters only, with spaces between words (no numbers or symbols).",
+    "ageHint": "The physician must be between 31 and 75 years old.",
     "uploadPhoto": "Upload a photo.",
     "dragFile": "Drag the file into this box",
     "preview": "Preview:",
@@ -105,10 +108,24 @@
     "errors": {
       "required": "is required",
       "requiredFemale": "is required",
-      "emailInvalid": "is required and must be valid",
+      "emailInvalid": "is required and must be valid(without spaces)",
       "photoRequired": "Photo is required",
       "cannotAssignToCaregiver": "This senior citizen is already assigned to a caregiver. Cannot be assigned to a doctor (mutual exclusion).",
-      "assignError": "Error assigning senior citizen"
+      "assignError": "Error assigning senior citizen",
+      "formInvalidSummary": "There are errors in the form. Please fix the highlighted fields before saving.",
+      "ageRequired": "Age is required.",
+      "ageTooYoung": "The physician must be over 30 years old (minimum age: 31).",
+      "ageTooOld": "The physician cannot be older than 75.",
+      "specialtyRequired": "Specialty is required.",
+      "specialtyHasDigits": "Specialty cannot contain numbers.",
+      "specialtyInvalidChars": "Specialty may only contain letters and spaces between words (no symbols or numbers).",
+      "phoneRequired": "Phone number is required.",
+      "phoneNoLetters": "The phone number cannot contain letters.",
+      "phoneInvalidChars": "The phone number may only include digits and the characters + ( ) - and spaces.",
+      "duplicateRegistration": "Registration error: a doctor with this name or email is already registered in your organization. Please review the data and try again.",
+      "duplicateEmail": "A doctor with this email is already registered in your organization. Use a different email or review existing staff.",
+      "duplicateFullName": "A doctor with the same full name is already registered in your organization. Change the name or review existing staff.",
+      "saveFailed": "The doctor could not be saved. Check the data or try again."
     }
   },
   "senior-citizen": {
@@ -142,13 +159,31 @@
     "lastNameRequired": "Last name is required",
     "birthDateRequired": "Birth date is required",
     "genderRequired": "Gender is required",
+    "genderPlaceholder": "Select gender",
+    "genderMale": "Masculino",
+    "genderFemale": "Femenino",
     "dniRequired": "DNI is required",
+    "dniDigitsMax": "DNI must contain digits only, up to 8 characters",
     "weightRequired": "Weight is required",
     "weightMin": "Weight must be greater than 0",
+    "weightRange": "Weight must be between 25 and 250 kg",
     "heightRequired": "Height is required",
     "heightMin": "Height must be greater than 0",
+    "heightRange": "Height must be between 120 and 220 cm",
     "deviceIdRequired": "Device ID is required",
     "deviceIdTooLarge": "Device ID is too large. Maximum allowed value is {{maxValue}}. Please use a smaller device ID.",
+    "errors": {
+      "invalidBirthDate": "The birth date is not valid. Use a real date in YYYY-MM-DD format (not in the future).",
+      "invalidBirthDateServer": "Registration error: the birth date was not accepted. Enter a valid date (YYYY-MM-DD, reasonable year).",
+      "ageOutOfRange": "Age from the birth date must be between {{minAge}} and {{maxAge}} years.",
+      "noOrganizationContext": "No active organization context. Return to the list and try again.",
+      "deviceIdInvalid": "Device ID must be a positive number.",
+      "validationServer": "The server rejected the data. Check age (60–120 years), gender (Masculino/Femenino), weight (25–250 kg), height (120–220 cm), and DNI (digits only, max 8).",
+      "duplicateDni": "A senior citizen with this DNI is already registered in the organization. Use another ID or review the existing record.",
+      "duplicateFullName": "A senior citizen with the same first and last name already exists in the organization. Change the name or review the existing record.",
+      "deviceAlreadyAssigned": "This device ID is already assigned to another senior citizen. Use an available device or verify the wearable hardware ID.",
+      "saveFailed": "The senior citizen could not be saved. Check the data or try again."
+    },
     "clickToView": "Click to view details",
     "edit": "Edit",
     "delete": "Delete",
@@ -178,20 +213,14 @@
       "noAlerts": "No alerts available"
     },
     "statistics": {
-      "bloodPressure": "Blood Pressure (mmHg)",
-      "bloodPressureTitle": "Blood Pressure (Diastolic & Systolic) - Last 7 Days",
-      "bloodPressureTooltip": "Diastolic: {{diastolic}}, Systolic: {{systolic}}",
       "heartRate": "Heart Rate (bpm)",
       "heartRateTitle": "Heart Rate - Last 7 Days",
       "oxygenSaturation": "Oxygen Saturation (%) - Last 7 Days",
       "temperature": "Body Temperature - Last 7 Days",
       "dayOfWeek": "Day of the Week",
-      "mmhg": "mmHg",
       "bpm": "bpm",
       "spO2": "SpO₂ (%)",
-      "temperatureUnit": "Temperature (°C)",
-      "diastolic": "Diastolic",
-      "systolic": "Systolic"
+      "temperatureUnit": "Temperature (°C)"
     }
   },
   "caregiver": {
@@ -219,6 +248,8 @@
     "imageUrlHint": "Enter a valid image URL",
     "imageUrlPlaceholder": "https://example.com/image.jpg",
     "imageUrlError": "Must be a valid image URL",
+    "ageHint": "Age must be a whole number between 21 and 65.",
+    "phoneHint": "Digits only (no spaces, letters, or symbols).",
     "photo": "Photo",
     "assignedTo": "Assigned to",
     "errors": {
@@ -227,7 +258,17 @@
       "emailInvalid": "is required and must be valid",
       "photoRequired": "Photo is required",
       "cannotAssignToDoctor": "This senior citizen is already assigned to a doctor. Cannot be assigned to a caregiver (mutual exclusion).",
-      "assignError": "Error assigning senior citizen"
+      "assignError": "Error assigning senior citizen",
+      "formInvalidSummary": "There are errors in the form. Please fix the highlighted fields before saving.",
+      "duplicateRegistration": "Registration error: a caregiver with this name or email is already registered in your organization. Please review the data and try again.",
+      "duplicateEmail": "A caregiver with this email is already registered in your organization. Use a different email or review existing staff.",
+      "duplicateFullName": "A caregiver with the same full name is already registered in your organization. Change the name or review existing staff.",
+      "saveFailed": "The caregiver could not be saved. Check the data or try again.",
+      "ageRequired": "Age is required.",
+      "ageTooYoung": "The caregiver must be at least 21 years old.",
+      "ageTooOld": "The caregiver cannot be older than 65.",
+      "phoneRequired": "Phone number is required.",
+      "phoneDigitsOnly": "The phone number may only contain digits (no letters or special characters)."
     },
     "deleteCaregiverDialog": {
       "title": "Delete Caregiver",
@@ -252,9 +293,10 @@
     "togglePassword": "Toggle password visibility",
     "errors": {
       "emailRequired": "Email is required and must be valid",
-      "passwordRequired": "Password is required (minimum 6 characters)",
+      "passwordRequired": "Password is required",
       "invalidCredentials": "Invalid email or password. Please try again."
-    }
+    },
+    "staffPasswordHint": "If you were registered by your organization, your initial password is usually the same as your email address."
   },
   "signup": {
     "title": "Create an account",
@@ -329,6 +371,7 @@
     "toggleConfirmPassword": "Toggle confirm password visibility",
     "terms": "By providing your card information, you allow MediTrack to charge your card for future payments in accordance with their terms.",
     "startButton": "Start using MediTrack",
+    "changeInstitutionDetails": "Change institution name",
     "errors": {
       "cardNumberRequired": "Card number is required",
       "invalidCardNumber": "Invalid card number",
@@ -350,6 +393,7 @@
     "startButton": "Start using MediTrack",
     "errors": {
       "institutionNameRequired": "Institution name is required",
+      "institutionNameTaken": "That institution name is already registered. Please try another.",
       "institutionTypeRequired": "Please select an institution type"
     }
   },

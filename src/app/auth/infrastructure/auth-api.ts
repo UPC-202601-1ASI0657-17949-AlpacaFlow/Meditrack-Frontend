@@ -106,6 +106,13 @@ export class AuthApi extends BaseApi {
   }
 
   /**
+   * True if no other organization is already using this name (case-insensitive). Used during admin sign-up.
+   */
+  isOrganizationNameAvailable(name: string) {
+    return this.usersEndpoint.isOrganizationNameAvailable(name);
+  }
+
+  /**
    * Fetches all credentials from the API.
    * @returns An Observable emitting an array of Credentials entities.
    */

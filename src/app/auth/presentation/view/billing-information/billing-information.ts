@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -31,6 +32,8 @@ import { switchMap, of } from 'rxjs';
   styleUrl: './billing-information.css'
 })
 export class BillingInformationComponent {
+  private static readonly ORG_DUPLICATE_NAME_CODE = 'MEDITRACK_ORGANIZATION_DUPLICATE_NAME';
+
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -41,6 +44,8 @@ export class BillingInformationComponent {
   billingForm: FormGroup;
   hidePassword = true;
   hideConfirmPassword = true;
+  /** i18n key shown when registration fails (e.g. duplicate organization name). */
+  registrationErrorKey: string | null = null;
 
   constructor() {
     this.billingForm = this.fb.group({
@@ -141,6 +146,8 @@ export class BillingInformationComponent {
       this.billingForm.markAllAsTouched();
       return;
     }
+
+    this.registrationErrorKey = null;
 
     // This is a static form, billing data is ignored for now
     // But this is where we create user, organization and admin after payment is completed
@@ -263,19 +270,22 @@ export class BillingInformationComponent {
           }
         });
       },
-      error: (error) => {
+      error: (error: HttpErrorResponse) => {
         console.error('Error creating user, organization and admin:', error);
-        console.error('Error details:', {
-          status: error.status,
-          statusText: error.statusText,
-          message: error.message,
-          error: error.error,
-          url: error.url
-        });
-        // On error, redirect to login
+        const body = typeof error.error === 'string' ? error.error : '';
+        const haystack = `${body} ${error.message ?? ''}`;
+        if (error.status === 409 && haystack.includes(BillingInformationComponent.ORG_DUPLICATE_NAME_CODE)) {
+          this.registrationErrorKey = 'institutionDetails.errors.institutionNameTaken';
+          return;
+        }
         this.router.navigate(['/auth/login']);
       }
     });
+  }
+
+  goToInstitutionDetails(): void {
+    this.registrationErrorKey = null;
+    this.router.navigate(['../institution-details'], { relativeTo: this.route.parent });
   }
 
   goBack(): void {

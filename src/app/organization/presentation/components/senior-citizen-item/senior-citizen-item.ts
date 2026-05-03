@@ -27,9 +27,15 @@ export class SeniorCitizenItem {
     public organizationStore: OrganizationStore
   ) {}
 
-  /**
-   * Obtiene organizationId, userRole y userId de la ruta padre
-   */
+  /** Admin de clínica u organización residencial que puede dar de alta, editar o eliminar adultos mayores. */
+  canManageSeniorCitizensRoster(): boolean {
+    const fromRoute = this.getRouteParams().userRole;
+    const fromStore = this.organizationStore.getCurrentUserRole();
+    const r = (fromRoute || fromStore || '').toLowerCase();
+    return r === 'admin' || r === 'admin-casa-reposo';
+  }
+
+  /** Obtiene organizationId, userRole y userId de la ruta padre. */
   private getRouteParams(): { organizationId: number | null; userRole: string | null; userId: number | null } {
     let currentRoute: ActivatedRoute | null = this.route;
     while (currentRoute) {

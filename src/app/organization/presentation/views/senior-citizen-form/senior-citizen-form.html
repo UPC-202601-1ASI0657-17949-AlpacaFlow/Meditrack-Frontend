@@ -1,9 +1,8 @@
 <div class="form-container">
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="senior-citizen-form">
-        <!-- Error del backend o local -->
-        @if (organizationStore.seniorCitizensError() || localError) {
-            <div class="error-message-backend">
-                {{ localError || organizationStore.seniorCitizensError() }}
+        @if (formErrorKey) {
+            <div class="error-message-backend" role="alert">
+                {{ formErrorKey | translate : formErrorParams }}
             </div>
         }
         
@@ -33,14 +32,24 @@
                 <input type="date" formControlName="birthDate" class="form-input" [class.error]="form.get('birthDate')?.invalid && form.get('birthDate')?.touched" />
                 @if (form.get('birthDate')?.invalid && form.get('birthDate')?.touched) {
                     <div class="error-message">
-                        {{ 'senior-citizen.birthDateRequired' | translate }}
+                        @if (form.get('birthDate')?.hasError('required')) {
+                            {{ 'senior-citizen.birthDateRequired' | translate }}
+                        } @else if (form.get('birthDate')?.hasError('invalidDate')) {
+                            {{ 'senior-citizen.errors.invalidBirthDate' | translate }}
+                        } @else if (form.get('birthDate')?.hasError('ageOutOfRange')) {
+                            {{ 'senior-citizen.errors.ageOutOfRange' | translate : { minAge: '60', maxAge: '120' } }}
+                        }
                     </div>
                 }
             </div>
 
             <div class="form-field">
                 <label>{{ 'senior-citizen.gender' | translate }}:</label>
-                <input formControlName="gender" class="form-input" [class.error]="form.get('gender')?.invalid && form.get('gender')?.touched" />
+                <select formControlName="gender" class="form-input" [class.error]="form.get('gender')?.invalid && form.get('gender')?.touched">
+                    <option value="" disabled>{{ 'senior-citizen.genderPlaceholder' | translate }}</option>
+                    <option value="Masculino">{{ 'senior-citizen.genderMale' | translate }}</option>
+                    <option value="Femenino">{{ 'senior-citizen.genderFemale' | translate }}</option>
+                </select>
                 @if (form.get('gender')?.invalid && form.get('gender')?.touched) {
                     <div class="error-message">
                         {{ 'senior-citizen.genderRequired' | translate }}
@@ -49,28 +58,28 @@
             </div>
 
             <div class="form-field">
-                <label>{{ 'senior-citizen.weight' | translate }}:</label>
-                <input type="number" formControlName="weight" class="form-input" [class.error]="form.get('weight')?.invalid && form.get('weight')?.touched" />
+                <label>{{ 'senior-citizen.weight' | translate }} ({{ 'senior-citizen.units.kg' | translate }}):</label>
+                <input type="number" formControlName="weight" class="form-input" min="25" max="250" step="0.1" [class.error]="form.get('weight')?.invalid && form.get('weight')?.touched" />
                 @if (form.get('weight')?.invalid && form.get('weight')?.touched) {
                     <div class="error-message">
                         @if (form.get('weight')?.hasError('required')) {
                             {{ 'senior-citizen.weightRequired' | translate }}
-                        } @else if (form.get('weight')?.hasError('min')) {
-                            {{ 'senior-citizen.weightMin' | translate }}
+                        } @else if (form.get('weight')?.hasError('min') || form.get('weight')?.hasError('max')) {
+                            {{ 'senior-citizen.weightRange' | translate }}
                         }
                     </div>
                 }
             </div>
 
             <div class="form-field">
-                <label>{{ 'senior-citizen.height' | translate }}:</label>
-                <input type="number" formControlName="height" class="form-input" [class.error]="form.get('height')?.invalid && form.get('height')?.touched" />
+                <label>{{ 'senior-citizen.height' | translate }} ({{ 'senior-citizen.units.cm' | translate }}):</label>
+                <input type="number" formControlName="height" class="form-input" min="120" max="220" step="1" [class.error]="form.get('height')?.invalid && form.get('height')?.touched" />
                 @if (form.get('height')?.invalid && form.get('height')?.touched) {
                     <div class="error-message">
                         @if (form.get('height')?.hasError('required')) {
                             {{ 'senior-citizen.heightRequired' | translate }}
-                        } @else if (form.get('height')?.hasError('min')) {
-                            {{ 'senior-citizen.heightMin' | translate }}
+                        } @else if (form.get('height')?.hasError('min') || form.get('height')?.hasError('max')) {
+                            {{ 'senior-citizen.heightRange' | translate }}
                         }
                     </div>
                 }
@@ -78,10 +87,14 @@
 
             <div class="form-field">
                 <label>{{ 'senior-citizen.dni' | translate }}:</label>
-                <input formControlName="dni" class="form-input" [class.error]="form.get('dni')?.invalid && form.get('dni')?.touched" />
+                <input formControlName="dni" class="form-input" inputmode="numeric" maxlength="8" autocomplete="off" [class.error]="form.get('dni')?.invalid && form.get('dni')?.touched" />
                 @if (form.get('dni')?.invalid && form.get('dni')?.touched) {
                     <div class="error-message">
-                        {{ 'senior-citizen.dniRequired' | translate }}
+                        @if (form.get('dni')?.hasError('required')) {
+                            {{ 'senior-citizen.dniRequired' | translate }}
+                        } @else if (form.get('dni')?.hasError('pattern')) {
+                            {{ 'senior-citizen.dniDigitsMax' | translate }}
+                        }
                     </div>
                 }
             </div>
@@ -123,10 +136,10 @@
 
         <!-- Botones -->
         <div class="form-actions">
-            <button type="submit" [disabled]="form.invalid" class="save-btn">
+            <button type="submit" [disabled]="form.invalid || submitInProgress" class="save-btn">
                 {{ 'senior-citizen.save' | translate }}
             </button>
-            <button type="button" (click)="onCancel()" class="cancel-btn">
+            <button type="button" (click)="onCancel()" class="cancel-btn" [disabled]="submitInProgress">
                 {{ 'senior-citizen.cancel' | translate }}
             </button>
         </div>

@@ -14,7 +14,7 @@
     </div>
 
     <div class="senior-citizen-actions">
-        @if (organizationStore.getCurrentUserRole() === 'admin-casa-reposo') {
+        @if (canManageSeniorCitizensRoster()) {
             <button class="action-btn edit-btn"
                     (click)="onEdit($event)"
                     [title]="'senior-citizen.edit' | translate">

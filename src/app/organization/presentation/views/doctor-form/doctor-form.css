@@ -52,6 +52,23 @@
   margin-top: 4px;
 }
 
+.form-summary-error {
+  color: #b71c1c;
+  background: #ffebee;
+  border: 1px solid #ef9a9a;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.field-hint {
+  display: block;
+  color: #666;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
 .email-hint {
   display: block;
   color: #666;

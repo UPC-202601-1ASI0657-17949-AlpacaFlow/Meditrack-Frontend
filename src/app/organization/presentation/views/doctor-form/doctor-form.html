@@ -1,6 +1,16 @@
 <div class="form-container">
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="doctor-form">
-        
+        @if (invalidSubmitAttempt && form.invalid) {
+            <div class="form-summary-error" role="alert">
+                {{ 'doctor.errors.formInvalidSummary' | translate }}
+            </div>
+        }
+        @if (apiErrorKey) {
+            <div class="form-summary-error" role="alert">
+                {{ apiErrorKey | translate }}
+            </div>
+        }
+
         <div class="form-grid">
             <div class="form-field">
                 <label>{{ 'doctor.firstName' | translate }}:</label>
@@ -24,21 +34,35 @@
 
             <div class="form-field">
                 <label>{{ 'doctor.age' | translate }}:</label>
-                <input type="number" formControlName="age" class="form-input" />
+                <input type="number" formControlName="age" class="form-input" min="31" max="75" />
+                <small class="field-hint">{{ 'doctor.ageHint' | translate }}</small>
                 @if (form.get('age')?.invalid && form.get('age')?.touched) {
-                    <div class="error-message">
-                        {{ 'doctor.age' | translate }} {{ 'doctor.errors.requiredFemale' | translate }}
-                    </div>
+                    @if (form.get('age')?.errors?.['required']) {
+                        <div class="error-message">{{ 'doctor.errors.ageRequired' | translate }}</div>
+                    }
+                    @if (form.get('age')?.errors?.['min']) {
+                        <div class="error-message">{{ 'doctor.errors.ageTooYoung' | translate }}</div>
+                    }
+                    @if (form.get('age')?.errors?.['max']) {
+                        <div class="error-message">{{ 'doctor.errors.ageTooOld' | translate }}</div>
+                    }
                 }
             </div>
 
             <div class="form-field">
                 <label>{{ 'doctor.specialty' | translate }}:</label>
-                <input formControlName="specialty" class="form-input" />
+                <input formControlName="specialty" class="form-input" autocomplete="off" />
+                <small class="field-hint">{{ 'doctor.specialtyHint' | translate }}</small>
                 @if (form.get('specialty')?.invalid && form.get('specialty')?.touched) {
-                    <div class="error-message">
-                        {{ 'doctor.specialty' | translate }} {{ 'doctor.errors.requiredFemale' | translate }}
-                    </div>
+                    @if (form.get('specialty')?.errors?.['required']) {
+                        <div class="error-message">{{ 'doctor.errors.specialtyRequired' | translate }}</div>
+                    }
+                    @if (form.get('specialty')?.errors?.['specialtyHasDigits']) {
+                        <div class="error-message">{{ 'doctor.errors.specialtyHasDigits' | translate }}</div>
+                    }
+                    @if (form.get('specialty')?.errors?.['specialtyInvalidChars']) {
+                        <div class="error-message">{{ 'doctor.errors.specialtyInvalidChars' | translate }}</div>
+                    }
                 }
             </div>
 
@@ -60,11 +84,18 @@
 
             <div class="form-field">
                 <label>{{ 'doctor.phoneNumber' | translate }}:</label>
-                <input formControlName="phoneNumber" class="form-input" />
+                <input formControlName="phoneNumber" class="form-input" inputmode="tel" autocomplete="tel" />
+                <small class="field-hint">{{ 'doctor.phoneHint' | translate }}</small>
                 @if (form.get('phoneNumber')?.invalid && form.get('phoneNumber')?.touched) {
-                    <div class="error-message">
-                        {{ 'doctor.phoneNumber' | translate }}
-                    </div>
+                    @if (form.get('phoneNumber')?.errors?.['required']) {
+                        <div class="error-message">{{ 'doctor.errors.phoneRequired' | translate }}</div>
+                    }
+                    @if (form.get('phoneNumber')?.errors?.['phoneHasLetters']) {
+                        <div class="error-message">{{ 'doctor.errors.phoneNoLetters' | translate }}</div>
+                    }
+                    @if (form.get('phoneNumber')?.errors?.['phoneInvalidChars']) {
+                        <div class="error-message">{{ 'doctor.errors.phoneInvalidChars' | translate }}</div>
+                    }
                 }
             </div>
         </div>
@@ -93,14 +124,15 @@
 
         <!-- Botones -->
         <div class="form-actions">
-            <button type="submit" 
-                    [disabled]="form.invalid" 
-                    class="save-btn">
+            <button type="submit"
+                    class="save-btn"
+                    [disabled]="submitInProgress">
                 {{ 'doctor.save' | translate }}
             </button>
-            <button type="button" 
-                    (click)="onCancel()" 
-                    class="cancel-btn">
+            <button type="button"
+                    (click)="onCancel()"
+                    class="cancel-btn"
+                    [disabled]="submitInProgress">
                 {{ 'doctor.cancel' | translate }}
             </button>
         </div>

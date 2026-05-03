@@ -3,29 +3,25 @@ import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, retry } from 'rxjs/operators';
 import { Device } from '../domain/model/device.entity';
-import { 
-  BloodPressureMeasurement, 
-  HeartRateMeasurement, 
-  TemperatureMeasurement, 
-  OxygenMeasurement 
+import {
+  HeartRateMeasurement,
+  TemperatureMeasurement,
+  OxygenMeasurement
 } from '../domain/model/measurement.entity';
 import { Alert } from '../domain/model/alert.entity';
 import { DeviceApiEndpoint, AlertApiEndpoint, DeviceAlertApiEndpoint } from './device-api-endpoint';
 import { DeviceResponse, CreateDeviceRequest } from './device-response';
 import { AlertResponse } from './alert-response';
 import {
-  BloodPressureMeasurementResponse,
   HeartRateMeasurementResponse,
   TemperatureMeasurementResponse,
   OxygenMeasurementResponse,
-  AddBloodPressureMeasurementRequest,
   AddHeartRateMeasurementRequest,
   AddTemperatureMeasurementRequest,
   AddOxygenMeasurementRequest
 } from './measurement-response';
 import {
   DeviceAssembler,
-  BloodPressureMeasurementAssembler,
   HeartRateMeasurementAssembler,
   TemperatureMeasurementAssembler,
   OxygenMeasurementAssembler
@@ -115,37 +111,6 @@ export class DeviceApi {
         map(response => DeviceAssembler.toEntity(response)),
         catchError(this.handleError)
       );
-  }
-
-  // ==================== Blood Pressure Measurements ====================
-
-  /**
-   * Add blood pressure measurement to device
-   */
-  addBloodPressureMeasurement(
-    deviceId: number, 
-    request: AddBloodPressureMeasurementRequest
-  ): Observable<Device> {
-    return this.http.post<DeviceResponse>(
-      DeviceApiEndpoint.addBloodPressureMeasurement(deviceId), 
-      request
-    ).pipe(
-      map(response => DeviceAssembler.toEntity(response)),
-      catchError(this.handleError)
-    );
-  }
-
-  /**
-   * Get all blood pressure measurements by device ID
-   */
-  getAllBloodPressureMeasurements(deviceId: number): Observable<BloodPressureMeasurement[]> {
-    return this.http.get<BloodPressureMeasurementResponse[]>(
-      DeviceApiEndpoint.getAllBloodPressureMeasurements(deviceId)
-    ).pipe(
-      retry(2),
-      map(responses => BloodPressureMeasurementAssembler.toEntityList(responses)),
-      catchError(this.handleError)
-    );
   }
 
   // ==================== Heart Rate Measurements ====================

@@ -55,6 +55,12 @@ export class SeniorCitizenListComponent implements OnInit, OnDestroy {
     return this.organizationStore.getCurrentUserRole();
   }
 
+  /** Misma regla que en senior-citizen-item: admins de clínica o casa de reposo. */
+  canManageSeniorCitizensRoster(): boolean {
+    const r = (this.getUserRole() || '').toLowerCase();
+    return r === 'admin' || r === 'admin-casa-reposo';
+  }
+
   ngOnInit(): void {
     // Evitar múltiples inicializaciones
     if (this.hasInitialized) {

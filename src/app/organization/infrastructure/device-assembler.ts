@@ -1,13 +1,11 @@
 import { Device } from "../domain/model/device.entity";
 import { DeviceResponse } from "./device-response";
 import {
-  BloodPressureMeasurement,
   HeartRateMeasurement,
   TemperatureMeasurement,
   OxygenMeasurement
 } from "../domain/model/measurement.entity";
 import {
-  BloodPressureMeasurementResponse,
   HeartRateMeasurementResponse,
   TemperatureMeasurementResponse,
   OxygenMeasurementResponse
@@ -29,25 +27,6 @@ export class DeviceAssembler {
   }
 
   static toEntityList(responses: DeviceResponse[]): Device[] {
-    return responses.map(response => this.toEntity(response));
-  }
-}
-
-/**
- * BloodPressureMeasurementAssembler
- * Transforms BloodPressureMeasurementResponse to BloodPressureMeasurement entity
- */
-export class BloodPressureMeasurementAssembler {
-  static toEntity(response: BloodPressureMeasurementResponse): BloodPressureMeasurement {
-    return new BloodPressureMeasurement({
-      id: response.id,
-      diastolic: response.diastolic,
-      systolic: response.systolic,
-      measuredAt: response.measuredAt
-    });
-  }
-
-  static toEntityList(responses: BloodPressureMeasurementResponse[]): BloodPressureMeasurement[] {
     return responses.map(response => this.toEntity(response));
   }
 }

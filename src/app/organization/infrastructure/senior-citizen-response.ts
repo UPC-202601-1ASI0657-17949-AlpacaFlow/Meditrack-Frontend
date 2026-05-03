@@ -21,7 +21,6 @@ export interface SeniorCitizenResource extends BaseResource {
     createdAt?: Date | string;
     updatedAt?: Date | string;
     signalVitals?: {
-        bloodPressure?: number[][];
         heartRate?: number[];
         temperature?: number[];
         oxygenLevel?: { ox: number }[];

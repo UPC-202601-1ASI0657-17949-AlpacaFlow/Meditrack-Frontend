@@ -409,6 +409,18 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
           errorMsg = 'The device ID is already in use. Please use a different device ID.';
         } else if (error.status === 401 || error.status === 403) {
           errorMsg = 'Authentication error. Please log in again.';
+        } else if (error?.status === 409) {
+          const body409 = typeof error.error === 'string' ? error.error : '';
+          const hay409 = `${body409} ${errorStr}`;
+          if (hay409.includes('MEDITRACK_SENIOR_CITIZEN_DUPLICATE_DNI')) {
+            errorMsg = this.translate.instant('senior-citizen.errors.duplicateDni');
+          } else if (hay409.includes('MEDITRACK_SENIOR_CITIZEN_DUPLICATE_FULL_NAME')) {
+            errorMsg = this.translate.instant('senior-citizen.errors.duplicateFullName');
+          } else if (hay409.includes('MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED')) {
+            errorMsg = this.translate.instant('senior-citizen.errors.deviceAlreadyAssigned');
+          } else {
+            errorMsg = extractErrorMessage(error);
+          }
         } else if (error.status === 404) {
           errorMsg = 'Service not found. Please contact support.';
         } else if (error.status === 400) {

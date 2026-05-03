@@ -64,6 +64,9 @@
     "specialty": "Especialidad",
     "email": "Email Institucional",
     "phoneNumber": "Teléfono",
+    "phoneHint": "Solo números; puede usar espacios, +, guiones y paréntesis.",
+    "specialtyHint": "Solo letras y espacios entre palabras (sin números ni símbolos).",
+    "ageHint": "El médico debe tener entre 31 y 75 años.",
     "uploadPhoto": "Subir una foto.",
     "dragFile": "Arrastra el archivo a esta caja",
     "preview": "Vista previa:",
@@ -105,10 +108,24 @@
     "errors": {
       "required": "es requerido",
       "requiredFemale": "es requerida",
-      "emailInvalid": "es requerido y debe ser válido",
+      "emailInvalid": "es requerido y debe ser válido(sin espacios)",
       "photoRequired": "La foto es requerida",
       "cannotAssignToCaregiver": "Este adulto mayor ya está asignado a un cuidador. No se puede asignar a un doctor (exclusión mutua).",
-      "assignError": "Error al asignar adulto mayor"
+      "assignError": "Error al asignar adulto mayor",
+      "formInvalidSummary": "Hay errores en el formulario. Revise los campos indicados antes de guardar.",
+      "ageRequired": "La edad es obligatoria.",
+      "ageTooYoung": "El médico debe ser mayor de 30 años (edad mínima: 31).",
+      "ageTooOld": "El médico no puede tener más de 75 años.",
+      "specialtyRequired": "La especialidad es obligatoria.",
+      "specialtyHasDigits": "La especialidad no puede contener números.",
+      "specialtyInvalidChars": "La especialidad solo puede contener letras y espacios entre palabras (sin símbolos ni números).",
+      "phoneRequired": "El teléfono es obligatorio.",
+      "phoneNoLetters": "El teléfono no puede contener letras.",
+      "phoneInvalidChars": "El teléfono solo puede incluir dígitos y los caracteres + ( ) - y espacios.",
+      "duplicateRegistration": "Error de registro: el nombre o el correo del médico ya está registrado en esta institución. Revise los datos y vuelva a intentarlo.",
+      "duplicateEmail": "Ya existe un médico con este correo en su institución. Use otro correo o revise el personal registrado.",
+      "duplicateFullName": "Ya existe un médico con el mismo nombre completo en su institución. Cambie el nombre o revise el personal registrado.",
+      "saveFailed": "No se pudo guardar el médico. Compruebe los datos o intente de nuevo."
     }
   },
   "patient": {
@@ -148,20 +165,14 @@
       "noAlerts": "No hay alertas disponibles"
     },
     "statistics": {
-      "bloodPressure": "Presión Arterial (mmHg)",
-      "bloodPressureTitle": "Presión Arterial (Diastólica y Sistólica) - Últimos 7 Días",
-      "bloodPressureTooltip": "Diastólica: {{diastolic}}, Sistólica: {{systolic}}",
       "heartRate": "Frecuencia Cardíaca (lpm)",
       "heartRateTitle": "Frecuencia Cardíaca - Últimos 7 Días",
       "oxygenSaturation": "Saturación de Oxígeno (%) - Últimos 7 Días",
       "temperature": "Temperatura Corporal - Últimos 7 Días",
       "dayOfWeek": "Día de la Semana",
-      "mmhg": "mmHg",
       "bpm": "lpm",
       "spO2": "SpO₂ (%)",
-      "temperatureUnit": "Temperatura (°C)",
-      "diastolic": "Diastólica",
-      "systolic": "Sistólica"
+      "temperatureUnit": "Temperatura (°C)"
     }
   },
   "senior-citizen": {
@@ -195,13 +206,31 @@
     "lastNameRequired": "El apellido es requerido",
     "birthDateRequired": "La fecha de nacimiento es requerida",
     "genderRequired": "El género es requerido",
+    "genderPlaceholder": "Seleccione género",
+    "genderMale": "Masculino",
+    "genderFemale": "Femenino",
     "dniRequired": "El DNI es requerido",
+    "dniDigitsMax": "El DNI debe contener solo números y como máximo 8 dígitos",
     "weightRequired": "El peso es requerido",
     "weightMin": "El peso debe ser mayor que 0",
+    "weightRange": "El peso debe estar entre 25 y 250 kg",
     "heightRequired": "La estatura es requerida",
     "heightMin": "La estatura debe ser mayor que 0",
+    "heightRange": "La altura debe estar entre 120 y 220 cm",
     "deviceIdRequired": "El ID del dispositivo es requerido",
     "deviceIdTooLarge": "El ID del dispositivo es demasiado grande. El valor máximo permitido es {{maxValue}}. Por favor use un ID de dispositivo más pequeño.",
+    "errors": {
+      "invalidBirthDate": "La fecha de nacimiento no es válida. Use una fecha real en formato AAAA-MM-DD (no futura).",
+      "invalidBirthDateServer": "Error de registro: la fecha de nacimiento no es válida o no pudo procesarse. Indique una fecha correcta (AAAA-MM-DD, año razonable).",
+      "ageOutOfRange": "La edad calculada a partir de la fecha de nacimiento debe estar entre {{minAge}} y {{maxAge}} años.",
+      "noOrganizationContext": "No hay una organización activa. Vuelva a la lista e inténtelo de nuevo.",
+      "deviceIdInvalid": "El ID del dispositivo debe ser un número positivo.",
+      "validationServer": "El servidor rechazó los datos. Revise edad (60–120 años), género (Masculino/Femenino), peso (25–250 kg), altura (120–220 cm) y DNI (solo números, máximo 8 dígitos).",
+      "duplicateDni": "Ya existe un adulto mayor con este DNI en la organización. Use otro documento o revise el registro existente.",
+      "duplicateFullName": "Ya existe un adulto mayor con el mismo nombre y apellido en la organización. Cambie los datos o revise el registro existente.",
+      "deviceAlreadyAssigned": "Este ID de dispositivo ya está asignado a otro adulto mayor. Elija un dispositivo libre o verifique el número físico del wearable.",
+      "saveFailed": "No se pudo guardar el adulto mayor. Revise los datos o intente de nuevo."
+    },
     "photo": "Foto",
     "clickToView": "Hacer clic para ver detalles",
     "edit": "Editar",
@@ -231,20 +260,14 @@
       "noAlerts": "No hay alertas disponibles"
     },
     "statistics": {
-      "bloodPressure": "Presión Arterial (mmHg)",
-      "bloodPressureTitle": "Presión Arterial (Diastólica y Sistólica) - Últimos 7 Días",
-      "bloodPressureTooltip": "Diastólica: {{diastolic}}, Sistólica: {{systolic}}",
       "heartRate": "Frecuencia Cardíaca (lpm)",
       "heartRateTitle": "Frecuencia Cardíaca - Últimos 7 Días",
       "oxygenSaturation": "Saturación de Oxígeno (%) - Últimos 7 Días",
       "temperature": "Temperatura Corporal - Últimos 7 Días",
       "dayOfWeek": "Día de la Semana",
-      "mmhg": "mmHg",
       "bpm": "lpm",
       "spO2": "SpO₂ (%)",
-      "temperatureUnit": "Temperatura (°C)",
-      "diastolic": "Diastólica",
-      "systolic": "Sistólica"
+      "temperatureUnit": "Temperatura (°C)"
     }
   },
   "caregiver": {
@@ -272,6 +295,8 @@
     "imageUrlHint": "Ingrese una URL válida de imagen",
     "imageUrlPlaceholder": "https://ejemplo.com/imagen.jpg",
     "imageUrlError": "Debe ser una URL válida de imagen",
+    "ageHint": "La edad debe ser un número entero entre 21 y 65 años.",
+    "phoneHint": "Solo dígitos (sin espacios, letras ni símbolos).",
     "photo": "Foto",
     "assignedTo": "Asignado a",
     "errors": {
@@ -280,7 +305,17 @@
       "emailInvalid": "es requerido y debe ser válido",
       "photoRequired": "La foto es requerida",
       "cannotAssignToDoctor": "Este adulto mayor ya está asignado a un doctor. No se puede asignar a un cuidador (exclusión mutua).",
-      "assignError": "Error al asignar adulto mayor"
+      "assignError": "Error al asignar adulto mayor",
+      "formInvalidSummary": "Hay errores en el formulario. Corrija los campos indicados antes de guardar.",
+      "duplicateRegistration": "Error de registro: ya existe un cuidador con este nombre o correo en su organización. Revise los datos e intente de nuevo.",
+      "duplicateEmail": "Ya hay un cuidador con este correo en su organización. Use otro correo o revise el personal existente.",
+      "duplicateFullName": "Ya hay un cuidador con el mismo nombre completo en su organización. Cambie el nombre o revise el personal existente.",
+      "saveFailed": "No se pudo guardar el cuidador. Verifique los datos o intente de nuevo.",
+      "ageRequired": "La edad es obligatoria.",
+      "ageTooYoung": "El cuidador debe tener al menos 21 años.",
+      "ageTooOld": "El cuidador no puede tener más de 65 años.",
+      "phoneRequired": "El teléfono es obligatorio.",
+      "phoneDigitsOnly": "El teléfono solo puede contener dígitos (sin letras ni caracteres especiales)."
     },
     "deleteCaregiverDialog": {
       "title": "Eliminar Cuidador",
@@ -305,9 +340,10 @@
     "togglePassword": "Mostrar/ocultar contraseña",
     "errors": {
       "emailRequired": "El correo es requerido y debe ser válido",
-      "passwordRequired": "La contraseña es requerida (mínimo 6 caracteres)",
+      "passwordRequired": "La contraseña es requerida",
       "invalidCredentials": "Correo o contraseña inválidos. Por favor intenta de nuevo."
-    }
+    },
+    "staffPasswordHint": "Si su organización le dio de alta, la contraseña inicial suele ser la misma que su correo electrónico."
   },
   "signup": {
     "title": "Crear una cuenta",
@@ -382,6 +418,7 @@
     "toggleConfirmPassword": "Alternar visibilidad de confirmación de contraseña",
     "terms": "Al proporcionar la información de su tarjeta, permite que MediTrack cargue su tarjeta para pagos futuros de acuerdo con sus términos.",
     "startButton": "Comenzar a usar MediTrack",
+    "changeInstitutionDetails": "Cambiar nombre de la institución",
     "errors": {
       "cardNumberRequired": "El número de tarjeta es obligatorio",
       "invalidCardNumber": "Número de tarjeta inválido",
@@ -403,6 +440,7 @@
     "startButton": "Comenzar a usar MediTrack",
     "errors": {
       "institutionNameRequired": "El nombre de la institución es obligatorio",
+      "institutionNameTaken": "Ese nombre de institución ya está registrado. Prueba con otro.",
       "institutionTypeRequired": "Por favor selecciona un tipo de institución"
     }
   },

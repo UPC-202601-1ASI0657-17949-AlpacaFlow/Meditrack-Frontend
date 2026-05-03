@@ -40,7 +40,8 @@ export class LoginComponent {
   constructor() {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      // No minLength: staff users created by admin use the institutional email as the initial password (often < 6 chars).
+      password: ['', [Validators.required]]
     });
   }
 

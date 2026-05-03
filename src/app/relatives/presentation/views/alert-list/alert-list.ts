@@ -40,19 +40,11 @@ export class AlertList implements OnInit {
     // Loading state
     loading = computed(() => this.deviceStore.loadingAlerts());
 
-    // Real-time alerts from device API
+    // Solo alertas del API de dispositivos (sin fallback a datos estáticos del modelo).
     alerts = computed(() => {
         const deviceId = this.deviceId();
-        if (!deviceId) {
-            // Fallback to static alerts if no deviceId
-            return this.relative()?.seniorCitizen?.alerts ?? [];
-        }
-        const deviceAlerts = this.deviceStore.getAlertsForDevice(deviceId)();
-        // If we have real-time alerts, use them; otherwise fallback to static alerts
-        if (deviceAlerts.length > 0) {
-            return deviceAlerts;
-        }
-        return this.relative()?.seniorCitizen?.alerts ?? [];
+        if (!deviceId) return [];
+        return this.deviceStore.getAlertsForDevice(deviceId)();
     });
 
     // Sort alerts by date (newest first)

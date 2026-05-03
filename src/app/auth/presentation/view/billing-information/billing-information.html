@@ -6,6 +6,15 @@
 
         <h1 class="title">{{ 'billingInformation.title' | translate }}</h1>
 
+        @if (registrationErrorKey) {
+            <div class="registration-error-banner" role="alert">
+                <p>{{ registrationErrorKey | translate }}</p>
+                <button mat-button type="button" class="registration-error-link" (click)="goToInstitutionDetails()">
+                    {{ 'billingInformation.changeInstitutionDetails' | translate }}
+                </button>
+            </div>
+        }
+
         <div class="card-section">
             <mat-icon class="card-icon">credit_card</mat-icon>
             <span class="card-label">{{ 'billingInformation.card' | translate }}</span>

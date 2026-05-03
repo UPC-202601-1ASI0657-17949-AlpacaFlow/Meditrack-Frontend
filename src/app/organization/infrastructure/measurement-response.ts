@@ -1,10 +1,3 @@
-export interface BloodPressureMeasurementResponse {
-  id: number;
-  diastolic: number;
-  systolic: number;
-  measuredAt: string;
-}
-
 export interface HeartRateMeasurementResponse {
   id: number;
   bpm: number;
@@ -20,12 +13,6 @@ export interface TemperatureMeasurementResponse {
 export interface OxygenMeasurementResponse {
   id: number;
   spo2: number;  // El backend devuelve "spo2"
-  measuredAt: string;
-}
-
-export interface AddBloodPressureMeasurementRequest {
-  diastolic: number;
-  systolic: number;
   measuredAt: string;
 }
 

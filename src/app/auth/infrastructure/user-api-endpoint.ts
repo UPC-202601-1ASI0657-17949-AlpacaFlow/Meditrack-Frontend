@@ -5,7 +5,7 @@ import { UserResource, UsersResponse } from './user-response';
 import { UserAssembler } from './user-assembler';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { map, switchMap, of, throwError, catchError } from 'rxjs';
+import { map, switchMap, of, throwError, catchError, Observable } from 'rxjs';
 
 /**
  * API endpoint for managing users.
@@ -239,6 +239,20 @@ export class UserApiEndpoint extends
                 })
             );
         }
+    }
+
+    /**
+     * Returns true if the organization name is not yet registered (Spring backend only; json-server assumes available).
+     */
+    isOrganizationNameAvailable(name: string): Observable<boolean> {
+        const isJsonServer = environment.platformProviderApiBaseUrl.includes('localhost:3000');
+        if (isJsonServer) {
+            return of(true);
+        }
+        const url = `${environment.platformProviderApiBaseUrl}/api/v1/authentication/organization-name-availability`;
+        return this.http.get<{ available: boolean }>(url, { params: { name: name ?? '' } }).pipe(
+            map((r) => r.available)
+        );
     }
 }
 

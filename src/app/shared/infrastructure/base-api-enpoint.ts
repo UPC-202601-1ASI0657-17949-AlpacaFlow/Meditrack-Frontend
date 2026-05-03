@@ -72,6 +72,10 @@ export abstract class BaseApiEndpoint<
         } else {
           errorMessage = `${operation}: Invalid data. Please check all fields are correct.`;
         }
+      } else if (error.status === 409) {
+        const backendMessage =
+          typeof error.error === 'string' ? error.error : error.error?.message || error.error?.error;
+        errorMessage = `${operation}: ${typeof backendMessage === 'string' ? backendMessage : 'Conflict'}`;
       } else if (error.status === 500) {
         const backendMessage = error.error?.message || error.error?.error || error.error;
         errorMessage = `${operation}: Server error. ${typeof backendMessage === 'string' ? backendMessage : 'Please try again later.'}`;

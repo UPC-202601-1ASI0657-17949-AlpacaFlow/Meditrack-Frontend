@@ -1,7 +1,6 @@
 import {Component, computed, inject, OnInit, OnDestroy, effect} from '@angular/core';
 import {OrganizationStore} from "../../../application/organization.store";
 import {DeviceStore} from "../../../application/device.store";
-import {BloodPressure} from "../../components/blood-pressure/blood-pressure";
 import {HeartRate} from "../../components/heart-rate/heart-rate";
 import {OxygenSaturation} from "../../components/oxygen-saturation/oxygen-saturation";
 import {TemperatureRate} from "../../components/temperature-rate/temperature-rate";
@@ -15,7 +14,6 @@ import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
   standalone: true,
   imports: [
     CommonModule,
-    BloodPressure,
     HeartRate,
     OxygenSaturation,
     TemperatureRate,
@@ -38,12 +36,6 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
     loading = computed(() => this.deviceStore.loadingMeasurements());
 
     // Real-time measurements from device API
-    bloodPressureMeasurements = computed(() => {
-        const deviceId = this.deviceId();
-        if (!deviceId) return [];
-        return this.deviceStore.getBloodPressureMeasurementsForDevice(deviceId)();
-    });
-
     heartRateMeasurements = computed(() => {
         const deviceId = this.deviceId();
         if (!deviceId) return [];
@@ -62,57 +54,11 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
         return this.deviceStore.getOxygenMeasurementsForDevice(deviceId)();
     });
 
-    // Transform measurements to format expected by chart components
-    bloodPressure = computed<[number, number][]>(() => {
-        const measurements = this.bloodPressureMeasurements();
-        const bp = measurements.map(m => [m.systolic, m.diastolic] as [number, number]);
-        // Si no hay datos del backend, usar datos de fallback del senior citizen
-        if (bp.length === 0) {
-            const sc = this.seniorCitizen();
-            const bpData = sc?.signalVitals?.bloodPressure;
-            if (!bpData) return [];
-            return bpData.map(arr => [arr[0] ?? 0, arr[1] ?? 0] as [number, number]);
-        }
-        return bp;
-    });
+    heartRate = computed<number[]>(() => this.heartRateMeasurements().map(m => m.bpm));
 
-    heartRate = computed<number[]>(() => {
-        const measurements = this.heartRateMeasurements();
-        const hr = measurements.map(m => m.bpm);
-        // Si no hay datos del backend, usar datos de fallback del senior citizen
-        if (hr.length === 0) {
-            const sc = this.seniorCitizen();
-            return sc?.signalVitals?.heartRate ?? [];
-        }
-        return hr;
-    });
+    temperature = computed<number[]>(() => this.temperatureMeasurements().map(m => m.temperature));
 
-    temperature = computed<number[]>(() => {
-        const measurements = this.temperatureMeasurements();
-        const temps = measurements.map(m => m.temperature);
-        // Si no hay datos del backend, usar datos de fallback del senior citizen
-        if (temps.length === 0) {
-            const sc = this.seniorCitizen();
-            return sc?.signalVitals?.temperature ?? [];
-        }
-        return temps;
-    });
-
-    oxygenLevel = computed<number[]>(() => {
-        const measurements = this.oxygenMeasurements();
-        const oxygen = measurements.map(m => m.saturation);
-        // Si no hay datos del backend, usar datos de fallback del senior citizen
-        if (oxygen.length === 0) {
-            const sc = this.seniorCitizen();
-            const oxygenData = sc?.signalVitals?.oxygenLevel ?? [];
-            // Convertir de { ox: number }[] a number[]
-            if (oxygenData.length > 0 && typeof oxygenData[0] === 'object') {
-                return oxygenData.map((item: any) => item.ox ?? item);
-            }
-            return oxygenData;
-        }
-        return oxygen;
-    });
+    oxygenLevel = computed<number[]>(() => this.oxygenMeasurements().map(m => m.saturation));
 
     constructor() {
         // Effect to automatically load measurements when deviceId changes
@@ -136,15 +82,6 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
             } else if (!seniorCitizen) {
                 console.warn('⚠️ SeniorCitizenStatistic: Senior citizen not loaded yet');
             }
-        });
-
-        // Debug effect to log data
-        effect(() => {
-            console.log('🔍 Debug - Blood Pressure:', this.bloodPressure());
-            console.log('🔍 Debug - Heart Rate:', this.heartRate());
-            console.log('🔍 Debug - Temperature:', this.temperature());
-            console.log('🔍 Debug - Oxygen Level:', this.oxygenLevel());
-            console.log('🔍 Debug - Loading:', this.loading());
         });
     }
 

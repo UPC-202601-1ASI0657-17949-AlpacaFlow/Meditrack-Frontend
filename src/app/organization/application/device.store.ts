@@ -2,7 +2,6 @@ import { computed, Injectable, signal, Signal } from '@angular/core';
 import { Device } from '../domain/model/device.entity';
 import { Alert } from '../domain/model/alert.entity';
 import {
-  BloodPressureMeasurement,
   HeartRateMeasurement,
   TemperatureMeasurement,
   OxygenMeasurement
@@ -34,10 +33,6 @@ export class DeviceStore {
   readonly deviceAlerts = this.deviceAlertsSignal.asReadonly();
   
   readonly alertCount = computed(() => this.alerts().length);
-
-  // ==================== Blood Pressure Measurements ====================
-  private readonly bloodPressureMeasurementsSignal = signal<Map<number, BloodPressureMeasurement[]>>(new Map());
-  readonly bloodPressureMeasurements = this.bloodPressureMeasurementsSignal.asReadonly();
 
   // ==================== Heart Rate Measurements ====================
   private readonly heartRateMeasurementsSignal = signal<Map<number, HeartRateMeasurement[]>>(new Map());
@@ -171,6 +166,13 @@ export class DeviceStore {
     this.loadingAlertsSignal.set(true);
     this.errorSignal.set(null);
 
+    // Evitar mostrar alertas de una carga anterior del mismo deviceId mientras llega la respuesta
+    this.deviceAlertsSignal.update(map => {
+      const next = new Map(map);
+      next.set(deviceId, []);
+      return next;
+    });
+
     console.log(`📡 DeviceStore: Attempting to load alerts for device ${deviceId}`);
     
     this.deviceApi.getAllAlertsByDeviceId(deviceId).subscribe({
@@ -215,68 +217,6 @@ export class DeviceStore {
     });
   }
 
-  // ==================== Blood Pressure Measurements ====================
-
-  /**
-   * Load blood pressure measurements for a device
-   */
-  loadBloodPressureMeasurements(deviceId: number): void {
-    this.loadingMeasurementsSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.deviceApi.getAllBloodPressureMeasurements(deviceId).subscribe({
-      next: (measurements) => {
-        this.bloodPressureMeasurementsSignal.update(map => {
-          const newMap = new Map(map);
-          newMap.set(deviceId, measurements);
-          return newMap;
-        });
-        this.loadingMeasurementsSignal.set(false);
-        console.log('✅ DeviceStore: Loaded', measurements.length, 'BP measurements for device', deviceId);
-      },
-      error: (error) => {
-        this.errorSignal.set('Error loading BP measurements: ' + error.message);
-        this.loadingMeasurementsSignal.set(false);
-        console.error('❌ DeviceStore: Error loading BP measurements:', error);
-      }
-    });
-  }
-
-  /**
-   * Add blood pressure measurement
-   */
-  addBloodPressureMeasurement(deviceId: number, systolic: number, diastolic: number): void {
-    this.loadingMeasurementsSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.deviceApi.addBloodPressureMeasurement(deviceId, {
-      systolic,
-      diastolic,
-      measuredAt: new Date().toISOString()
-    }).subscribe({
-      next: () => {
-        // Reload measurements after adding
-        this.loadBloodPressureMeasurements(deviceId);
-        console.log('✅ DeviceStore: Added BP measurement to device', deviceId);
-      },
-      error: (error) => {
-        this.errorSignal.set('Error adding BP measurement: ' + error.message);
-        this.loadingMeasurementsSignal.set(false);
-        console.error('❌ DeviceStore: Error adding BP measurement:', error);
-      }
-    });
-  }
-
-  /**
-   * Get blood pressure measurements for a device (computed)
-   */
-  getBloodPressureMeasurementsForDevice(deviceId: number): Signal<BloodPressureMeasurement[]> {
-    return computed(() => {
-      const map = this.bloodPressureMeasurementsSignal();
-      return map.get(deviceId) || [];
-    });
-  }
-
   // ==================== Heart Rate Measurements ====================
 
   /**
@@ -285,6 +225,12 @@ export class DeviceStore {
   loadHeartRateMeasurements(deviceId: number): void {
     this.loadingMeasurementsSignal.set(true);
     this.errorSignal.set(null);
+
+    this.heartRateMeasurementsSignal.update(map => {
+      const next = new Map(map);
+      next.set(deviceId, []);
+      return next;
+    });
 
     this.deviceApi.getAllHeartRateMeasurements(deviceId).subscribe({
       next: (measurements) => {
@@ -346,6 +292,12 @@ export class DeviceStore {
     this.loadingMeasurementsSignal.set(true);
     this.errorSignal.set(null);
 
+    this.temperatureMeasurementsSignal.update(map => {
+      const next = new Map(map);
+      next.set(deviceId, []);
+      return next;
+    });
+
     this.deviceApi.getAllTemperatureMeasurements(deviceId).subscribe({
       next: (measurements) => {
         this.temperatureMeasurementsSignal.update(map => {
@@ -406,6 +358,12 @@ export class DeviceStore {
     this.loadingMeasurementsSignal.set(true);
     this.errorSignal.set(null);
 
+    this.oxygenMeasurementsSignal.update(map => {
+      const next = new Map(map);
+      next.set(deviceId, []);
+      return next;
+    });
+
     this.deviceApi.getAllOxygenMeasurements(deviceId).subscribe({
       next: (measurements) => {
         this.oxygenMeasurementsSignal.update(map => {
@@ -464,7 +422,6 @@ export class DeviceStore {
    */
   loadAllMeasurementsForDevice(deviceId: number): void {
     console.log(`📡 DeviceStore: Attempting to load all measurements for device ${deviceId}`);
-    this.loadBloodPressureMeasurements(deviceId);
     this.loadHeartRateMeasurements(deviceId);
     this.loadTemperatureMeasurements(deviceId);
     this.loadOxygenMeasurements(deviceId);
@@ -478,7 +435,6 @@ export class DeviceStore {
     this.selectedDeviceSignal.set(null);
     this.alertsSignal.set([]);
     this.deviceAlertsSignal.set(new Map());
-    this.bloodPressureMeasurementsSignal.set(new Map());
     this.heartRateMeasurementsSignal.set(new Map());
     this.temperatureMeasurementsSignal.set(new Map());
     this.oxygenMeasurementsSignal.set(new Map());

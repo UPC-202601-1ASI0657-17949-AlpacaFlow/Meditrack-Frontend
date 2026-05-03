@@ -17,14 +17,6 @@
         </div>
     } @else {
         <div class="charts-grid">
-            <!-- Blood Pressure Chart -->
-            <div class="chart-wrapper">
-                <app-blood-pressure [bloodPressure]="bloodPressure()"></app-blood-pressure>
-                @if (!bloodPressure().length) {
-                    <div class="no-data-message">No hay datos de presión arterial disponibles</div>
-                }
-            </div>
-
             <!-- Heart Rate Chart -->
             <div class="chart-wrapper">
                 <app-heart-rate [heartRate]="heartRate()"></app-heart-rate>

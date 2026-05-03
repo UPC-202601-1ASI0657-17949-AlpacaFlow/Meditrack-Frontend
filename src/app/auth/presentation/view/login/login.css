@@ -1,3 +1,10 @@
+.login-hint {
+    font-size: 0.8rem;
+    color: #666;
+    margin: -8px 0 0 4px;
+    line-height: 1.35;
+}
+
 .login-container {
     display: flex;
     justify-content: center;

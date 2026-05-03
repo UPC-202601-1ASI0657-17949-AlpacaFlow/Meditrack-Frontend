@@ -17,13 +17,6 @@
         </div>
     } @else {
         <div class="charts-grid">
-            <!-- Blood Pressure Chart -->
-            @if (bloodPressure().length) {
-                <div class="chart-wrapper">
-                    <app-blood-preasure [bloodPressure]="bloodPressure()"></app-blood-preasure>
-                </div>
-            }
-
             <!-- Heart Rate Chart -->
             @if (heartRate().length) {
                 <div class="chart-wrapper">
@@ -46,7 +39,7 @@
             }
 
             <!-- No data message if all charts are empty -->
-            @if (!bloodPressure().length && !heartRate().length && !oxigenLevel().length && !temperature().length) {
+            @if (!heartRate().length && !oxigenLevel().length && !temperature().length) {
                 <div class="no-statistics">
                     <p>{{ 'relative.statistics.noData' | translate }}</p>
                 </div>

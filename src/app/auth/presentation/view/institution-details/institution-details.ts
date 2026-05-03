@@ -1,5 +1,13 @@
 import { Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  AsyncValidatorFn,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -8,6 +16,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import { RegistrationFlowStore } from '../../../application/registration-flow.store';
+import { AuthApi } from '../../../infrastructure/auth-api';
+import { catchError, map, of, switchMap, timer } from 'rxjs';
 
 @Component({
   selector: 'app-institution-details',
@@ -29,13 +39,29 @@ export class InstitutionDetailsComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private registrationFlowStore = inject(RegistrationFlowStore);
+  private authApi = inject(AuthApi);
 
   institutionForm: FormGroup;
   selectedInstitutionType: 'clinic' | 'resident' | null = null;
 
+  private readonly institutionNameAvailabilityValidator: AsyncValidatorFn = (control: AbstractControl) => {
+    const name = (control.value ?? '').toString().trim();
+    if (!name) {
+      return of(null);
+    }
+    return timer(400).pipe(
+      switchMap(() =>
+        this.authApi.isOrganizationNameAvailable(name).pipe(
+          map((available) => (available ? null : { institutionNameTaken: true })),
+          catchError(() => of(null))
+        )
+      )
+    );
+  };
+
   constructor() {
     this.institutionForm = this.fb.group({
-      institutionName: ['', [Validators.required]],
+      institutionName: ['', [Validators.required], [this.institutionNameAvailabilityValidator]],
       institutionType: ['', [Validators.required]]
     });
   }
@@ -49,20 +75,20 @@ export class InstitutionDetailsComponent {
   }
 
   onSubmit(): void {
+    if (this.institutionForm.pending) {
+      return;
+    }
     if (this.institutionForm.invalid) {
       this.institutionForm.markAllAsTouched();
-      // Mark institutionType as touched if not selected
       if (!this.selectedInstitutionType) {
         this.institutionForm.get('institutionType')?.markAsTouched();
       }
       return;
     }
 
-    // Save institution data temporarily (not created in DB yet)
     const { institutionName, institutionType } = this.institutionForm.value;
     this.registrationFlowStore.setInstitutionData(institutionName, institutionType);
-    
-    // Redirect to billing information after completing institution details
+
     this.router.navigate(['billing-information'], { relativeTo: this.route.parent });
   }
 
@@ -70,4 +96,3 @@ export class InstitutionDetailsComponent {
     this.router.navigate(['../subscription-selection'], { relativeTo: this.route.parent });
   }
 }
-

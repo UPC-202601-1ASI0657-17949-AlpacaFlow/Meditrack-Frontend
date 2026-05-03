@@ -1,10 +1,61 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChange, SimpleChanges } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { TranslatePipe } from '@ngx-translate/core';
+import { finalize } from 'rxjs';
 import { OrganizationStore } from '../../../application/organization.store';
 import { Doctor } from "../../../domain/model/doctor.entity";
+
+/** Edad mínima del médico (> 30 años). */
+const DOCTOR_AGE_MIN = 31;
+/** Edad máxima del médico (inclusive). */
+const DOCTOR_AGE_MAX = 75;
+
+/**
+ * Especialidad: solo letras (Unicode) y espacios entre palabras; sin números ni otros símbolos.
+ */
+function specialtyLettersOnlyValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const v = (control.value ?? '').toString().trim();
+    if (!v) {
+      return null;
+    }
+    if (/[0-9]/.test(v)) {
+      return { specialtyHasDigits: true };
+    }
+    if (!/^[\p{L}]+(?:\s[\p{L}]+)*$/u.test(v)) {
+      return { specialtyInvalidChars: true };
+    }
+    return null;
+  };
+}
+
+/** Teléfono: sin letras; solo dígitos y + ( ) - espacio. */
+function doctorPhoneValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const v = (control.value ?? '').toString();
+    if (!v.trim()) {
+      return null;
+    }
+    if (/\p{L}/u.test(v)) {
+      return { phoneHasLetters: true };
+    }
+    if (!/^\+?[\d\s().-]+$/.test(v.trim())) {
+      return { phoneInvalidChars: true };
+    }
+    return null;
+  };
+}
 
 @Component({
   selector: 'app-doctor-form',
@@ -20,6 +71,12 @@ export class DoctorFormComponent implements OnChanges {
 
   form: FormGroup;
   institutionEmailDomain: string = '';
+  /** True tras intentar guardar con el formulario inválido (mensaje resumen). */
+  invalidSubmitAttempt = false;
+  /** Error devuelto por el API (clave i18n). */
+  apiErrorKey: string | null = null;
+  /** Guardando en servidor (evita doble envío). */
+  submitInProgress = false;
 
   constructor(private fb: FormBuilder, private organizationStore: OrganizationStore) {
     // Get organizationId from store (patrón de relatives)
@@ -30,10 +87,10 @@ export class DoctorFormComponent implements OnChanges {
     this.form = this.fb.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
-      age: [null, [Validators.required, Validators.min(18)]],
+      age: [null, [Validators.required, Validators.min(DOCTOR_AGE_MIN), Validators.max(DOCTOR_AGE_MAX)]],
       email: ['', [Validators.required, Validators.email]],
-      specialty: ['', Validators.required],
-      phoneNumber: ['', Validators.required],
+      specialty: ['', [Validators.required, specialtyLettersOnlyValidator()]],
+      phoneNumber: ['', [Validators.required, doctorPhoneValidator()]],
       imageUrl: ['', [Validators.required, Validators.pattern(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)]],
       organizationId: [organizationId] // Get from store (patrón de relatives)
     });
@@ -85,12 +142,16 @@ export class DoctorFormComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Update institution email domain when organization changes
-    if (changes['doctor'] || changes['organizationStore']) {
-      this.institutionEmailDomain = this.organizationStore.getInstitutionEmailDomain();
+    const doctorChange = changes['doctor'] as SimpleChange | undefined;
+    if (!doctorChange) {
+      return;
     }
 
-    if (changes['doctor'] && this.doctor) {
+    this.institutionEmailDomain = this.organizationStore.getInstitutionEmailDomain();
+
+    if (this.doctor) {
+      this.invalidSubmitAttempt = false;
+      this.apiErrorKey = null;
       this.form.patchValue({
         firstName: this.doctor.firstName,
         lastName: this.doctor.lastName,
@@ -101,10 +162,19 @@ export class DoctorFormComponent implements OnChanges {
         imageUrl: this.doctor.imageUrl,
         organizationId: this.doctor.organizationId
       });
-    } else if (changes['doctor'] && !this.doctor) {
-      // Set organizationId from store (patrón de relatives)
+      return;
+    }
+
+    // Modo alta (doctor == null): solo vaciar el formulario al abrir alta nueva, no en cada
+    // re-notificación del mismo null (p. ej. tras 409), que antes borraba los datos del usuario.
+    const prev = doctorChange.previousValue;
+    const enteringAddFromEdit = prev != null && prev !== undefined;
+    const firstOpen = doctorChange.isFirstChange();
+
+    if (enteringAddFromEdit || firstOpen) {
+      this.invalidSubmitAttempt = false;
+      this.apiErrorKey = null;
       const organizationId = this.organizationStore.getCurrentOrganizationId() || 0;
-      this.institutionEmailDomain = this.organizationStore.getInstitutionEmailDomain();
       this.form.reset();
       this.form.patchValue({ organizationId });
     }
@@ -112,9 +182,13 @@ export class DoctorFormComponent implements OnChanges {
 
   onSubmit(): void {
     if (this.form.invalid) {
+      this.invalidSubmitAttempt = true;
       this.form.markAllAsTouched();
       return;
     }
+
+    this.invalidSubmitAttempt = false;
+    this.apiErrorKey = null;
 
     // Get organizationId from store at submit time to ensure it's always correct
     // Patrón de relatives: userId → organizationId (a través del store)
@@ -147,15 +221,45 @@ export class DoctorFormComponent implements OnChanges {
       organizationId: organizationId // Use from store, not form value
     });
 
-    if (this.doctor) {
-      // update
-      this.organizationStore.updateDoctor(doctor);
-    } else {
-      // create
-      this.organizationStore.addDoctor(doctor);
+    const request$ = this.doctor
+      ? this.organizationStore.updateDoctor(doctor)
+      : this.organizationStore.addDoctor(doctor);
+
+    this.submitInProgress = true;
+    request$.pipe(finalize(() => (this.submitInProgress = false))).subscribe({
+      next: savedDoctor => {
+        this.apiErrorKey = null;
+        this.saved.emit(savedDoctor);
+      },
+      error: (err: unknown) => {
+        this.apiErrorKey = this.mapServerDoctorError(err);
+      }
+    });
+  }
+
+  /** Mapea códigos estables del backend (409) a claves i18n. */
+  private mapServerDoctorError(err: unknown): string {
+    const chunks: string[] = [];
+    if (err instanceof HttpErrorResponse) {
+      if (typeof err.error === 'string') {
+        chunks.push(err.error);
+      } else if (err.error != null && typeof err.error === 'object' && 'message' in err.error) {
+        chunks.push(String((err.error as { message: unknown }).message));
+      }
+      chunks.push(err.message);
+    } else if (err instanceof Error) {
+      chunks.push(err.message);
+    } else if (typeof err === 'object' && err !== null && 'message' in err) {
+      chunks.push(String((err as { message: unknown }).message));
     }
-    
-    this.saved.emit(doctor);
+    const haystack = chunks.join(' ');
+    if (
+      haystack.includes('MEDITRACK_DOCTOR_DUPLICATE_EMAIL') ||
+      haystack.includes('MEDITRACK_DOCTOR_DUPLICATE_FULL_NAME')
+    ) {
+      return 'doctor.errors.duplicateRegistration';
+    }
+    return 'doctor.errors.saveFailed';
   }
 
   onCancel(): void {

@@ -1,5 +1,16 @@
 <div class="form-container">
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="caregiver-form">
+        @if (invalidSubmitAttempt && form.invalid) {
+            <div class="form-summary-error" role="alert">
+                {{ 'caregiver.errors.formInvalidSummary' | translate }}
+            </div>
+        }
+        @if (apiErrorKey) {
+            <div class="form-summary-error" role="alert">
+                {{ apiErrorKey | translate }}
+            </div>
+        }
+
         <div class="form-grid">
             <div class="form-field">
                 <label>{{ 'caregiver.firstName' | translate }}:</label>
@@ -13,7 +24,19 @@
 
             <div class="form-field">
                 <label>{{ 'caregiver.age' | translate }}:</label>
-                <input type="number" formControlName="age" class="form-input" />
+                <input type="number" formControlName="age" class="form-input" min="21" max="65" step="1" />
+                <small class="field-hint">{{ 'caregiver.ageHint' | translate }}</small>
+                @if (form.get('age')?.invalid && form.get('age')?.touched) {
+                    @if (form.get('age')?.errors?.['required']) {
+                        <div class="error-message">{{ 'caregiver.errors.ageRequired' | translate }}</div>
+                    }
+                    @if (form.get('age')?.errors?.['min']) {
+                        <div class="error-message">{{ 'caregiver.errors.ageTooYoung' | translate }}</div>
+                    }
+                    @if (form.get('age')?.errors?.['max']) {
+                        <div class="error-message">{{ 'caregiver.errors.ageTooOld' | translate }}</div>
+                    }
+                }
             </div>
 
             <div class="form-field">
@@ -29,7 +52,16 @@
 
             <div class="form-field">
                 <label>{{ 'caregiver.phoneNumber' | translate }}:</label>
-                <input formControlName="phoneNumber" class="form-input" />
+                <input formControlName="phoneNumber" class="form-input" inputmode="numeric" autocomplete="tel" />
+                <small class="field-hint">{{ 'caregiver.phoneHint' | translate }}</small>
+                @if (form.get('phoneNumber')?.invalid && form.get('phoneNumber')?.touched) {
+                    @if (form.get('phoneNumber')?.errors?.['required']) {
+                        <div class="error-message">{{ 'caregiver.errors.phoneRequired' | translate }}</div>
+                    }
+                    @if (form.get('phoneNumber')?.errors?.['phoneDigitsOnly']) {
+                        <div class="error-message">{{ 'caregiver.errors.phoneDigitsOnly' | translate }}</div>
+                    }
+                }
             </div>
     </div>
     <!-- URL de imagen -->
@@ -55,10 +87,10 @@
 
         <!-- Botones -->
         <div class="form-actions">
-            <button type="submit" [disabled]="form.invalid" class="save-btn">
+            <button type="submit" class="save-btn" [disabled]="submitInProgress">
                 {{ 'caregiver.save' | translate }}
             </button>
-            <button type="button" (click)="onCancel()" class="cancel-btn">
+            <button type="button" (click)="onCancel()" class="cancel-btn" [disabled]="submitInProgress">
                 {{ 'caregiver.cancel' | translate }}
             </button>
         </div>

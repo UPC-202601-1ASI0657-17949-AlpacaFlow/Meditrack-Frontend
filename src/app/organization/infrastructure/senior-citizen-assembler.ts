@@ -2,6 +2,36 @@ import { BaseAssembler } from '../../shared/infrastructure/base-assembler';
 import { SeniorCitizen } from '../domain/model/senior-citizen.entity';
 import { SeniorCitizenResource, SeniorCitizensResponse } from './senior-citizen-response';
 
+/** Parse estricto YYYY-MM-DD → Date UTC mediodía (evita años absurdos tipo +012912 de ISO extendido). */
+function parseIsoDateOnlyUtcNoon(value: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!m) {
+    throw new Error(`Invalid birthDate format (expected YYYY-MM-DD): ${value}`);
+  }
+  const y = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10);
+  const d = parseInt(m[3], 10);
+  if (y < 1880 || y > 2120 || mo < 1 || mo > 12 || d < 1 || d > 31) {
+    throw new Error('Birth date components out of range');
+  }
+  const t = Date.UTC(y, mo - 1, d, 12, 0, 0);
+  const dt = new Date(t);
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) {
+    throw new Error('Invalid calendar date');
+  }
+  return dt;
+}
+
+function formatUtcDateToYyyyMmDd(d: Date): string {
+  if (isNaN(d.getTime())) {
+    throw new Error('Invalid Date');
+  }
+  const y = d.getUTCFullYear();
+  const mo = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  return `${String(y).padStart(4, '0')}-${String(mo).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 /**
  * Assembler for converting between SeniorCitizen entities, SeniorCitizenResource resources, and SeniorCitizensResponse.
  */
@@ -56,7 +86,10 @@ export class SeniorCitizensAssembler implements BaseAssembler<SeniorCitizen, Sen
             organizationId: entity.organizationId,
             firstName: entity.firstName,
             lastName: entity.lastName,
-            birthDate: entity.birthDate instanceof Date ? entity.birthDate.toISOString().split('T')[0] : entity.birthDate,
+            birthDate:
+                entity.birthDate instanceof Date
+                    ? formatUtcDateToYyyyMmDd(entity.birthDate)
+                    : entity.birthDate,
             age: entity.age,
             gender: entity.gender,
             weight: entity.weight,
@@ -67,7 +100,6 @@ export class SeniorCitizensAssembler implements BaseAssembler<SeniorCitizen, Sen
             assignedDoctorId: entity.assignedDoctorId ?? null,
             assignedCaregiverId: entity.assignedCaregiverId ?? null,
             signalVitals: entity.signalVitals ? {
-                bloodPressure: entity.signalVitals.bloodPressure,
                 heartRate: entity.signalVitals.heartRate,
                 temperature: entity.signalVitals.temperature,
                 oxygenLevel: entity.signalVitals.oxygenLevel
@@ -101,34 +133,16 @@ export class SeniorCitizensAssembler implements BaseAssembler<SeniorCitizen, Sen
         imageUrl: string;
         deviceId: number;
     } {
-        // Get birthDate from entity (it's a Date object from the getter)
         const birthDateValue = entity.birthDate;
-        
-        // Convert birthDate to ISO 8601 format (Spring Boot can deserialize this to Java Date)
-        let birthDateStr: string;
+        let calendar: Date;
         if (birthDateValue instanceof Date) {
-            // Validate the date is valid
             if (isNaN(birthDateValue.getTime())) {
                 throw new Error(`Invalid Date object: ${birthDateValue}`);
             }
-            // Use ISO 8601 format with time component for proper deserialization
-            birthDateStr = birthDateValue.toISOString();
+            calendar = birthDateValue;
         } else if (typeof birthDateValue === 'string') {
-            // If it's already a string in YYYY-MM-DD format, use it directly or convert to ISO
-            // Check if it's already in YYYY-MM-DD format
-            if (/^\d{4}-\d{2}-\d{2}$/.test(birthDateValue)) {
-                // It's already in YYYY-MM-DD format, add time component for ISO 8601
-                birthDateStr = `${birthDateValue}T00:00:00.000Z`;
-            } else {
-                // Try to parse it and convert to ISO
-                const date = new Date(birthDateValue);
-                if (isNaN(date.getTime())) {
-                    throw new Error(`Invalid birthDate string format: ${birthDateValue}`);
-                }
-                birthDateStr = date.toISOString();
-            }
+            calendar = parseIsoDateOnlyUtcNoon(birthDateValue);
         } else if (typeof birthDateValue === 'number') {
-            // If it's a number (timestamp), validate it's within reasonable range
             if (birthDateValue > 1e15 || birthDateValue < -1e15) {
                 throw new Error(`BirthDate timestamp out of reasonable range: ${birthDateValue}`);
             }
@@ -136,10 +150,30 @@ export class SeniorCitizensAssembler implements BaseAssembler<SeniorCitizen, Sen
             if (isNaN(date.getTime())) {
                 throw new Error(`Invalid birthDate timestamp: ${birthDateValue}`);
             }
-            birthDateStr = date.toISOString();
+            calendar = date;
         } else {
             throw new Error(`Invalid birthDate format: ${typeof birthDateValue}, value: ${birthDateValue}`);
         }
+
+        const todayUtc = new Date();
+        const endTodayUtc = Date.UTC(
+            todayUtc.getUTCFullYear(),
+            todayUtc.getUTCMonth(),
+            todayUtc.getUTCDate(),
+            23,
+            59,
+            59
+        );
+        if (calendar.getTime() > endTodayUtc) {
+            throw new Error('Birth date cannot be in the future');
+        }
+        const minUtc = Date.UTC(1880, 0, 1, 12, 0, 0);
+        if (calendar.getTime() < minUtc) {
+            throw new Error('Birth date is too far in the past');
+        }
+
+        // Solo yyyy-MM-dd: Jackson/Java lo deserializa sin años ISO extendidos (+012912…).
+        const birthDateStr = formatUtcDateToYyyyMmDd(calendar);
 
         // Ensure all numeric values are safe integers (not in scientific notation)
         const organizationId = Math.floor(Number(entity.organizationId));

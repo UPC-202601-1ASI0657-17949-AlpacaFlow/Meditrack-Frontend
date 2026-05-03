@@ -1,4 +1,4 @@
-import { environment } from "../../../environments/environment.development";
+import { environment } from '../../../environments/environment';
 
 /**
  * Device API Endpoints
@@ -33,14 +33,6 @@ export class DeviceApiEndpoint {
   }
 
   /**
-   * Add blood pressure measurement to device
-   * POST /api/v1/devices/{deviceId}/measurements/blood-pressure
-   */
-  static addBloodPressureMeasurement(deviceId: number): string {
-    return `${this.baseUrl}${this.devicesPath}/${deviceId}/measurements/blood-pressure`;
-  }
-
-  /**
    * Add heart rate measurement to device
    * POST /api/v1/devices/{deviceId}/measurements/heart-rate
    */
@@ -62,14 +54,6 @@ export class DeviceApiEndpoint {
    */
   static addOxygenMeasurement(deviceId: number): string {
     return `${this.baseUrl}${this.devicesPath}/${deviceId}/measurements/oxygen`;
-  }
-
-  /**
-   * Get all blood pressure measurements by device ID
-   * GET /api/v1/devices/{deviceId}/measurements/blood-pressure
-   */
-  static getAllBloodPressureMeasurements(deviceId: number): string {
-    return `${this.baseUrl}${this.devicesPath}/${deviceId}/measurements/blood-pressure`;
   }
 
   /**
