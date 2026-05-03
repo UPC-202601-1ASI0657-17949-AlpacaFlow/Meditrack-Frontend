@@ -2,43 +2,39 @@
     @if (loading()) {
         <div class="loading-container">
             <mat-spinner diameter="50"></mat-spinner>
-            <p>Cargando estadísticas...</p>
+            <p>{{ 'relative.statistics.loading' | translate }}</p>
         </div>
     } @else if (!relative()) {
         <div class="error-container">
-            <p style="color: orange;">Cargando información del relative...</p>
+            <p class="message-warn">{{ 'relative.statistics.loadingRelative' | translate }}</p>
         </div>
     } @else if (!deviceId() || deviceId() === 0) {
         <div class="error-container">
-            <p style="color: red;">No se encontró un dispositivo asociado a este senior citizen.</p>
-            <p>Relative ID: {{ relative()?.id }}</p>
-            <p>Device ID: {{ relative()?.seniorCitizen?.deviceId ?? 'No asignado' }}</p>
-            <p>Por favor, asegúrate de que el senior citizen tenga un dispositivo asignado.</p>
+            <p class="message-error">{{ 'relative.statistics.noDeviceMessage' | translate }}</p>
+            <p><strong>{{ 'relative.statistics.relativeIdLabel' | translate }}:</strong> {{ relative()?.id }}</p>
+            <p><strong>{{ 'common.deviceId' | translate }}:</strong> {{ relative()?.seniorCitizen?.deviceId ?? ('common.notAssigned' | translate) }}</p>
+            <p>{{ 'relative.statistics.hintAssignDevice' | translate }}</p>
         </div>
     } @else {
         <div class="charts-grid">
-            <!-- Heart Rate Chart -->
             @if (heartRate().length) {
                 <div class="chart-wrapper">
                     <app-heart-rate [heartRate]="heartRate()"></app-heart-rate>
                 </div>
             }
 
-            <!-- Oxygen Saturation Chart -->
             @if (oxigenLevel().length) {
                 <div class="chart-wrapper">
                     <app-oxygen-saturation [oxygenLevel]="oxigenLevel()"></app-oxygen-saturation>
                 </div>
             }
 
-            <!-- Temperature Chart -->
             @if (temperature().length) {
                 <div class="chart-wrapper">
                     <app-temperature-rate [temperature]="temperature()"></app-temperature-rate>
                 </div>
             }
 
-            <!-- No data message if all charts are empty -->
             @if (!heartRate().length && !oxigenLevel().length && !temperature().length) {
                 <div class="no-statistics">
                     <p>{{ 'relative.statistics.noData' | translate }}</p>

@@ -1,5 +1,6 @@
-import { Component, Input, AfterViewInit, OnDestroy, ViewChild, ElementRef, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, AfterViewInit, OnDestroy, ViewChild, ElementRef, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { Chart, ChartTypeRegistry, registerables } from 'chart.js';
+import { TranslateService } from '@ngx-translate/core';
 
 Chart.register(...registerables);
 
@@ -15,11 +16,18 @@ Chart.register(...registerables);
 })
 export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {
 
+    private translateService = inject(TranslateService);
+
     @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
     @Input() temperature: number[] = [];
 
     private chartInstance?: Chart<keyof ChartTypeRegistry, number[], unknown>;
-    private labels: string[] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    private weekdayLabels(): string[] {
+        return (['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((k) =>
+            this.translateService.instant(`senior-citizen.statistics.weekdays.${k}`)
+        );
+    }
 
     ngAfterViewInit() {
         this.initChart();
@@ -45,13 +53,17 @@ export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {
         gradient.addColorStop(0.5, "rgba(255, 255, 0, 0.3)");
         gradient.addColorStop(1, "rgba(0, 123, 255, 0.2)");
 
+        const temperatureLabel = this.translateService.instant('senior-citizen.statistics.temperatureUnit');
+        const temperatureTitle = this.translateService.instant('senior-citizen.statistics.temperature');
+        const dayOfWeekLabel = this.translateService.instant('senior-citizen.statistics.dayOfWeek');
+
         this.chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: this.labels,
+                labels: this.weekdayLabels(),
                 datasets: [
                     {
-                        label: 'Temperature (°C)',
+                        label: temperatureLabel,
                         data: this.temperature,
                         fill: true,
                         backgroundColor: gradient,
@@ -67,11 +79,11 @@ export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {
                 responsive: true,
                 plugins: {
                     legend: { display: true },
-                    title: { display: true, text: 'Body Temperature - Last 7 Days' }
+                    title: { display: true, text: temperatureTitle }
                 },
                 scales: {
-                    x: { title: { display: true, text: 'Day of the Week' } },
-                    y: { min: 35, max: 38, title: { display: true, text: 'Temperature (°C)' } }
+                    x: { title: { display: true, text: dayOfWeekLabel } },
+                    y: { min: 35, max: 38, title: { display: true, text: temperatureLabel } }
                 }
             }
         });

@@ -96,10 +96,10 @@ export class RelativeLayoutComponent implements OnInit, OnDestroy {
         const planType = relative?.planType?.toLowerCase();
         
         const allItems = [
-            { link: `/relative/relative/${this.relativeId}/profile`, icon: 'person', label: 'Profile' },
-            { link: `/relative/relative/${this.relativeId}/statistics`, icon: 'bar_chart', label: 'Statistics' },
-            { link: `/relative/relative/${this.relativeId}/alerts`, icon: 'notifications', label: 'Alerts' },
-            { link: `/relative/relative/${this.relativeId}/support`, icon: 'headset_mic', label: 'Support' },
+            { link: `/relative/relative/${this.relativeId}/profile`, icon: 'person', label: 'navigation.profile' },
+            { link: `/relative/relative/${this.relativeId}/statistics`, icon: 'bar_chart', label: 'navigation.statistics' },
+            { link: `/relative/relative/${this.relativeId}/alerts`, icon: 'notifications', label: 'navigation.alerts' },
+            { link: `/relative/relative/${this.relativeId}/support`, icon: 'headset_mic', label: 'navigation.support' },
         ];
 
         // Filtrar items basándose en el planType
@@ -108,7 +108,7 @@ export class RelativeLayoutComponent implements OnInit, OnDestroy {
             this.navigationItems = allItems;
         } else {
             // Freemium (o cualquier otro plan que no sea premium) no tiene acceso a Support
-            this.navigationItems = allItems.filter(item => item.label !== 'Support');
+            this.navigationItems = allItems.filter(item => item.label !== 'navigation.support');
         }
     }
 

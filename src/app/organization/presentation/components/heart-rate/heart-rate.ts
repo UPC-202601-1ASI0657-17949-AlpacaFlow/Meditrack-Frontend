@@ -19,7 +19,11 @@ export class HeartRate implements AfterViewInit, OnDestroy, OnChanges {
     @Input() heartRate: number[] = [];
     private chartInstance?: Chart<keyof ChartTypeRegistry, (number | null)[], unknown>;
 
-    labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    private weekdayLabels(): string[] {
+        return (['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((k) =>
+            this.translateService.instant(`senior-citizen.statistics.weekdays.${k}`)
+        );
+    }
 
     ngAfterViewInit() {
         this.initChart();
@@ -49,7 +53,7 @@ export class HeartRate implements AfterViewInit, OnDestroy, OnChanges {
         this.chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: this.labels,
+                labels: this.weekdayLabels(),
                 datasets: [
                     {
                         label: heartRateLabel,

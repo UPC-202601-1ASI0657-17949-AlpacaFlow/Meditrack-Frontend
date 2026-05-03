@@ -17,7 +17,8 @@
     "seniorCitizenProfile": "Perfil del Adulto Mayor",
     "statistics": "Estadísticas",
     "alerts": "Alertas",
-    "logout": "Cerrar Sesión"
+    "logout": "Cerrar Sesión",
+    "profile": "Perfil"
   },
   "footer": {
     "copyright": "© 2024 MediTrack. Todos los derechos reservados."
@@ -26,7 +27,11 @@
     "switch": "Cambiar Idioma"
   },
   "common": {
-    "loading": "Cargando..."
+    "loading": "Cargando...",
+    "deviceId": "ID del dispositivo",
+    "notAssigned": "Sin asignar",
+    "info": "Info",
+    "alert": "Alerta"
   },
   "page-not-found": {
     "title": "Página No Encontrada",
@@ -257,7 +262,12 @@
       "time": "Hora",
       "dataRegistered": "Dato Registrado",
       "reason": "Razón",
-      "noAlerts": "No hay alertas disponibles"
+      "noAlerts": "No hay alertas disponibles",
+      "loading": "Cargando alertas...",
+      "loadingSeniorCitizen": "Cargando información del adulto mayor...",
+      "noDeviceMessage": "No hay un dispositivo asociado a este adulto mayor.",
+      "hintAssignDevice": "Asegúrese de que el adulto mayor tenga un dispositivo asignado.",
+      "seniorCitizenIdLabel": "ID del adulto mayor"
     },
     "statistics": {
       "heartRate": "Frecuencia Cardíaca (lpm)",
@@ -267,7 +277,24 @@
       "dayOfWeek": "Día de la Semana",
       "bpm": "lpm",
       "spO2": "SpO₂ (%)",
-      "temperatureUnit": "Temperatura (°C)"
+      "temperatureUnit": "Temperatura (°C)",
+      "loading": "Cargando estadísticas...",
+      "loadingSeniorCitizen": "Cargando información del adulto mayor...",
+      "noDeviceMessage": "No hay un dispositivo asociado a este adulto mayor.",
+      "hintAssignDevice": "Asegúrese de que el adulto mayor tenga un dispositivo asignado.",
+      "seniorCitizenIdLabel": "ID del adulto mayor",
+      "noHeartRateData": "No hay datos de frecuencia cardíaca disponibles",
+      "noOxygenData": "No hay datos de saturación de oxígeno disponibles",
+      "noTemperatureData": "No hay datos de temperatura disponibles",
+      "weekdays": {
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mié",
+        "thu": "Jue",
+        "fri": "Vie",
+        "sat": "Sáb",
+        "sun": "Dom"
+      }
     }
   },
   "caregiver": {
@@ -490,11 +517,26 @@
       "time": "Hora",
       "dataRegistered": "Dato Registrado",
       "reason": "Razón",
-      "noAlerts": "No hay alertas disponibles"
+      "noAlerts": "No hay alertas disponibles",
+      "loading": "Cargando alertas...",
+      "loadingRelative": "Cargando información del familiar...",
+      "loadingSeniorCitizen": "Cargando información del adulto mayor...",
+      "noDeviceMessage": "No hay un dispositivo asociado a este adulto mayor.",
+      "hintAssignDevice": "Asegúrese de que el adulto mayor tenga un dispositivo asignado.",
+      "relativeIdLabel": "ID del familiar"
     },
     "statistics": {
       "title": "Estadísticas",
-      "noData": "No hay datos de estadísticas disponibles"
+      "noData": "No hay datos de estadísticas disponibles",
+      "loading": "Cargando estadísticas...",
+      "loadingRelative": "Cargando información del familiar...",
+      "loadingSeniorCitizen": "Cargando información del adulto mayor...",
+      "noDeviceMessage": "No hay un dispositivo asociado a este adulto mayor.",
+      "hintAssignDevice": "Asegúrese de que el adulto mayor tenga un dispositivo asignado.",
+      "relativeIdLabel": "ID del familiar",
+      "noHeartRateData": "No hay datos de frecuencia cardíaca disponibles",
+      "noOxygenData": "No hay datos de saturación de oxígeno disponibles",
+      "noTemperatureData": "No hay datos de temperatura disponibles"
     }
   }
 }

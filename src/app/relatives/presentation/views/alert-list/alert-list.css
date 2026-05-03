@@ -41,3 +41,11 @@
     color: #aaa;
     font-style: italic;
 }
+
+.message-warn {
+    color: #e65100;
+}
+
+.message-error {
+    color: #c62828;
+}

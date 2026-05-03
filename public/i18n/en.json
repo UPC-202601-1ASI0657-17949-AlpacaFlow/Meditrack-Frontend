@@ -17,7 +17,8 @@
     "seniorCitizenProfile": "Senior Citizen Profile",
     "statistics": "Statistics",
     "alerts": "Alerts",
-    "logout": "Logout"
+    "logout": "Logout",
+    "profile": "Profile"
   },
     "footer": {
       "copyright": "© 2024 MediTrack. All rights reserved."
@@ -26,7 +27,11 @@
     "switch": "Switch Language"
   },
   "common": {
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "deviceId": "Device ID",
+    "notAssigned": "Not assigned",
+    "info": "Info",
+    "alert": "Alert"
   },
   "page-not-found": {
     "title": "Page Not Found",
@@ -210,7 +215,12 @@
       "time": "Time",
       "dataRegistered": "Data Registered",
       "reason": "Reason",
-      "noAlerts": "No alerts available"
+      "noAlerts": "No alerts available",
+      "loading": "Loading alerts...",
+      "loadingSeniorCitizen": "Loading senior citizen information...",
+      "noDeviceMessage": "No device is associated with this senior citizen.",
+      "hintAssignDevice": "Please make sure the senior citizen has an assigned device.",
+      "seniorCitizenIdLabel": "Senior citizen ID"
     },
     "statistics": {
       "heartRate": "Heart Rate (bpm)",
@@ -220,7 +230,24 @@
       "dayOfWeek": "Day of the Week",
       "bpm": "bpm",
       "spO2": "SpO₂ (%)",
-      "temperatureUnit": "Temperature (°C)"
+      "temperatureUnit": "Temperature (°C)",
+      "loading": "Loading statistics...",
+      "loadingSeniorCitizen": "Loading senior citizen information...",
+      "noDeviceMessage": "No device is associated with this senior citizen.",
+      "hintAssignDevice": "Please make sure the senior citizen has an assigned device.",
+      "seniorCitizenIdLabel": "Senior citizen ID",
+      "noHeartRateData": "No heart rate data available",
+      "noOxygenData": "No oxygen saturation data available",
+      "noTemperatureData": "No temperature data available",
+      "weekdays": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      }
     }
   },
   "caregiver": {
@@ -443,11 +470,26 @@
       "time": "Time",
       "dataRegistered": "Data Registered",
       "reason": "Reason",
-      "noAlerts": "No alerts available"
+      "noAlerts": "No alerts available",
+      "loading": "Loading alerts...",
+      "loadingRelative": "Loading relative information...",
+      "loadingSeniorCitizen": "Loading senior citizen information...",
+      "noDeviceMessage": "No device is associated with this senior citizen.",
+      "hintAssignDevice": "Please make sure the senior citizen has an assigned device.",
+      "relativeIdLabel": "Relative ID"
     },
     "statistics": {
       "title": "Statistics",
-      "noData": "No statistics data available"
+      "noData": "No statistics data available",
+      "loading": "Loading statistics...",
+      "loadingRelative": "Loading relative information...",
+      "loadingSeniorCitizen": "Loading senior citizen information...",
+      "noDeviceMessage": "No device is associated with this senior citizen.",
+      "hintAssignDevice": "Please make sure the senior citizen has an assigned device.",
+      "relativeIdLabel": "Relative ID",
+      "noHeartRateData": "No heart rate data available",
+      "noOxygenData": "No oxygen saturation data available",
+      "noTemperatureData": "No temperature data available"
     }
   }
   }

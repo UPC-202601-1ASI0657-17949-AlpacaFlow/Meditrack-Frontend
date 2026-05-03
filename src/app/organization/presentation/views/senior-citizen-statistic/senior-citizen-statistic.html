@@ -2,45 +2,41 @@
     @if (loading()) {
         <div class="loading-container">
             <mat-spinner diameter="50"></mat-spinner>
-            <p>Cargando estadísticas...</p>
+            <p>{{ 'senior-citizen.statistics.loading' | translate }}</p>
         </div>
     } @else if (!seniorCitizen()) {
         <div class="error-container">
-            <p style="color: orange;">⚠️ Cargando información del senior citizen...</p>
+            <p class="message-warn">{{ 'senior-citizen.statistics.loadingSeniorCitizen' | translate }}</p>
         </div>
     } @else if (!deviceId() || deviceId() === 0) {
         <div class="error-container">
-            <p style="color: red;">❌ No se encontró un dispositivo asociado a este senior citizen.</p>
-            <p>Senior Citizen ID: {{ seniorCitizen()?.id }}</p>
-            <p>Device ID: {{ seniorCitizen()?.deviceId ?? 'No asignado' }}</p>
-            <p>Por favor, asegúrate de que el senior citizen tenga un dispositivo asignado.</p>
+            <p class="message-error">{{ 'senior-citizen.statistics.noDeviceMessage' | translate }}</p>
+            <p><strong>{{ 'senior-citizen.statistics.seniorCitizenIdLabel' | translate }}:</strong> {{ seniorCitizen()?.id }}</p>
+            <p><strong>{{ 'common.deviceId' | translate }}:</strong> {{ seniorCitizen()?.deviceId ?? ('common.notAssigned' | translate) }}</p>
+            <p>{{ 'senior-citizen.statistics.hintAssignDevice' | translate }}</p>
         </div>
     } @else {
         <div class="charts-grid">
-            <!-- Heart Rate Chart -->
             <div class="chart-wrapper">
                 <app-heart-rate [heartRate]="heartRate()"></app-heart-rate>
                 @if (!heartRate().length) {
-                    <div class="no-data-message">No hay datos de ritmo cardíaco disponibles</div>
+                    <div class="no-data-message">{{ 'senior-citizen.statistics.noHeartRateData' | translate }}</div>
                 }
             </div>
 
-            <!-- Oxygen Saturation Chart -->
             <div class="chart-wrapper">
                 <app-oxygen-saturation [oxygenLevel]="oxygenLevel()"></app-oxygen-saturation>
                 @if (!oxygenLevel().length) {
-                    <div class="no-data-message">No hay datos de saturación de oxígeno disponibles</div>
+                    <div class="no-data-message">{{ 'senior-citizen.statistics.noOxygenData' | translate }}</div>
                 }
             </div>
 
-            <!-- Temperature Chart -->
             <div class="chart-wrapper">
                 <app-temperature-rate [temperature]="temperature()"></app-temperature-rate>
                 @if (!temperature().length) {
-                    <div class="no-data-message">No hay datos de temperatura disponibles</div>
+                    <div class="no-data-message">{{ 'senior-citizen.statistics.noTemperatureData' | translate }}</div>
                 }
             </div>
         </div>
     }
 </div>
-

@@ -1,5 +1,6 @@
-import { Component, Input, AfterViewInit, OnDestroy, OnChanges, ViewChild, ElementRef } from '@angular/core';
-import { Chart, ChartTypeRegistry, ChartConfiguration, LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import { Component, Input, AfterViewInit, OnDestroy, OnChanges, ViewChild, ElementRef, inject } from '@angular/core';
+import { Chart, ChartTypeRegistry, LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import { TranslateService } from '@ngx-translate/core';
 
 Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -12,13 +13,19 @@ Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearS
 })
 export class OxygenSaturation implements AfterViewInit, OnDestroy, OnChanges {
 
+    private translateService = inject(TranslateService);
+
     @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
     @Input() oxygenLevel: { ox: number }[] = [];
 
     private chartInstance?: Chart<keyof ChartTypeRegistry, (number | null)[], unknown>;
 
-    labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    private weekdayLabels(): string[] {
+        return (['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((k) =>
+            this.translateService.instant(`senior-citizen.statistics.weekdays.${k}`)
+        );
+    }
 
     ngAfterViewInit() {
         this.initChart();
@@ -42,14 +49,17 @@ export class OxygenSaturation implements AfterViewInit, OnDestroy, OnChanges {
         if (!ctx) return;
 
         const data = this.oxygenLevel?.map(d => d.ox) ?? [];
+        const oxygenSaturationTitle = this.translateService.instant('senior-citizen.statistics.oxygenSaturation');
+        const dayOfWeekLabel = this.translateService.instant('senior-citizen.statistics.dayOfWeek');
+        const spO2Label = this.translateService.instant('senior-citizen.statistics.spO2');
 
         this.chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: this.labels,
+                labels: this.weekdayLabels(),
                 datasets: [
                     {
-                        label: 'SpO2',
+                        label: spO2Label,
                         data: data,
                         borderColor: 'rgb(99,255,135)',
                         backgroundColor: 'rgba(99,255,135,0.2)',
@@ -63,16 +73,16 @@ export class OxygenSaturation implements AfterViewInit, OnDestroy, OnChanges {
                 responsive: true,
                 plugins: {
                     legend: { display: true },
-                    title: { display: true, text: 'Oxygen Saturation (%) - Last 7 Days' }
+                    title: { display: true, text: oxygenSaturationTitle }
                 },
                 scales: {
                     x: {
-                        title: { display: true, text: 'Day of the Week' }
+                        title: { display: true, text: dayOfWeekLabel }
                     },
                     y: {
                         min: 90,
                         max: 100,
-                        title: { display: true, text: 'SpO₂ (%)' }
+                        title: { display: true, text: spO2Label }
                     }
                 }
             }

@@ -8,6 +8,7 @@ import {ActivatedRoute} from "@angular/router";
 import {Subscription} from "rxjs";
 import {CommonModule} from "@angular/common";
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
+import {TranslatePipe} from "@ngx-translate/core";
 
 @Component({
   selector: 'app-senior-citizen-statistic',
@@ -17,7 +18,8 @@ import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
     HeartRate,
     OxygenSaturation,
     TemperatureRate,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    TranslatePipe
   ],
   templateUrl: './senior-citizen-statistic.html',
   styleUrl: './senior-citizen-statistic.css'

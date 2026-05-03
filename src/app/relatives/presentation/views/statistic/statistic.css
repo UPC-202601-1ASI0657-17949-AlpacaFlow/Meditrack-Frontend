@@ -1,3 +1,49 @@
+.statistics-container {
+    padding: 20px;
+    width: 100%;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 16px;
+}
+
+.error-container {
+    padding: 24px;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.error-container p {
+    margin: 0.5rem 0;
+}
+
+.message-warn {
+    color: #e65100;
+}
+
+.message-error {
+    color: #c62828;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 24px;
+    width: 100%;
+}
+
+.chart-wrapper {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .no-statistics {
     display: flex;
     justify-content: center;

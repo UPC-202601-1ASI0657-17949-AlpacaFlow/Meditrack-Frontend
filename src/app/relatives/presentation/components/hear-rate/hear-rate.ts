@@ -1,5 +1,6 @@
-import { Component, Input, AfterViewInit, OnDestroy, ViewChild, ElementRef, OnChanges } from '@angular/core';
-import { Chart, ChartTypeRegistry, ChartConfiguration, LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import { Component, Input, AfterViewInit, OnDestroy, ViewChild, ElementRef, OnChanges, inject } from '@angular/core';
+import { Chart, ChartTypeRegistry, LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import { TranslateService } from '@ngx-translate/core';
 
 Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -12,12 +13,18 @@ Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearS
 })
 export class HeartRate implements AfterViewInit, OnDestroy, OnChanges {
 
+    private translateService = inject(TranslateService);
+
     @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
     @Input() heartRate: number[] = [];
     private chartInstance?: Chart<keyof ChartTypeRegistry, (number | null)[], unknown>;
 
-    labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    private weekdayLabels(): string[] {
+        return (['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((k) =>
+            this.translateService.instant(`senior-citizen.statistics.weekdays.${k}`)
+        );
+    }
 
     ngAfterViewInit() {
         this.initChart();
@@ -40,13 +47,17 @@ export class HeartRate implements AfterViewInit, OnDestroy, OnChanges {
         const ctx = this.chartCanvas.nativeElement.getContext('2d');
         if (!ctx) return;
 
+        const heartRateLabel = this.translateService.instant('senior-citizen.statistics.heartRate');
+        const heartRateTitle = this.translateService.instant('senior-citizen.statistics.heartRateTitle');
+        const bpmLabel = this.translateService.instant('senior-citizen.statistics.bpm');
+
         this.chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: this.labels,
+                labels: this.weekdayLabels(),
                 datasets: [
                     {
-                        label: 'Heart Rate (bpm)',
+                        label: heartRateLabel,
                         data: this.heartRate ?? [],
                         borderColor: 'rgb(226,99,255)',
                         backgroundColor: 'rgba(255, 99, 132, 0.2)',
@@ -66,7 +77,7 @@ export class HeartRate implements AfterViewInit, OnDestroy, OnChanges {
                     legend: { position: 'top' },
                     title: {
                         display: true,
-                        text: 'Heart Rate - Last 7 Days'
+                        text: heartRateTitle
                     }
                 },
                 scales: {
@@ -78,7 +89,7 @@ export class HeartRate implements AfterViewInit, OnDestroy, OnChanges {
                         suggestedMax: 100,
                         title: {
                             display: true,
-                            text: 'BPM'
+                            text: bpmLabel
                         }
                     }
                 }

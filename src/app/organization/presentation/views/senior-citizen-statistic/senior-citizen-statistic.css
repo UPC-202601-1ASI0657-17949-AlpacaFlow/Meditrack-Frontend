@@ -3,6 +3,24 @@
     width: 100%;
 }
 
+.error-container {
+    padding: 24px;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.error-container p {
+    margin: 0.5rem 0;
+}
+
+.message-warn {
+    color: #e65100;
+}
+
+.message-error {
+    color: #c62828;
+}
+
 .loading-container {
     display: flex;
     flex-direction: column;
