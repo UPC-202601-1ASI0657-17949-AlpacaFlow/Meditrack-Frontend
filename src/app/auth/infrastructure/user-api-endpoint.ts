@@ -249,7 +249,7 @@ export class UserApiEndpoint extends
         if (isJsonServer) {
             return of(true);
         }
-        const url = `${environment.platformProviderApiBaseUrl}/api/v1/authentication/organization-name-availability`;
+        const url = `${environment.platformProviderApiBaseUrl}/api/v1/organizations/availability`;
         return this.http.get<{ available: boolean }>(url, { params: { name: name ?? '' } }).pipe(
             map((r) => r.available)
         );
