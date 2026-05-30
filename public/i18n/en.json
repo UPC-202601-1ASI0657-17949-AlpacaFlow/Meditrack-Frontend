@@ -321,7 +321,10 @@
     "errors": {
       "emailRequired": "Email is required and must be valid",
       "passwordRequired": "Password is required",
-      "invalidCredentials": "Invalid email or password. Please try again."
+      "invalidCredentials": "Invalid email or password. Please try again.",
+      "adminNotFound": "No administrator profile was found for your account.",
+      "doctorNotFound": "No doctor profile was found for your account.",
+      "caregiverNotFound": "No caregiver profile was found for your account."
     },
     "staffPasswordHint": "If you were registered by your organization, your initial password is usually the same as your email address."
   },

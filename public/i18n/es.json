@@ -368,7 +368,10 @@
     "errors": {
       "emailRequired": "El correo es requerido y debe ser válido",
       "passwordRequired": "La contraseña es requerida",
-      "invalidCredentials": "Correo o contraseña inválidos. Por favor intenta de nuevo."
+      "invalidCredentials": "Correo o contraseña inválidos. Por favor intenta de nuevo.",
+      "adminNotFound": "No se encontró el perfil de administrador asociado a tu cuenta.",
+      "doctorNotFound": "No se encontró el perfil de médico asociado a tu cuenta.",
+      "caregiverNotFound": "No se encontró el perfil de cuidador asociado a tu cuenta."
     },
     "staffPasswordHint": "Si su organización le dio de alta, la contraseña inicial suele ser la misma que su correo electrónico."
   },
