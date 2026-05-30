@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
@@ -9,82 +9,38 @@ import { SeniorCitizenResource } from './senior-citizen-response';
 import { SeniorCitizensAssembler } from './senior-citizen-assembler';
 
 /**
- * Resource for assigning a senior citizen to a doctor
- * Must match the backend AssignSeniorCitizenToDoctorResource record:
- * - seniorCitizenId: Long
- * - doctorId: Long
- */
-export interface AssignSeniorCitizenToDoctorResource {
-  seniorCitizenId: number;
-  doctorId: number;
-}
-
-/**
- * API endpoint for managing doctor assignments.
+ * API endpoint for doctor ↔ senior citizen assignments.
+ * Uses organization microservice routes under /api/v1/senior-citizens.
  */
 @Injectable({
   providedIn: 'root'
 })
 export class DoctorAssignmentApiEndpoint {
-  private readonly endpointUrl = `${environment.platformProviderApiBaseUrl}/api/v1/doctor-assignments`;
+  private readonly basePath = `${environment.platformProviderApiBaseUrl}${environment.platformProviderSeniorCitizensEndpointPath}`;
   private readonly assembler = new SeniorCitizensAssembler();
 
   constructor(private http: HttpClient) {}
 
   /**
-   * Assigns a senior citizen to a doctor
-   * @param doctorId - The doctor ID
-   * @param seniorCitizenId - The senior citizen ID
-   * @returns An Observable emitting the assignment response (contains seniorCitizenId, doctorId, and id)
+   * Assigns a senior citizen to a doctor.
+   * POST /api/v1/senior-citizens/{seniorCitizenId}/assignments/doctor/{doctorId}
    */
-  assignSeniorCitizenToDoctor(doctorId: number, seniorCitizenId: number): Observable<AssignSeniorCitizenToDoctorResource & { id: number }> {
-    const url = `${this.endpointUrl}`;
-    // Backend expects: seniorCitizenId first, then doctorId (camelCase)
-    const resource: AssignSeniorCitizenToDoctorResource = {
-      seniorCitizenId,
-      doctorId
-    };
-    
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
-    
+  assignSeniorCitizenToDoctor(doctorId: number, seniorCitizenId: number): Observable<SeniorCitizen> {
+    const url = `${this.basePath}/${seniorCitizenId}/assignments/doctor/${doctorId}`;
+
     console.log(`[API] Assigning senior citizen ${seniorCitizenId} to doctor ${doctorId} at: ${url}`);
-    console.log(`[API] Request body:`, JSON.stringify(resource));
-    
-    // The response from json-server will be the assignment object with an id
-    return this.http.post<AssignSeniorCitizenToDoctorResource & { id: number }>(url, resource, { headers }).pipe(
+
+    return this.http.post<SeniorCitizenResource>(url, {}).pipe(
       map(response => {
         console.log(`[API] Assignment response from server:`, response);
-        // Return the assignment response directly (not transformed as SeniorCitizen)
-        return response;
+        return this.assembler.toEntityFromResource(response);
       }),
       catchError(error => {
         const errorMessage = error?.error || error?.message || 'Unknown error';
-        const errorDetails = {
-          status: error?.status,
-          statusText: error?.statusText,
-          message: error?.message,
-          error: error?.error,
-          errorBody: typeof error?.error === 'string' ? error.error : (error?.error ? JSON.stringify(error.error) : 'No error body'),
-          url: error?.url
-        };
-        
         console.error(`[API] Error assigning senior citizen to doctor:`, error);
-        console.error(`[API] Error details:`, errorDetails);
-        console.error(`[API] Error message from backend:`, errorMessage);
-        
-        // Log the request that was sent
-        console.error(`[API] Request that failed:`, {
-          url: url,
-          method: 'POST',
-          body: JSON.stringify(resource),
-          doctorId,
-          seniorCitizenId
-        });
-        
-        // Create a more informative error
-        const enhancedError = new Error(`Failed to assign senior citizen ${seniorCitizenId} to doctor ${doctorId}: ${errorMessage}`);
+        const enhancedError = new Error(
+          `Failed to assign senior citizen ${seniorCitizenId} to doctor ${doctorId}: ${errorMessage}`
+        );
         (enhancedError as any).status = error?.status;
         (enhancedError as any).error = error?.error;
         return throwError(() => enhancedError);
@@ -93,17 +49,15 @@ export class DoctorAssignmentApiEndpoint {
   }
 
   /**
-   * Unassigns a senior citizen from a doctor
-   * @param doctorId - The doctor ID
-   * @param seniorCitizenId - The senior citizen ID
-   * @returns An Observable that completes when the unassignment is successful
+   * Unassigns a senior citizen from a doctor.
+   * DELETE /api/v1/senior-citizens/{seniorCitizenId}/assignments/doctor/{doctorId}
    */
   unassignSeniorCitizenFromDoctor(doctorId: number, seniorCitizenId: number): Observable<void> {
-    const url = `${this.endpointUrl}/doctors/${doctorId}/senior-citizens/${seniorCitizenId}`;
-    
+    const url = `${this.basePath}/${seniorCitizenId}/assignments/doctor/${doctorId}`;
+
     console.log(`[API] Unassigning senior citizen ${seniorCitizenId} from doctor ${doctorId} at: ${url}`);
-    
-    return this.http.delete<void>(url).pipe(
+
+    return this.http.delete<SeniorCitizenResource>(url).pipe(
       map(() => {
         console.log(`[API] Successfully unassigned senior citizen ${seniorCitizenId} from doctor ${doctorId}`);
       })
@@ -111,23 +65,19 @@ export class DoctorAssignmentApiEndpoint {
   }
 
   /**
-   * Gets all senior citizens assigned to a doctor
-   * @param doctorId - The doctor ID
-   * @returns An Observable emitting an array of SeniorCitizen entities
+   * Gets all senior citizens assigned to a doctor.
+   * GET /api/v1/senior-citizens/doctor/{doctorId}
    */
   getSeniorCitizensByDoctorId(doctorId: number): Observable<SeniorCitizen[]> {
-    const url = `${this.endpointUrl}/doctors/${doctorId}/senior-citizens`;
-    
+    const url = `${this.basePath}/doctor/${doctorId}`;
+
     console.log(`[API] Requesting senior citizens for doctor ${doctorId} from: ${url}`);
-    
+
     return this.http.get<SeniorCitizenResource[]>(url).pipe(
       map(response => {
         console.log(`[API] Raw response from server:`, response);
-        const entities = response.map(resource => this.assembler.toEntityFromResource(resource));
-        console.log(`[API] Transformed entities:`, entities);
-        return entities;
+        return response.map(resource => this.assembler.toEntityFromResource(resource));
       })
     );
   }
 }
-

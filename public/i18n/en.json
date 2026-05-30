@@ -407,7 +407,8 @@
       "securityCodeRequired": "Security code is required",
       "passwordRequired": "Password is required (minimum 6 characters)",
       "confirmPasswordRequired": "Please confirm your password",
-      "passwordMismatch": "Passwords do not match"
+      "passwordMismatch": "Passwords do not match",
+      "emailAlreadyExists": "This email is already registered. Please sign in or use another email."
     }
   },
   "institutionDetails": {

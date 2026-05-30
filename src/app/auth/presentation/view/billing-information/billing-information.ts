@@ -251,8 +251,14 @@ export class BillingInformationComponent {
         // Clear temporary registration data
         this.registrationFlowStore.clear();
         
-        // Fetch admin details to get organization ID for redirect
-        this.organizationApi.getAdminByUserId(userResponse.user.id.toString()).subscribe({
+        // IAM creates user + organization; ensure admin profile exists in Organization MS
+        this.organizationApi.ensureAdminAfterSignup({
+          userId: userResponse.user.id,
+          email: email,
+          firstName: adminFirstName,
+          lastName: adminLastName,
+          organizationName: institutionName
+        }).subscribe({
           next: (admin) => {
             if (admin) {
               // Redirect to organization routes with userId and role
@@ -274,6 +280,10 @@ export class BillingInformationComponent {
         console.error('Error creating user, organization and admin:', error);
         const body = typeof error.error === 'string' ? error.error : '';
         const haystack = `${body} ${error.message ?? ''}`;
+        if (error.status === 400 && haystack.toLowerCase().includes('email already exists')) {
+          this.registrationErrorKey = 'billingInformation.errors.emailAlreadyExists';
+          return;
+        }
         if (error.status === 409 && haystack.includes(BillingInformationComponent.ORG_DUPLICATE_NAME_CODE)) {
           this.registrationErrorKey = 'institutionDetails.errors.institutionNameTaken';
           return;

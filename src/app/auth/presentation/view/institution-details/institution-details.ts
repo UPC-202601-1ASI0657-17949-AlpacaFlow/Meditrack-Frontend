@@ -64,6 +64,11 @@ export class InstitutionDetailsComponent {
       institutionName: ['', [Validators.required], [this.institutionNameAvailabilityValidator]],
       institutionType: ['', [Validators.required]]
     });
+
+    const preferredType = this.registrationFlowStore.preferredInstitutionType;
+    if (preferredType) {
+      this.selectInstitutionType(preferredType);
+    }
   }
 
   /**

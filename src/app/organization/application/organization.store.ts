@@ -974,31 +974,20 @@ export class OrganizationStore {
     
     console.log(`[Store] Calling API to assign seniorCitizenId=${seniorCitizenId} to doctorId=${doctorId}`);
     
-    // Persist to API using the doctor-assignments endpoint (creates entry in doctor_assignments table)
+    // Persist assignment via organization microservice
     this.organizationApi.assignSeniorCitizenToDoctor(doctorId, seniorCitizenId).pipe(retry(2)).subscribe({
-      next: (assignmentResponse) => {
-        console.log(`[Store] Assignment successful. Assignment response:`, assignmentResponse);
-        
-        // After creating the assignment, we need to update the senior citizen's assignedDoctorId
-        // json-server doesn't automatically update the senior citizen when an assignment is created
-        // So we need to explicitly update the senior citizen
-        this.organizationApi.updateSeniorCitizen(seniorCitizen).pipe(retry(2)).subscribe({
-          next: (updatedSeniorCitizen) => {
-            console.log(`[Store] Senior citizen updated with assignedDoctorId:`, updatedSeniorCitizen.assignedDoctorId);
-            // Update the senior citizen in the store with the server response
-            this.seniorCitizensSignal.update(seniorCitizens =>
-              seniorCitizens.map(sc => sc.id === seniorCitizenId ? updatedSeniorCitizen : sc)
-            );
-            // Reload doctors to get updated assignedSeniorIds from backend
-            this.loadDoctorsByOrganization(doctor.organizationId);
-          },
-          error: (updateErr) => {
-            console.error('[Store] Failed to update senior citizen after assignment:', updateErr);
-            // Even if the update fails, reload to get the latest state
-            this.loadDoctorsByOrganization(doctor.organizationId);
-            this.loadSeniorCitizensByOrganization(doctor.organizationId);
-          }
+      next: (updatedSeniorCitizen) => {
+        console.log(`[Store] Assignment successful. Updated senior citizen:`, {
+          id: updatedSeniorCitizen.id,
+          assignedDoctorId: updatedSeniorCitizen.assignedDoctorId,
+          expectedDoctorId: doctorId
         });
+
+        this.seniorCitizensSignal.update(seniorCitizens =>
+          seniorCitizens.map(sc => sc.id === seniorCitizenId ? updatedSeniorCitizen : sc)
+        );
+        this.loadDoctorsByOrganization(doctor.organizationId);
+        this.loadSeniorCitizensByOrganization(doctor.organizationId);
       },
       error: err => {
         console.error('[Store] Failed to persist doctor assignment:', err);
@@ -1060,7 +1049,7 @@ export class OrganizationStore {
       seniorCitizens.map(sc => sc.id === seniorCitizenId ? seniorCitizen : sc)
     );
 
-    // Persist to API using the doctor-assignments endpoint (removes entry from doctor_assignments table)
+    // Persist unassignment via organization microservice
     this.organizationApi.unassignSeniorCitizenFromDoctor(doctorId, seniorCitizenId).pipe(retry(2)).subscribe({
       next: () => {
         // Reload doctors and senior citizens to get updated state from backend
@@ -1153,7 +1142,7 @@ export class OrganizationStore {
 
     console.log(`[Store] Calling API to assign seniorCitizenId=${seniorCitizenId} to caregiverId=${caregiverId}`);
     
-    // Persist to API using the caregiver-assignments endpoint (creates entry in caregiver_assignments table)
+    // Persist assignment via organization microservice
     this.organizationApi.assignSeniorCitizenToCaregiver(caregiverId, seniorCitizenId).pipe(retry(2)).subscribe({
       next: (updatedSeniorCitizen) => {
         console.log(`[Store] Assignment successful. Updated senior citizen:`, {
@@ -1238,7 +1227,7 @@ export class OrganizationStore {
 
     console.log(`[Store] Calling API to unassign seniorCitizenId=${seniorCitizenId} from caregiverId=${caregiverId}`);
     
-    // Persist to API using the caregiver-assignments endpoint (removes entry from caregiver_assignments table)
+    // Persist unassignment via organization microservice
     this.organizationApi.unassignSeniorCitizenFromCaregiver(caregiverId, seniorCitizenId).pipe(retry(2)).subscribe({
       next: () => {
         console.log(`[Store] Unassignment successful: seniorCitizenId=${seniorCitizenId} from caregiverId=${caregiverId}`);

@@ -7,6 +7,13 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { map } from 'rxjs';
 
+interface OrganizationListItem {
+  id: number;
+  name: string;
+  type: string;
+  email?: string;
+}
+
 /**
  * API endpoint for managing organizations.
  */
@@ -38,6 +45,20 @@ export class OrganizationsApiEndpoint extends
           return entity;
         })
       );
+  }
+
+  /**
+   * Finds an organization by contact email or institution name.
+   */
+  findByEmailOrName(email: string, name: string) {
+    return this.http.get<OrganizationListItem[]>(this.endpointUrl).pipe(
+      map(organizations =>
+        organizations.find(organization =>
+          organization.email?.toLowerCase() === email.toLowerCase() ||
+          organization.name?.toLowerCase() === name.toLowerCase()
+        ) ?? null
+      )
+    );
   }
 }
 

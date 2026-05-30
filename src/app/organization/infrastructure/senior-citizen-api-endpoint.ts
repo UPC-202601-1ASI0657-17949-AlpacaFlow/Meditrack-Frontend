@@ -27,17 +27,16 @@ export class SeniorCitizensApiEndpoint extends BaseApiEndpoint<
     }
 
     /**
-     * Gets senior citizens by organizationId
-     * Uses query parameter for json-server: ?organizationId={organizationId}
+     * Gets senior citizens by organizationId.
+     * GET /api/v1/senior-citizens/organization/{organizationId}
      */
     getByOrganizationId(organizationId: number) {
-        const url = `${this.endpointUrl}?organizationId=${organizationId}`;
+        const url = `${this.endpointUrl}/organization/${organizationId}`;
         console.log(`[API] Requesting senior citizens from: ${url} (organizationId=${organizationId})`);
         return this.http.get<SeniorCitizenResource[]>(url)
             .pipe(
                 map(response => {
                     console.log(`[API] Raw response from server:`, response);
-                    // Backend returns array directly
                     const entities = response.map(resource => this.assembler.toEntityFromResource(resource));
                     console.log(`[API] Transformed entities:`, entities);
                     return entities;
@@ -46,12 +45,11 @@ export class SeniorCitizensApiEndpoint extends BaseApiEndpoint<
     }
 
     /**
-     * Gets senior citizens by doctorId
-     * Note: This endpoint needs to be implemented in the backend if not already available
-     * For now, using query parameter as fallback
+     * Gets senior citizens assigned to a doctor.
+     * GET /api/v1/senior-citizens/doctor/{doctorId}
      */
     getByDoctorId(doctorId: number) {
-        const url = `${this.endpointUrl}?doctor_id=${doctorId}`;
+        const url = `${this.endpointUrl}/doctor/${doctorId}`;
         console.log(`[API] Requesting senior citizens from: ${url} (doctorId=${doctorId})`);
         return this.http.get<SeniorCitizenResource[]>(url)
             .pipe(
@@ -65,12 +63,11 @@ export class SeniorCitizensApiEndpoint extends BaseApiEndpoint<
     }
 
     /**
-     * Gets senior citizens by caregiverId
-     * Note: This endpoint needs to be implemented in the backend if not already available
-     * For now, using query parameter as fallback
+     * Gets senior citizens assigned to a caregiver.
+     * GET /api/v1/senior-citizens/caregiver/{caregiverId}
      */
     getByCaregiverId(caregiverId: number) {
-        const url = `${this.endpointUrl}?caregiver_id=${caregiverId}`;
+        const url = `${this.endpointUrl}/caregiver/${caregiverId}`;
         console.log(`[API] Requesting senior citizens from: ${url} (caregiverId=${caregiverId})`);
         return this.http.get<SeniorCitizenResource[]>(url)
             .pipe(

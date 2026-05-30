@@ -8,8 +8,8 @@ import { AdminsApiEndpoint } from './admin-api-endpoint';
 import { DoctorAssignmentApiEndpoint } from './doctor-assignment-api-endpoint';
 import { CaregiverAssignmentApiEndpoint } from './caregiver-assignment-api-endpoint';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { Doctor } from '../domain/model/doctor.entity';
 import { Caregiver } from '../domain/model/caregiver.entity';
 import { SeniorCitizen } from '../domain/model/senior-citizen.entity';
@@ -339,22 +339,16 @@ export class OrganizationApi extends BaseApi {
   }
 
   /**
-   * Assigns a senior citizen to a doctor using the doctor-assignments endpoint.
-   * This creates the entry in the doctor_assignments table.
-   * @param doctorId - The doctor ID
-   * @param seniorCitizenId - The senior citizen ID
-   * @returns An Observable emitting the assignment response (contains seniorCitizenId, doctorId, and id)
+   * Assigns a senior citizen to a doctor.
+   * POST /api/v1/senior-citizens/{seniorCitizenId}/assignments/doctor/{doctorId}
    */
-  assignSeniorCitizenToDoctor(doctorId: number, seniorCitizenId: number): Observable<{ seniorCitizenId: number; doctorId: number; id: number }> {
+  assignSeniorCitizenToDoctor(doctorId: number, seniorCitizenId: number): Observable<SeniorCitizen> {
     return this.doctorAssignmentEndpoint.assignSeniorCitizenToDoctor(doctorId, seniorCitizenId);
   }
 
   /**
-   * Unassigns a senior citizen from a doctor using the doctor-assignments endpoint.
-   * This removes the entry from the doctor_assignments table.
-   * @param doctorId - The doctor ID
-   * @param seniorCitizenId - The senior citizen ID
-   * @returns An Observable that completes when the unassignment is successful
+   * Unassigns a senior citizen from a doctor.
+   * DELETE /api/v1/senior-citizens/{seniorCitizenId}/assignments/doctor/{doctorId}
    */
   unassignSeniorCitizenFromDoctor(doctorId: number, seniorCitizenId: number): Observable<void> {
     return this.doctorAssignmentEndpoint.unassignSeniorCitizenFromDoctor(doctorId, seniorCitizenId);
@@ -370,22 +364,16 @@ export class OrganizationApi extends BaseApi {
   }
 
   /**
-   * Assigns a senior citizen to a caregiver using the caregiver-assignments endpoint.
-   * This creates the entry in the caregiver_assignments table.
-   * @param caregiverId - The caregiver ID
-   * @param seniorCitizenId - The senior citizen ID
-   * @returns An Observable emitting the updated SeniorCitizen entity
+   * Assigns a senior citizen to a caregiver.
+   * POST /api/v1/senior-citizens/{seniorCitizenId}/assignments/caregiver/{caregiverId}
    */
   assignSeniorCitizenToCaregiver(caregiverId: number, seniorCitizenId: number): Observable<SeniorCitizen> {
     return this.caregiverAssignmentEndpoint.assignSeniorCitizenToCaregiver(caregiverId, seniorCitizenId);
   }
 
   /**
-   * Unassigns a senior citizen from a caregiver using the caregiver-assignments endpoint.
-   * This removes the entry from the caregiver_assignments table.
-   * @param caregiverId - The caregiver ID
-   * @param seniorCitizenId - The senior citizen ID
-   * @returns An Observable that completes when the unassignment is successful
+   * Unassigns a senior citizen from a caregiver.
+   * DELETE /api/v1/senior-citizens/{seniorCitizenId}/assignments/caregiver/{caregiverId}
    */
   unassignSeniorCitizenFromCaregiver(caregiverId: number, seniorCitizenId: number): Observable<void> {
     return this.caregiverAssignmentEndpoint.unassignSeniorCitizenFromCaregiver(caregiverId, seniorCitizenId);
@@ -398,5 +386,42 @@ export class OrganizationApi extends BaseApi {
    */
   getSeniorCitizensByCaregiverId(caregiverId: number): Observable<SeniorCitizen[]> {
     return this.caregiverAssignmentEndpoint.getSeniorCitizensByCaregiverId(caregiverId);
+  }
+
+  /**
+   * Ensures an admin profile exists after IAM sign-up.
+   * IAM creates the user and organization; if the admin row is missing, it is created here.
+   */
+  ensureAdminAfterSignup(params: {
+    userId: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    organizationName: string;
+  }): Observable<Admin> {
+    return this.getAdminByUserId(params.userId.toString()).pipe(
+      switchMap(existingAdmin => {
+        if (existingAdmin) {
+          return of(existingAdmin);
+        }
+
+        return this.organizationsEndpoint.findByEmailOrName(params.email, params.organizationName).pipe(
+          switchMap(organization => {
+            if (!organization) {
+              return throwError(() => new Error('Organization not found after sign-up'));
+            }
+
+            const admin = new Admin({
+              organizationId: organization.id,
+              userId: params.userId,
+              firstName: params.firstName,
+              lastName: params.lastName
+            });
+
+            return this.createAdmin(admin);
+          })
+        );
+      })
+    );
   }
 }

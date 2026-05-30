@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
+import { RegistrationFlowStore } from '../../../application/registration-flow.store';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -20,6 +21,7 @@ import { CommonModule } from '@angular/common';
 export class UserTypeSelectionComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private registrationFlowStore = inject(RegistrationFlowStore);
 
   /**
    * Navigate back to login
@@ -37,6 +39,12 @@ export class UserTypeSelectionComponent {
     // - relative -> 'relative'
     // - nursing-home or clinic -> 'admin'
     const role = userType === 'relative' ? 'relative' : 'admin';
+
+    if (userType === 'nursing-home') {
+      this.registrationFlowStore.setPreferredInstitutionType('resident');
+    } else if (userType === 'clinic') {
+      this.registrationFlowStore.setPreferredInstitutionType('clinic');
+    }
     
     console.log('[UserTypeSelection] Selected user type:', userType);
     console.log('[UserTypeSelection] Mapped to role:', role);

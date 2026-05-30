@@ -20,6 +20,8 @@ export class RegistrationFlowStore {
   // Organization data (from institution details form)
   private _institutionName = signal<string>('');
   private _institutionType = signal<'clinic' | 'resident' | null>(null);
+  /** Hint from user-type-selection (nursing-home → resident, clinic → clinic). */
+  private _preferredInstitutionType = signal<'clinic' | 'resident' | null>(null);
 
   // Plan type (for relative users)
   private _planType = signal<string>('');
@@ -73,6 +75,10 @@ export class RegistrationFlowStore {
     return this._institutionType();
   }
 
+  get preferredInstitutionType(): 'clinic' | 'resident' | null {
+    return this._preferredInstitutionType();
+  }
+
   /**
    * Get plan type
    */
@@ -100,6 +106,10 @@ export class RegistrationFlowStore {
   /**
    * Set institution data from institution details form
    */
+  setPreferredInstitutionType(type: 'clinic' | 'resident'): void {
+    this._preferredInstitutionType.set(type);
+  }
+
   setInstitutionData(name: string, type: 'clinic' | 'resident'): void {
     this._institutionName.set(name);
     this._institutionType.set(type);
@@ -123,6 +133,7 @@ export class RegistrationFlowStore {
     this._adminLastName.set('');
     this._institutionName.set('');
     this._institutionType.set(null);
+    this._preferredInstitutionType.set(null);
     this._planType.set('');
   }
 
