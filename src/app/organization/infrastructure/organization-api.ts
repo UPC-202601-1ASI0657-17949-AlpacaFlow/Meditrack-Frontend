@@ -8,7 +8,7 @@ import { AdminsApiEndpoint } from './admin-api-endpoint';
 import { DoctorAssignmentApiEndpoint } from './doctor-assignment-api-endpoint';
 import { CaregiverAssignmentApiEndpoint } from './caregiver-assignment-api-endpoint';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, timer } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { Doctor } from '../domain/model/doctor.entity';
 import { Caregiver } from '../domain/model/caregiver.entity';
@@ -23,6 +23,9 @@ import { Admin } from '../domain/model/admin.entity';
   providedIn: 'root'
 })
 export class OrganizationApi extends BaseApi {
+
+  private static readonly ADMIN_REGISTRATION_POLL_INTERVAL_MS = 2000;
+  private static readonly ADMIN_REGISTRATION_MAX_ATTEMPTS = 15;
 
   private readonly doctorsEndpoint: DoctorsApiEndpoint;
   private readonly caregiversEndpoint: CaregiversApiEndpoint;
@@ -390,7 +393,7 @@ export class OrganizationApi extends BaseApi {
 
   /**
    * Ensures an admin profile exists after IAM sign-up.
-   * IAM creates the user and organization; if the admin row is missing, it is created here.
+   * With JMS, org/admin creation is async; poll before falling back to a direct lookup.
    */
   ensureAdminAfterSignup(params: {
     userId: number;
@@ -399,28 +402,63 @@ export class OrganizationApi extends BaseApi {
     lastName: string;
     organizationName: string;
   }): Observable<Admin> {
-    return this.getAdminByUserId(params.userId.toString()).pipe(
+    const userId = params.userId.toString();
+
+    return this.getAdminByUserId(userId).pipe(
       switchMap(existingAdmin => {
         if (existingAdmin) {
           return of(existingAdmin);
         }
 
-        return this.organizationsEndpoint.findByEmailOrName(params.email, params.organizationName).pipe(
-          switchMap(organization => {
-            if (!organization) {
-              return throwError(() => new Error('Organization not found after sign-up'));
+        return this.waitForAdminAfterAsyncSignup(userId).pipe(
+          switchMap(admin => {
+            if (admin) {
+              return of(admin);
             }
-
-            const admin = new Admin({
-              organizationId: organization.id,
-              userId: params.userId,
-              firstName: params.firstName,
-              lastName: params.lastName
-            });
-
-            return this.createAdmin(admin);
+            return this.createAdminIfOrganizationExists(params);
           })
         );
+      })
+    );
+  }
+
+  private waitForAdminAfterAsyncSignup(userId: string, attempt = 0): Observable<Admin | null> {
+    return this.getAdminByUserId(userId).pipe(
+      switchMap(admin => {
+        if (admin) {
+          return of(admin);
+        }
+        if (attempt + 1 >= OrganizationApi.ADMIN_REGISTRATION_MAX_ATTEMPTS) {
+          return of(null);
+        }
+        return timer(OrganizationApi.ADMIN_REGISTRATION_POLL_INTERVAL_MS).pipe(
+          switchMap(() => this.waitForAdminAfterAsyncSignup(userId, attempt + 1))
+        );
+      })
+    );
+  }
+
+  private createAdminIfOrganizationExists(params: {
+    userId: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    organizationName: string;
+  }): Observable<Admin> {
+    return this.organizationsEndpoint.findByEmailOrName(params.email, params.organizationName).pipe(
+      switchMap(organization => {
+        if (!organization) {
+          return throwError(() => new Error('Organization not found after sign-up'));
+        }
+
+        const admin = new Admin({
+          organizationId: organization.id,
+          userId: params.userId,
+          firstName: params.firstName,
+          lastName: params.lastName
+        });
+
+        return this.createAdmin(admin);
       })
     );
   }
