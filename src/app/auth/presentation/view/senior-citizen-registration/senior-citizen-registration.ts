@@ -50,9 +50,8 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
   userId: number | null = null;
 
   genderOptions = [
-    { value: 'male', label: 'senior-citizen-registration.gender.male' },
-    { value: 'female', label: 'senior-citizen-registration.gender.female' },
-    { value: 'other', label: 'senior-citizen-registration.gender.other' }
+    { value: 'Masculino', label: 'senior-citizen-registration.gender.male' },
+    { value: 'Femenino', label: 'senior-citizen-registration.gender.female' }
   ];
 
   constructor() {
