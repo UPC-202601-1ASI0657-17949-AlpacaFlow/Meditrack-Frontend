@@ -15,7 +15,7 @@ import { RelativesApi } from '../../../../relatives/infrastructure/relatives-api
 import { SeniorCitizen } from '../../../../organization/domain/model/senior-citizen.entity';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
-import { map, switchMap, of } from 'rxjs';
+import { map, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-senior-citizen-registration',
@@ -48,6 +48,9 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
   isLoading = false;
   errorMessage: string | null = null;
   userId: number | null = null;
+  pendingSeniorCitizenId: number | null = null;
+
+  private static readonly PENDING_SENIOR_CITIZEN_STORAGE_KEY = 'meditrack.pendingSeniorCitizenRegistration';
 
   genderOptions = [
     { value: 'Masculino', label: 'senior-citizen-registration.gender.male' },
@@ -76,6 +79,7 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
       return;
     }
     this.userId = currentUser.id;
+    this.restorePendingSeniorCitizenId();
     console.log('[SeniorCitizenRegistration] Component initialized for userId:', this.userId);
     
     // Check if user already has a relative with senior citizen registered
@@ -123,6 +127,11 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
 
     this.isLoading = true;
     this.errorMessage = null;
+
+    if (this.pendingSeniorCitizenId) {
+      this.completeRelativeLink(this.pendingSeniorCitizenId);
+      return;
+    }
 
     // Split fullName into firstName and lastName
     const fullNameParts = this.form.value.fullName.trim().split(/\s+/);
@@ -278,19 +287,8 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
       deviceId: seniorCitizen.deviceId
     });
     
-    // Get planType from registration flow store
-    const planType = this.registrationFlowStore.planType || 'freemium';
-    const currentUser = this.authStore.currentUser();
-    const tokenSignal = this.authStore.token;
-    const token = tokenSignal();
-    
-    console.log('[SeniorCitizenRegistration] Current user:', currentUser);
-    console.log('[SeniorCitizenRegistration] Has token:', !!token);
-    console.log('[SeniorCitizenRegistration] Token length:', token?.length || 0);
-    console.log('[SeniorCitizenRegistration] Token preview:', token ? `${token.substring(0, 20)}...` : 'null');
-    console.log('[SeniorCitizenRegistration] Plan type:', planType);
-    
     // Verify token is available
+    const token = this.authStore.token();
     if (!token) {
       console.error('[SeniorCitizenRegistration] No token available! User needs to log in again.');
       this.errorMessage = 'Authentication error. Please log in again.';
@@ -299,165 +297,200 @@ export class SeniorCitizenRegistrationComponent implements OnInit {
       return;
     }
     
-    // Create senior citizen
+    // Create senior citizen, then link the relative account
     this.organizationApi.createSeniorCitizen(seniorCitizen).pipe(
       switchMap(createdSeniorCitizen => {
         console.log('[SeniorCitizenRegistration] Senior citizen created:', createdSeniorCitizen);
-        
-        // Note: The backend now assigns a default organization for relatives (organizationId = 0)
-        // The created senior citizen will have a real organizationId, but it belongs to the "Individual Users" organization
         console.log('[SeniorCitizenRegistration] Senior citizen created with organizationId:', createdSeniorCitizen.organizationId);
-        
-        // Create relative entity with planType and seniorCitizenId
-        const relativeUrl = `${environment.platformProviderApiBaseUrl}${environment.platformProviderRelativesEndpointPath}`;
-        
-        // Extract name from email (e.g., "john.doe@example.com" -> "john.doe")
-        const emailName = currentUser?.email?.split('@')[0] || 'user';
-        const nameParts = emailName.split('.');
-        const firstName = nameParts[0] || emailName;
-        const lastName = nameParts.slice(1).join(' ') || 'N/A'; // Use "N/A" if no last name found
-        
-        const relativeData = {
-          userId: this.userId,
-          firstName: firstName,
-          lastName: lastName, // Backend requires non-empty lastName
-          phoneNumber: 'N/A', // Backend requires non-empty phoneNumber (can be updated later)
-          planType: planType.toUpperCase(), // Backend expects 'FREEMIUM' or 'PREMIUM'
-          seniorCitizenId: createdSeniorCitizen.id
-        };
-        
+
+        this.persistPendingSeniorCitizenId(createdSeniorCitizen.id);
+        const { relativeData, relativeUrl } = this.buildRelativePayload(createdSeniorCitizen.id);
+
         console.log('[SeniorCitizenRegistration] Creating relative:', relativeData);
-        
+
         return this.http.post(relativeUrl, relativeData).pipe(
           map(() => {
             console.log('[SeniorCitizenRegistration] Relative created successfully');
-            // Clear registration flow store
+            this.clearPendingSeniorCitizenId();
             this.registrationFlowStore.clear();
             return createdSeniorCitizen;
           })
         );
       })
     ).subscribe({
-      next: (seniorCitizen) => {
+      next: () => {
         console.log('[SeniorCitizenRegistration] Senior citizen registered and relative created');
-        // Redirect to relative routes
         this.router.navigate(['/relative/relative', this.userId]);
       },
-      error: (error) => {
-        console.error('[SeniorCitizenRegistration] Error registering senior citizen:', error);
-        console.error('[SeniorCitizenRegistration] Error details:', {
-          message: error.message,
-          status: error.status,
-          statusText: error.statusText,
-          error: error.error,
-          url: error.url
-        });
-        
-        // Helper function to extract and clean error message
-        const extractErrorMessage = (err: any): string => {
-          // Try different sources for the error message
-          let msg = err?.error?.message || err?.error || err?.message || '';
-          
-          // If error.error is a string (plain text response from backend)
-          if (typeof err?.error === 'string') {
-            msg = err.error;
-          }
-          
-          // If error.message contains the backend message, extract it
-          if (typeof err?.message === 'string' && err.message.includes(':')) {
-            // Extract message after the last colon (removes prefixes like "Failed to create senior citizen: ")
-            const parts = err.message.split(':');
-            if (parts.length > 1) {
-              msg = parts.slice(1).join(':').trim();
-            }
-          }
-          
-          // Clean common prefixes from backend error messages
-          if (typeof msg === 'string') {
-            // Remove "Invalid request: " prefix
-            msg = msg.replace(/^Invalid request:\s*/i, '');
-            // Remove "Failed to create senior citizen: " prefix if still present
-            msg = msg.replace(/^Failed to create senior citizen:\s*/i, '');
-            // Remove "Failed to register senior citizen. Please try again." if it's the only message
-            msg = msg.replace(/^Failed to register senior citizen\.\s*Please try again\.\s*$/i, '');
-            // Trim whitespace
-            msg = msg.trim();
-          }
-          
-          return msg || 'An error occurred. Please try again.';
-        };
-        
-        // Provide more specific error message
-        let errorMsg = 'Failed to register senior citizen. Please try again.';
-        
-        // Check for duplicate deviceId error
-        const errorMessage = error.message || error.error?.message || error.error || '';
-        const errorStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage);
-        
-        // Check for device ID out of safe range error (synchronous error from assembler)
-        if (errorStr.includes('out of safe range') || errorStr.includes('out of safe integer range')) {
-          // Extract the specific message about device ID
-          if (errorStr.includes('Device ID')) {
-            errorMsg = this.translate.instant('senior-citizen-registration.deviceIdTooLarge', {
-              maxValue: Number.MAX_SAFE_INTEGER.toLocaleString()
-            });
-          } else {
-            errorMsg = extractErrorMessage(error);
-          }
-        } else if (errorStr.includes('Duplicate entry') && (errorStr.includes('device_id') || errorStr.includes('deviceId') || errorStr.includes('senior_citizens'))) {
-          errorMsg = 'The device ID is already in use. Please use a different device ID.';
-        } else if (error.status === 401 || error.status === 403) {
-          errorMsg = 'Authentication error. Please log in again.';
-        } else if (error?.status === 409) {
-          const body409 = typeof error.error === 'string' ? error.error : '';
-          const hay409 = `${body409} ${errorStr}`;
-          if (hay409.includes('MEDITRACK_SENIOR_CITIZEN_DUPLICATE_DNI')) {
-            errorMsg = this.translate.instant('senior-citizen.errors.duplicateDni');
-          } else if (hay409.includes('MEDITRACK_SENIOR_CITIZEN_DUPLICATE_FULL_NAME')) {
-            errorMsg = this.translate.instant('senior-citizen.errors.duplicateFullName');
-          } else if (hay409.includes('MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED')) {
-            errorMsg = this.translate.instant('senior-citizen.errors.deviceAlreadyAssigned');
-          } else {
-            errorMsg = extractErrorMessage(error);
-          }
-        } else if (error.status === 404) {
-          errorMsg = 'Service not found. Please contact support.';
-        } else if (error.status === 400) {
-          // Extract and clean the backend error message
-          errorMsg = extractErrorMessage(error);
-          
-          // If we still have a generic message, provide a more helpful one
-          if (errorMsg === 'An error occurred. Please try again.' || errorMsg.includes('Failed to register')) {
-            errorMsg = 'Invalid data. Please check all fields and try again.';
-          }
-        } else if (error.status === 500) {
-          const serverMsg = extractErrorMessage(error);
-          if (serverMsg && serverMsg !== 'An error occurred. Please try again.') {
-            errorMsg = `Server error: ${serverMsg}`;
-          } else {
-            errorMsg = 'Server error. Please try again later.';
-          }
-        } else if (!error.status) {
-          // Handle synchronous errors (no HTTP status) - like errors from assembler
-          errorMsg = extractErrorMessage(error);
-          // If we got a meaningful message, use it; otherwise provide a generic one
-          if (!errorMsg || errorMsg === 'An error occurred. Please try again.') {
-            errorMsg = error.message || 'An unexpected error occurred. Please check your input and try again.';
-          }
-        } else {
-          // For other errors, try to extract a meaningful message
-          errorMsg = extractErrorMessage(error);
-        }
-        
-        // Ensure we always have a message to display
-        if (!errorMsg || errorMsg.trim().length === 0) {
-          errorMsg = 'An unexpected error occurred. Please try again.';
-        }
-        
-        this.errorMessage = errorMsg;
-        this.isLoading = false;
-      }
+      error: (error) => this.handleRegistrationError(error)
     });
+  }
+
+  private restorePendingSeniorCitizenId(): void {
+    const stored = sessionStorage.getItem(SeniorCitizenRegistrationComponent.PENDING_SENIOR_CITIZEN_STORAGE_KEY);
+    if (!stored) {
+      return;
+    }
+    const parsed = Number(stored);
+    if (!Number.isNaN(parsed) && parsed > 0) {
+      this.pendingSeniorCitizenId = parsed;
+    }
+  }
+
+  private persistPendingSeniorCitizenId(seniorCitizenId: number): void {
+    this.pendingSeniorCitizenId = seniorCitizenId;
+    sessionStorage.setItem(
+      SeniorCitizenRegistrationComponent.PENDING_SENIOR_CITIZEN_STORAGE_KEY,
+      String(seniorCitizenId)
+    );
+  }
+
+  private clearPendingSeniorCitizenId(): void {
+    this.pendingSeniorCitizenId = null;
+    sessionStorage.removeItem(SeniorCitizenRegistrationComponent.PENDING_SENIOR_CITIZEN_STORAGE_KEY);
+  }
+
+  private buildRelativePayload(seniorCitizenId: number): { relativeUrl: string; relativeData: Record<string, unknown> } {
+    const planType = this.registrationFlowStore.planType || 'freemium';
+    const currentUser = this.authStore.currentUser();
+    const relativeUrl = `${environment.platformProviderApiBaseUrl}${environment.platformProviderRelativesEndpointPath}`;
+    const emailName = currentUser?.email?.split('@')[0] || 'user';
+    const nameParts = emailName.split('.');
+    const firstName = nameParts[0] || emailName;
+    const lastName = nameParts.slice(1).join(' ') || 'N/A';
+
+    return {
+      relativeUrl,
+      relativeData: {
+        userId: this.userId,
+        firstName,
+        lastName,
+        phoneNumber: 'N/A',
+        planType: planType.toUpperCase(),
+        seniorCitizenId
+      }
+    };
+  }
+
+  private completeRelativeLink(seniorCitizenId: number): void {
+    const token = this.authStore.token();
+    if (!token) {
+      this.errorMessage = 'Authentication error. Please log in again.';
+      this.isLoading = false;
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    const { relativeData, relativeUrl } = this.buildRelativePayload(seniorCitizenId);
+    this.http.post(relativeUrl, relativeData).subscribe({
+      next: () => {
+        this.clearPendingSeniorCitizenId();
+        this.registrationFlowStore.clear();
+        this.router.navigate(['/relative/relative', this.userId]);
+      },
+      error: (error) => this.handleRegistrationError(error)
+    });
+  }
+
+  private handleRegistrationError(error: any): void {
+    console.error('[SeniorCitizenRegistration] Error registering senior citizen:', error);
+    console.error('[SeniorCitizenRegistration] Error details:', {
+      message: error.message,
+      status: error.status,
+      statusText: error.statusText,
+      error: error.error,
+      url: error.url
+    });
+
+    const extractErrorMessage = (err: any): string => {
+      let msg = err?.error?.message || err?.error || err?.message || '';
+
+      if (typeof err?.error === 'string') {
+        msg = err.error;
+      }
+
+      if (typeof err?.message === 'string' && err.message.includes(':')) {
+        const parts = err.message.split(':');
+        if (parts.length > 1) {
+          msg = parts.slice(1).join(':').trim();
+        }
+      }
+
+      if (typeof msg === 'string') {
+        msg = msg.replace(/^Invalid request:\s*/i, '');
+        msg = msg.replace(/^Failed to create senior citizen:\s*/i, '');
+        msg = msg.replace(/^Failed to register senior citizen\.\s*Please try again\.\s*$/i, '');
+        msg = msg.trim();
+      }
+
+      return msg || 'An error occurred. Please try again.';
+    };
+
+    let errorMsg = 'Failed to register senior citizen. Please try again.';
+    const errorMessage = error.message || error.error?.message || error.error || '';
+    const errorStr = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage);
+
+    if (this.pendingSeniorCitizenId) {
+      errorMsg = 'El paciente ya fue registrado. Pulse Guardar de nuevo para completar el vínculo con su cuenta.';
+    } else if (errorStr.includes('out of safe range') || errorStr.includes('out of safe integer range')) {
+      if (errorStr.includes('Device ID')) {
+        errorMsg = this.translate.instant('senior-citizen-registration.deviceIdTooLarge', {
+          maxValue: Number.MAX_SAFE_INTEGER.toLocaleString()
+        });
+      } else {
+        errorMsg = extractErrorMessage(error);
+      }
+    } else if (errorStr.includes('Duplicate entry') && (errorStr.includes('device_id') || errorStr.includes('deviceId') || errorStr.includes('senior_citizens'))) {
+      errorMsg = 'The device ID is already in use. Please use a different device ID.';
+    } else if (error.status === 401 || error.status === 403) {
+      errorMsg = 'Authentication error. Please log in again.';
+    } else if (error?.status === 409) {
+      this.restorePendingSeniorCitizenId();
+      const body409 = typeof error.error === 'string' ? error.error : '';
+      const hay409 = `${body409} ${errorStr}`;
+      if (this.pendingSeniorCitizenId && (
+        hay409.includes('MEDITRACK_SENIOR_CITIZEN_DUPLICATE_DNI')
+        || hay409.includes('MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED')
+      )) {
+        errorMsg = 'El paciente ya fue registrado. Pulse Guardar de nuevo para completar el vínculo con su cuenta.';
+      } else if (hay409.includes('MEDITRACK_SENIOR_CITIZEN_DUPLICATE_DNI')) {
+        errorMsg = this.translate.instant('senior-citizen.errors.duplicateDni');
+      } else if (hay409.includes('MEDITRACK_SENIOR_CITIZEN_DUPLICATE_FULL_NAME')) {
+        errorMsg = this.translate.instant('senior-citizen.errors.duplicateFullName');
+      } else if (hay409.includes('MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED')) {
+        errorMsg = this.translate.instant('senior-citizen.errors.deviceAlreadyAssigned');
+      } else {
+        errorMsg = extractErrorMessage(error);
+      }
+    } else if (error.status === 404) {
+      errorMsg = 'Service not found. Please contact support.';
+    } else if (error.status === 400) {
+      errorMsg = extractErrorMessage(error);
+      if (errorMsg === 'An error occurred. Please try again.' || errorMsg.includes('Failed to register')) {
+        errorMsg = 'Invalid data. Please check all fields and try again.';
+      }
+    } else if (error.status === 500) {
+      const serverMsg = extractErrorMessage(error);
+      if (serverMsg && serverMsg !== 'An error occurred. Please try again.') {
+        errorMsg = `Server error: ${serverMsg}`;
+      } else {
+        errorMsg = 'Server error. Please try again later.';
+      }
+    } else if (!error.status) {
+      errorMsg = extractErrorMessage(error);
+      if (!errorMsg || errorMsg === 'An error occurred. Please try again.') {
+        errorMsg = error.message || 'An unexpected error occurred. Please check your input and try again.';
+      }
+    } else {
+      errorMsg = extractErrorMessage(error);
+    }
+
+    if (!errorMsg || errorMsg.trim().length === 0) {
+      errorMsg = 'An unexpected error occurred. Please try again.';
+    }
+
+    this.errorMessage = errorMsg;
+    this.isLoading = false;
   }
 
   navigateBack(): void {
