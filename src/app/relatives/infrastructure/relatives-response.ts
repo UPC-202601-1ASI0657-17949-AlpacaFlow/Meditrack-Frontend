@@ -20,6 +20,7 @@ export interface RelativeResource extends BaseResource {
     firstName: string;
     lastName: string;
     phoneNumber: string;
+    seniorCitizenId?: number | null;
     seniorCitizen?: SeniorCitizenResource | null;
     // Legacy fields (not in backend, but may be needed for frontend compatibility)
     email?: string;

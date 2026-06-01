@@ -2,6 +2,8 @@ import {Injectable, signal, computed} from '@angular/core';
 import {Relative} from "../domain/model/relative.entity";
 import {RelativesApi} from "../infrastructure/relatives-api";
 import {take} from 'rxjs';
+import { OrganizationApi } from '../../organization/infrastructure/organization-api';
+import { SeniorCitizen as RelativeSeniorCitizen } from '../domain/model/seniorCitizen.entity';
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +19,10 @@ export class RelativesStore {
     private readonly errorSignal = signal<string | null>(null);
     readonly error = this.errorSignal.asReadonly();
 
-    constructor(private relativesApi: RelativesApi) {}
+    constructor(
+        private relativesApi: RelativesApi,
+        private organizationApi: OrganizationApi
+    ) {}
 
     /**
      * Loads a relative by userId (since the route uses userId as relativeId)
@@ -31,6 +36,35 @@ export class RelativesStore {
         this.relativesApi.getRelativeByUserId(userId).pipe(take(1)).subscribe({
             next: (relative) => {
                 console.log('[RelativesStore] ✅ Relative loaded:', relative);
+                if (!relative?.seniorCitizen && relative?.seniorCitizenId) {
+                    this.organizationApi.getSeniorCitizenById(relative.seniorCitizenId).pipe(take(1)).subscribe({
+                        next: (seniorCitizen) => {
+                            if (seniorCitizen) {
+                                relative.seniorCitizen = new RelativeSeniorCitizen({
+                                    firstName: seniorCitizen.firstName,
+                                    lastName: seniorCitizen.lastName,
+                                    birthDate: seniorCitizen.birthDate,
+                                    dni: seniorCitizen.dni,
+                                    gender: seniorCitizen.gender,
+                                    height: seniorCitizen.height,
+                                    weight: seniorCitizen.weight,
+                                    image: seniorCitizen.imageUrl,
+                                    deviceId: seniorCitizen.deviceId,
+                                    signalVitals: {},
+                                    alerts: []
+                                });
+                            }
+                            this._selectedRelative.set(relative);
+                            this.loadingSignal.set(false);
+                        },
+                        error: (error) => {
+                            console.warn('[RelativesStore] Could not load senior citizen details:', error);
+                            this._selectedRelative.set(relative);
+                            this.loadingSignal.set(false);
+                        }
+                    });
+                    return;
+                }
                 this._selectedRelative.set(relative);
                 this.loadingSignal.set(false);
             },

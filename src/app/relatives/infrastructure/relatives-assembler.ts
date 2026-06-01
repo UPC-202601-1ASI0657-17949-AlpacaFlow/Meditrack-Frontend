@@ -61,6 +61,7 @@ export class RelativesAssembler
             creditCard: resource.creditCard || null, // May not be in backend response
             expirationDate: resource.expirationDate || null, // May not be in backend response
             securityCode: resource.securityCode || null, // May not be in backend response
+            seniorCitizenId: resource.seniorCitizenId ?? null,
             seniorCitizen: seniorCitizen
         };
         

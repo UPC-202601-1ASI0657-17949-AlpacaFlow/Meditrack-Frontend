@@ -32,4 +32,13 @@
             </mat-card-content>
         </mat-card>
     </div>
+} @else {
+    <div class="profile-container">
+        <mat-card class="profile-card">
+            <mat-card-header>
+                <mat-card-title>{{ 'relative.profile.patientProfile' | translate }}</mat-card-title>
+                <mat-card-subtitle>No hay un paciente vinculado todavia.</mat-card-subtitle>
+            </mat-card-header>
+        </mat-card>
+    </div>
 }

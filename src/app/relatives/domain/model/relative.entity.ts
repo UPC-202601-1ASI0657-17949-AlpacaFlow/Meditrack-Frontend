@@ -12,6 +12,7 @@ export class Relative implements BaseEntity {
     creditCard: string | null;
     expirationDate: string | null;
     securityCode: string | null;
+    seniorCitizenId: number | null;
     seniorCitizen: SeniorCitizen | null;
     constructor({
                     id,
@@ -24,6 +25,7 @@ export class Relative implements BaseEntity {
                     creditCard = null,
                     expirationDate = null,
                     securityCode = null,
+                    seniorCitizenId = null,
                     seniorCitizen = null,
 
                 }: {
@@ -37,6 +39,7 @@ export class Relative implements BaseEntity {
         creditCard?: string | null;
         expirationDate?: string | null;
         securityCode?: string | null;
+        seniorCitizenId?: number | null;
         seniorCitizen?: SeniorCitizen | null;
     }) {
         this.id = id;
@@ -49,6 +52,7 @@ export class Relative implements BaseEntity {
         this.creditCard = creditCard;
         this.expirationDate = expirationDate;
         this.securityCode = securityCode;
+        this.seniorCitizenId = seniorCitizenId;
         this.seniorCitizen = seniorCitizen ? new SeniorCitizen(seniorCitizen) : null;
     }
 }
