@@ -31,7 +31,9 @@
     "deviceId": "Device ID",
     "notAssigned": "Not assigned",
     "info": "Info",
-    "alert": "Alert"
+    "alert": "Alert",
+    "save": "Save",
+    "saved": "Saved!"
   },
   "page-not-found": {
     "title": "Page Not Found",
@@ -491,5 +493,18 @@
       "noOxygenData": "No oxygen saturation data available",
       "noTemperatureData": "No temperature data available"
     }
+  },
+  "medical-record": {
+    "title": "Medical Record / History",
+    "medicalHistoryDescription": "Medical History & Notes",
+    "allergies": "Allergies"
+  },
+  "patient-threshold": {
+    "title": "Threshold Configuration",
+    "minBpm": "Min Heart Rate (BPM)",
+    "maxBpm": "Max Heart Rate (BPM)",
+    "minSpo2": "Min SpO₂ (%)",
+    "minCelsius": "Min Temperature (°C)",
+    "maxCelsius": "Max Temperature (°C)"
   }
   }
