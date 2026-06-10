@@ -1,0 +1,19 @@
+.threshold-config-card {
+  margin-top: 1.5rem;
+}
+
+.threshold-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.threshold-field {
+  flex: 1;
+}
+
+.saved-indicator {
+  color: #4caf50;
+  font-weight: 500;
+  margin-left: 1rem;
+}

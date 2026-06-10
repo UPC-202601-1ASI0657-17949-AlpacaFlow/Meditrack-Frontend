@@ -2,7 +2,10 @@ import { Component, OnInit, OnDestroy, computed, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTabsModule } from '@angular/material/tabs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { SeniorCitizenMedicalRecord } from '../../../../clinical/presentation/components/senior-citizen-medical-record/senior-citizen-medical-record';
+import { SeniorCitizenThresholdConfig } from '../../../../clinical/presentation/components/senior-citizen-threshold-config/senior-citizen-threshold-config';
 import { OrganizationStore } from '../../../application/organization.store';
 import { SeniorCitizen } from '../../../domain/model/senior-citizen.entity';
 import { Caregiver } from '../../../domain/model/caregiver.entity';
@@ -12,7 +15,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-senior-citizen-detail',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, TranslatePipe],
+  imports: [CommonModule, MatButtonModule, MatTabsModule, TranslatePipe, SeniorCitizenMedicalRecord, SeniorCitizenThresholdConfig],
   templateUrl: './senior-citizen-detail.html',
   styleUrls: ['./senior-citizen-detail.css']
 })

@@ -1,0 +1,25 @@
+<mat-card class="medical-record-card">
+  <mat-card-header>
+    <mat-card-title>{{ 'medical-record.title' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <form [formGroup]="form" (ngSubmit)="onSave()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'medical-record.medicalHistoryDescription' | translate }}</mat-label>
+        <textarea matInput formControlName="medicalHistoryDescription" rows="4"></textarea>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'medical-record.allergies' | translate }}</mat-label>
+        <textarea matInput formControlName="allergies" rows="2"></textarea>
+      </mat-form-field>
+    </form>
+  </mat-card-content>
+  <mat-card-actions align="end">
+    <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid">
+      {{ 'common.save' | translate }}
+    </button>
+    @if (saved) {
+      <span class="saved-indicator">{{ 'common.saved' | translate }}</span>
+    }
+  </mat-card-actions>
+</mat-card>

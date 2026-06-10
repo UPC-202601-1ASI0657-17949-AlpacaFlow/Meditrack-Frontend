@@ -31,7 +31,9 @@
     "deviceId": "ID del dispositivo",
     "notAssigned": "Sin asignar",
     "info": "Info",
-    "alert": "Alerta"
+    "alert": "Alerta",
+    "save": "Guardar",
+    "saved": "¡Guardado!"
   },
   "page-not-found": {
     "title": "Página No Encontrada",
@@ -542,5 +544,18 @@
       "noOxygenData": "No hay datos de saturación de oxígeno disponibles",
       "noTemperatureData": "No hay datos de temperatura disponibles"
     }
+  },
+  "medical-record": {
+    "title": "Historial Médico / Antecedentes",
+    "medicalHistoryDescription": "Historial Médico y Notas",
+    "allergies": "Alergias"
+  },
+  "patient-threshold": {
+    "title": "Configuración de Umbrales",
+    "minBpm": "Mín. Pulso (BPM)",
+    "maxBpm": "Máx. Pulso (BPM)",
+    "minSpo2": "Mín. SpO₂ (%)",
+    "minCelsius": "Mín. Temperatura (°C)",
+    "maxCelsius": "Máx. Temperatura (°C)"
   }
 }

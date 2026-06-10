@@ -1,0 +1,43 @@
+<mat-card class="threshold-config-card">
+  <mat-card-header>
+    <mat-card-title>{{ 'patient-threshold.title' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <form [formGroup]="form" (ngSubmit)="onSave()">
+      <div class="threshold-row">
+        <mat-form-field appearance="outline" class="threshold-field">
+          <mat-label>{{ 'patient-threshold.minBpm' | translate }}</mat-label>
+          <input matInput type="number" formControlName="minBpm">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="threshold-field">
+          <mat-label>{{ 'patient-threshold.maxBpm' | translate }}</mat-label>
+          <input matInput type="number" formControlName="maxBpm">
+        </mat-form-field>
+      </div>
+      <div class="threshold-row">
+        <mat-form-field appearance="outline" class="threshold-field">
+          <mat-label>{{ 'patient-threshold.minSpo2' | translate }}</mat-label>
+          <input matInput type="number" formControlName="minSpo2">
+        </mat-form-field>
+      </div>
+      <div class="threshold-row">
+        <mat-form-field appearance="outline" class="threshold-field">
+          <mat-label>{{ 'patient-threshold.minCelsius' | translate }}</mat-label>
+          <input matInput type="number" step="0.1" formControlName="minCelsius">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="threshold-field">
+          <mat-label>{{ 'patient-threshold.maxCelsius' | translate }}</mat-label>
+          <input matInput type="number" step="0.1" formControlName="maxCelsius">
+        </mat-form-field>
+      </div>
+    </form>
+  </mat-card-content>
+  <mat-card-actions align="end">
+    <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid">
+      {{ 'common.save' | translate }}
+    </button>
+    @if (saved) {
+      <span class="saved-indicator">{{ 'common.saved' | translate }}</span>
+    }
+  </mat-card-actions>
+</mat-card>

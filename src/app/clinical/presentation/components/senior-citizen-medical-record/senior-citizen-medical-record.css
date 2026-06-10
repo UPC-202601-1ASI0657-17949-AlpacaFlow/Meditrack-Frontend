@@ -1,0 +1,14 @@
+.medical-record-card {
+  margin-top: 1.5rem;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.saved-indicator {
+  color: #4caf50;
+  font-weight: 500;
+  margin-left: 1rem;
+}

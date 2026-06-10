@@ -75,6 +75,10 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.detail-tabs {
+  margin-top: 2rem;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .senior-citizen-info-grid {

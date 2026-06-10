@@ -67,5 +67,15 @@
         {{ 'senior-citizen.backToList' | translate }}
       </button>
     </div>
+
+    <!-- Tabs: antecedentes y umbrales -->
+    <mat-tab-group class="detail-tabs" dynamicHeight>
+      <mat-tab [label]="'medical-record.title' | translate">
+        <app-senior-citizen-medical-record [seniorCitizenId]="seniorCitizen()!.id" />
+      </mat-tab>
+      <mat-tab [label]="'patient-threshold.title' | translate">
+        <app-senior-citizen-threshold-config [seniorCitizenId]="seniorCitizen()!.id" />
+      </mat-tab>
+    </mat-tab-group>
   </div>
 }
