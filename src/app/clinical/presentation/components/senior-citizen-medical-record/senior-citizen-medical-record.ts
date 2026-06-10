@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, effect } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,7 +15,7 @@ import { ClinicalStore } from '../../../application/clinical.store';
   templateUrl: './senior-citizen-medical-record.html',
   styleUrls: ['./senior-citizen-medical-record.css']
 })
-export class SeniorCitizenMedicalRecord implements OnInit {
+export class SeniorCitizenMedicalRecord implements OnInit, OnChanges {
   @Input() seniorCitizenId!: number;
 
   form: FormGroup;
@@ -31,17 +31,39 @@ export class SeniorCitizenMedicalRecord implements OnInit {
     });
     effect(() => {
       const record = this.store.medicalRecord();
-      if (record) {
+      if (record && record.seniorCitizenId === this.seniorCitizenId) {
         this.form.patchValue({
           medicalHistoryDescription: record.medicalHistoryDescription,
           allergies: record.allergies,
         }, { emitEvent: false });
+      } else if (!this.store.medicalRecordLoading() && this.store.medicalRecord() === null) {
+        this.resetForm();
       }
     });
   }
 
   ngOnInit(): void {
-    this.store.loadMedicalRecord(this.seniorCitizenId);
+    this.loadForCurrentSenior();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['seniorCitizenId'] && !changes['seniorCitizenId'].firstChange) {
+      this.loadForCurrentSenior();
+    }
+  }
+
+  private loadForCurrentSenior(): void {
+    this.resetForm();
+    if (this.seniorCitizenId) {
+      this.store.loadMedicalRecord(this.seniorCitizenId);
+    }
+  }
+
+  private resetForm(): void {
+    this.form.reset({
+      medicalHistoryDescription: '',
+      allergies: '',
+    }, { emitEvent: false });
   }
 
   onSave(): void {

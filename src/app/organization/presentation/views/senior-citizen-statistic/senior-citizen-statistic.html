@@ -18,21 +18,32 @@
     } @else {
         <div class="charts-grid">
             <div class="chart-wrapper">
-                <app-heart-rate [heartRate]="heartRate()"></app-heart-rate>
+                <app-heart-rate
+                    [heartRate]="heartRate()"
+                    [thresholdMin]="thresholdMinBpm()"
+                    [thresholdMax]="thresholdMaxBpm()">
+                </app-heart-rate>
                 @if (!heartRate().length) {
                     <div class="no-data-message">{{ 'senior-citizen.statistics.noHeartRateData' | translate }}</div>
                 }
             </div>
 
             <div class="chart-wrapper">
-                <app-oxygen-saturation [oxygenLevel]="oxygenLevel()"></app-oxygen-saturation>
+                <app-oxygen-saturation
+                    [oxygenLevel]="oxygenLevel()"
+                    [thresholdMin]="thresholdMinSpo2()">
+                </app-oxygen-saturation>
                 @if (!oxygenLevel().length) {
                     <div class="no-data-message">{{ 'senior-citizen.statistics.noOxygenData' | translate }}</div>
                 }
             </div>
 
             <div class="chart-wrapper">
-                <app-temperature-rate [temperature]="temperature()"></app-temperature-rate>
+                <app-temperature-rate
+                    [temperature]="temperature()"
+                    [thresholdMin]="thresholdMinCelsius()"
+                    [thresholdMax]="thresholdMaxCelsius()">
+                </app-temperature-rate>
                 @if (!temperature().length) {
                     <div class="no-data-message">{{ 'senior-citizen.statistics.noTemperatureData' | translate }}</div>
                 }

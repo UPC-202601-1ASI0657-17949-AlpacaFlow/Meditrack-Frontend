@@ -5,7 +5,7 @@ import { MedicalRecord } from '../domain/model/medical-record.entity';
 import { PatientThreshold } from '../domain/model/patient-threshold.entity';
 import { ClinicalAssembler } from './clinical-assembler';
 import { MedicalRecordResource, PatientThresholdResource } from './clinical-response';
-import { Observable, map, catchError, throwError } from 'rxjs';
+import { Observable, map, catchError, of, throwError } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ClinicalApiEndpoint {
@@ -19,7 +19,7 @@ export class ClinicalApiEndpoint {
     getMedicalRecord(seniorCitizenId: number): Observable<MedicalRecord | null> {
         return this.http.get<MedicalRecordResource>(`${this.baseUrl}/api/v1/medical-records/senior-citizen/${seniorCitizenId}`).pipe(
             map(r => this.assembler.medicalRecordToEntity(r)),
-            catchError(err => err.status === 404 ? throwError(() => null) : throwError(() => new Error('Error loading medical record')))
+            catchError(err => err.status === 404 ? of(null) : throwError(() => err))
         );
     }
 
@@ -38,7 +38,7 @@ export class ClinicalApiEndpoint {
     getPatientThreshold(seniorCitizenId: number): Observable<PatientThreshold | null> {
         return this.http.get<PatientThresholdResource>(`${this.baseUrl}/api/v1/patient-thresholds/senior-citizen/${seniorCitizenId}`).pipe(
             map(r => this.assembler.patientThresholdToEntity(r)),
-            catchError(err => err.status === 404 ? throwError(() => null) : throwError(() => new Error('Error loading patient thresholds')))
+            catchError(err => err.status === 404 ? of(null) : throwError(() => err))
         );
     }
 

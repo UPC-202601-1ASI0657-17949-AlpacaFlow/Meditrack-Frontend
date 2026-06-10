@@ -17,6 +17,8 @@ export class HeartRate implements AfterViewInit, OnDestroy, OnChanges {
     @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
     @Input() heartRate: number[] = [];
+    @Input() thresholdMin = 60;
+    @Input() thresholdMax = 100;
     private chartInstance?: Chart<keyof ChartTypeRegistry, (number | null)[], unknown>;
 
     private weekdayLabels(): string[] {
@@ -32,6 +34,10 @@ export class HeartRate implements AfterViewInit, OnDestroy, OnChanges {
     ngOnChanges() {
         if (this.chartInstance) {
             this.chartInstance.data.datasets[0].data = this.heartRate ?? [];
+            if (this.chartInstance.options.scales?.['y']) {
+                this.chartInstance.options.scales['y'].min = this.thresholdMin - 5;
+                this.chartInstance.options.scales['y'].max = this.thresholdMax + 5;
+            }
             this.chartInstance.update();
         }
     }
@@ -84,8 +90,8 @@ export class HeartRate implements AfterViewInit, OnDestroy, OnChanges {
                         type: 'linear',
                         display: true,
                         position: 'left',
-                        suggestedMin: 60,
-                        suggestedMax: 100,
+                        min: this.thresholdMin - 5,
+                        max: this.thresholdMax + 5,
                         title: {
                             display: true,
                             text: bpmLabel

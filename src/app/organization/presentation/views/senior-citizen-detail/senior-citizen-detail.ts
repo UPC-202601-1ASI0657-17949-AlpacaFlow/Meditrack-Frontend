@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, computed, signal } from '@angular/core';
+import { ClinicalStore } from '../../../../clinical/application/clinical.store';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -43,6 +44,13 @@ export class SeniorCitizenDetail implements OnInit, OnDestroy {
   });
 
   doctorTitle = signal<string>('Dr.');
+  userRole = signal<string | null>(null);
+
+  /** Clinical tabs are only for doctor/caregiver views, not admin. */
+  canViewClinicalData = computed(() => {
+    const role = this.userRole()?.toLowerCase();
+    return role === 'doctor' || role === 'caregiver';
+  });
 
   /**
    * Determines if the senior citizen is assigned to a doctor or caregiver
@@ -69,7 +77,8 @@ export class SeniorCitizenDetail implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private organizationStore: OrganizationStore,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private clinicalStore: ClinicalStore
   ) {
     // Load doctor title translation
     this.translateService.get('doctor.title').subscribe(title => {
@@ -78,16 +87,19 @@ export class SeniorCitizenDetail implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Load senior citizen on init
+    this.updateUserRole();
     this.loadSeniorCitizen();
-    
-    // Subscribe to route changes to reload senior citizen when navigating between different senior citizens
+
     this.routeSubscription = this.route.paramMap.subscribe(params => {
-      const seniorCitizenId = params.get('id');
-      if (seniorCitizenId) {
+      if (params.get('id')) {
         this.loadSeniorCitizen();
       }
+      this.updateUserRole();
     });
+  }
+
+  private updateUserRole(): void {
+    this.userRole.set(this.getRouteParams().userRole);
   }
 
   private loadSeniorCitizen(): void {
@@ -105,6 +117,7 @@ export class SeniorCitizenDetail implements OnInit, OnDestroy {
     if (this.routeSubscription) {
       this.routeSubscription.unsubscribe();
     }
+    this.clinicalStore.clear();
   }
 
   /**

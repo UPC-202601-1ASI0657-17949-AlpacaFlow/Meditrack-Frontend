@@ -20,6 +20,8 @@ export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {
 
     @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
     @Input() temperature: number[] = [];
+    @Input() thresholdMin = 36.0;
+    @Input() thresholdMax = 37.5;
 
     private chartInstance?: Chart<keyof ChartTypeRegistry, number[], unknown>;
 
@@ -38,7 +40,7 @@ export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (this.chartInstance && changes['temperature']?.currentValue) {
+        if (this.chartInstance && (changes['temperature'] || changes['thresholdMin'] || changes['thresholdMax'])) {
             this.updateChartData();
         }
     }
@@ -83,7 +85,7 @@ export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {
                 },
                 scales: {
                     x: { title: { display: true, text: dayOfWeekLabel } },
-                    y: { min: 35, max: 38, title: { display: true, text: temperatureLabel } }
+                    y: { min: this.thresholdMin - 1, max: this.thresholdMax + 1, title: { display: true, text: temperatureLabel } }
                 }
             }
         });
@@ -92,6 +94,10 @@ export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {
     private updateChartData() {
         if (!this.chartInstance) return;
         this.chartInstance.data.datasets[0].data = this.temperature ?? [];
+        if (this.chartInstance.options.scales?.['y']) {
+            this.chartInstance.options.scales['y'].min = this.thresholdMin - 1;
+            this.chartInstance.options.scales['y'].max = this.thresholdMax + 1;
+        }
         this.chartInstance.update('active');
     }
 }

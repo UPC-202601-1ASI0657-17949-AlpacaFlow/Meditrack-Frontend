@@ -17,6 +17,7 @@ export class OxygenSaturation implements AfterViewInit, OnDestroy, OnChanges {
     @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
     @Input() oxygenLevel: number[] | { ox: number }[] = [];
+    @Input() thresholdMin = 90;
 
     private chartInstance?: Chart<keyof ChartTypeRegistry, (number | null)[], unknown>;
 
@@ -33,6 +34,10 @@ export class OxygenSaturation implements AfterViewInit, OnDestroy, OnChanges {
     ngOnChanges() {
         if (this.chartInstance) {
             this.chartInstance.data.datasets[0].data = this.getOxygenData();
+            if (this.chartInstance.options.scales?.['y']) {
+                this.chartInstance.options.scales['y'].min = Math.max(50, this.thresholdMin - 5);
+                this.chartInstance.options.scales['y'].max = 100;
+            }
             this.chartInstance.update();
         }
     }
@@ -89,7 +94,7 @@ export class OxygenSaturation implements AfterViewInit, OnDestroy, OnChanges {
                         title: { display: true, text: dayOfWeekLabel }
                     },
                     y: {
-                        min: 90,
+                        min: Math.max(50, this.thresholdMin - 5),
                         max: 100,
                         title: { display: true, text: spO2Label }
                     }

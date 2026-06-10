@@ -1,6 +1,7 @@
 import {Component, computed, inject, OnInit, OnDestroy, effect} from '@angular/core';
 import {OrganizationStore} from "../../../application/organization.store";
 import {DeviceStore} from "../../../application/device.store";
+import {ClinicalStore} from "../../../../clinical/application/clinical.store";
 import {HeartRate} from "../../components/heart-rate/heart-rate";
 import {OxygenSaturation} from "../../components/oxygen-saturation/oxygen-saturation";
 import {TemperatureRate} from "../../components/temperature-rate/temperature-rate";
@@ -28,11 +29,19 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
 
     private organizationStore = inject(OrganizationStore);
     private deviceStore = inject(DeviceStore);
+    private clinicalStore = inject(ClinicalStore);
     private route = inject(ActivatedRoute);
     private routeSubscription?: Subscription;
 
     seniorCitizen = computed(() => this.organizationStore.selectedSeniorCitizen());
     deviceId = computed(() => this.seniorCitizen()?.deviceId ?? 0);
+    patientThreshold = computed(() => this.clinicalStore.patientThreshold());
+
+    thresholdMinBpm = computed(() => this.patientThreshold()?.minBpm ?? 60);
+    thresholdMaxBpm = computed(() => this.patientThreshold()?.maxBpm ?? 100);
+    thresholdMinSpo2 = computed(() => this.patientThreshold()?.minSpo2 ?? 90);
+    thresholdMinCelsius = computed(() => this.patientThreshold()?.minCelsius ?? 36.0);
+    thresholdMaxCelsius = computed(() => this.patientThreshold()?.maxCelsius ?? 37.5);
 
     // Loading state
     loading = computed(() => this.deviceStore.loadingMeasurements());
@@ -56,11 +65,28 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
         return this.deviceStore.getOxygenMeasurementsForDevice(deviceId)();
     });
 
-    heartRate = computed<number[]>(() => this.heartRateMeasurements().map(m => m.bpm));
+    heartRate = computed<number[]>(() => {
+        const min = this.thresholdMinBpm();
+        const max = this.thresholdMaxBpm();
+        return this.heartRateMeasurements()
+            .filter(m => m.bpm >= min && m.bpm <= max)
+            .map(m => m.bpm);
+    });
 
-    temperature = computed<number[]>(() => this.temperatureMeasurements().map(m => m.temperature));
+    temperature = computed<number[]>(() => {
+        const min = this.thresholdMinCelsius();
+        const max = this.thresholdMaxCelsius();
+        return this.temperatureMeasurements()
+            .filter(m => m.temperature >= min && m.temperature <= max)
+            .map(m => m.temperature);
+    });
 
-    oxygenLevel = computed<number[]>(() => this.oxygenMeasurements().map(m => m.saturation));
+    oxygenLevel = computed<number[]>(() => {
+        const min = this.thresholdMinSpo2();
+        return this.oxygenMeasurements()
+            .filter(m => m.saturation >= min)
+            .map(m => m.saturation);
+    });
 
     constructor() {
         // Effect to automatically load measurements when deviceId changes
@@ -76,6 +102,10 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
             if (deviceId && deviceId > 0) {
                 console.log('📊 SeniorCitizenStatistic: Loading measurements for device', deviceId);
                 this.deviceStore.loadAllMeasurementsForDevice(deviceId);
+            }
+            const seniorCitizenId = seniorCitizen?.id;
+            if (seniorCitizenId) {
+                this.clinicalStore.loadPatientThreshold(seniorCitizenId);
             } else if (seniorCitizen && !deviceId) {
                 console.warn('⚠️ SeniorCitizenStatistic: Senior citizen loaded but deviceId is missing or 0', {
                     seniorCitizenId: seniorCitizen.id,
