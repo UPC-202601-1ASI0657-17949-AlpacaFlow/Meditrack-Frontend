@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { MedicalRecord } from '../domain/model/medical-record.entity';
 import { PatientThreshold } from '../domain/model/patient-threshold.entity';
 import { ClinicalApi } from '../infrastructure/clinical-api';
-import { take } from 'rxjs';
+import { switchMap, take } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ClinicalStore {
@@ -54,10 +54,19 @@ export class ClinicalStore {
     savePatientThreshold(seniorCitizenId: number, data: {
         minBpm: number; maxBpm: number; minSpo2: number; minCelsius: number; maxCelsius: number;
     }): void {
+        const payload = {
+            minBpm: Number(data.minBpm),
+            maxBpm: Number(data.maxBpm),
+            minSpo2: Number(data.minSpo2),
+            minCelsius: Number(data.minCelsius),
+            maxCelsius: Number(data.maxCelsius),
+        };
         const current = this.patientThresholdSignal();
         const request = current && current.id > 0
-            ? this.clinicalApi.updatePatientThreshold(seniorCitizenId, data)
-            : this.clinicalApi.createPatientThreshold(seniorCitizenId);
+            ? this.clinicalApi.updatePatientThreshold(seniorCitizenId, payload)
+            : this.clinicalApi.createPatientThreshold(seniorCitizenId).pipe(
+                switchMap(() => this.clinicalApi.updatePatientThreshold(seniorCitizenId, payload))
+            );
         request.pipe(take(1)).subscribe({
             next: (threshold) => this.patientThresholdSignal.set(threshold),
             error: (err) => console.error('Error saving patient threshold', err),

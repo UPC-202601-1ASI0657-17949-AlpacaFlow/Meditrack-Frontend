@@ -52,7 +52,14 @@ export class SeniorCitizenThresholdConfig implements OnInit {
 
   onSave(): void {
     if (this.form.valid) {
-      this.store.savePatientThreshold(this.seniorCitizenId, this.form.value);
+      const data = {
+        minBpm: Number(this.form.value.minBpm),
+        maxBpm: Number(this.form.value.maxBpm),
+        minSpo2: Number(this.form.value.minSpo2),
+        minCelsius: Number(this.form.value.minCelsius),
+        maxCelsius: Number(this.form.value.maxCelsius),
+      };
+      this.store.savePatientThreshold(this.seniorCitizenId, data);
       this.saved = true;
       setTimeout(() => this.saved = false, 2000);
     }
