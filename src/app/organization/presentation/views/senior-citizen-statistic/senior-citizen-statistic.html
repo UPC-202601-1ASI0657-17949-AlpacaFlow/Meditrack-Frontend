@@ -16,6 +16,9 @@
             <p>{{ 'senior-citizen.statistics.hintAssignDevice' | translate }}</p>
         </div>
     } @else {
+        <app-device-degraded-banner
+            [visible]="isDegraded()"
+            [lastSyncedAt]="lastSyncedAt()" />
         <div class="charts-grid">
             <div class="chart-wrapper">
                 <app-heart-rate

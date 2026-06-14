@@ -7,6 +7,7 @@ import {TranslatePipe} from '@ngx-translate/core';
 import {CommonModule} from '@angular/common';
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {MatChipsModule} from "@angular/material/chips";
+import {DeviceDegradedBanner} from "../../../../organization/presentation/components/device-degraded-banner/device-degraded-banner";
 
 @Component({
   selector: 'app-alert-list',
@@ -19,7 +20,8 @@ import {MatChipsModule} from "@angular/material/chips";
         MatCard,
         MatChipsModule,
         MatProgressSpinnerModule,
-        TranslatePipe
+        TranslatePipe,
+        DeviceDegradedBanner
     ],
   templateUrl: './alert-list.html',
   styleUrl: './alert-list.css'
@@ -35,6 +37,14 @@ export class AlertList implements OnInit {
     deviceId = computed(() => {
         const sc = this.relative()?.seniorCitizen;
         return sc?.deviceId ? Number(sc.deviceId) : 0;
+    });
+    isDegraded = computed(() => {
+        const id = this.deviceId();
+        return id > 0 && this.deviceStore.isDeviceDataDegraded(id)();
+    });
+    lastSyncedAt = computed(() => {
+        const id = this.deviceId();
+        return id > 0 ? this.deviceStore.getLastSyncedAt(id)() : null;
     });
 
     // Loading state

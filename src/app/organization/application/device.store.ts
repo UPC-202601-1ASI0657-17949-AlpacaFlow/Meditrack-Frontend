@@ -7,66 +7,76 @@ import {
   OxygenMeasurement
 } from '../domain/model/measurement.entity';
 import { DeviceApi } from '../infrastructure/device-api';
+import {
+  DeviceVitalsSnapshot,
+  readDeviceVitalsSnapshot,
+  snapshotHasAlerts,
+  snapshotHasMeasurements,
+  writeDeviceVitalsSnapshot
+} from '../infrastructure/device-vitals-cache';
 
 /**
  * DeviceStore
  * State management store for devices, measurements, and alerts using Angular signals.
+ * Applies client-side degraded mode (TS9): keeps last known vitals when devices API fails.
  */
 @Injectable({
   providedIn: 'root'
 })
 export class DeviceStore {
-  // ==================== Devices ====================
   private readonly devicesSignal = signal<Device[]>([]);
   readonly devices = this.devicesSignal.asReadonly();
-  
+
   private readonly selectedDeviceSignal = signal<Device | null>(null);
   readonly selectedDevice = this.selectedDeviceSignal.asReadonly();
-  
+
   readonly deviceCount = computed(() => this.devices().length);
 
-  // ==================== Alerts ====================
   private readonly alertsSignal = signal<Alert[]>([]);
   readonly alerts = this.alertsSignal.asReadonly();
-  
+
   private readonly deviceAlertsSignal = signal<Map<number, Alert[]>>(new Map());
   readonly deviceAlerts = this.deviceAlertsSignal.asReadonly();
-  
+
   readonly alertCount = computed(() => this.alerts().length);
 
-  // ==================== Heart Rate Measurements ====================
   private readonly heartRateMeasurementsSignal = signal<Map<number, HeartRateMeasurement[]>>(new Map());
   readonly heartRateMeasurements = this.heartRateMeasurementsSignal.asReadonly();
 
-  // ==================== Temperature Measurements ====================
   private readonly temperatureMeasurementsSignal = signal<Map<number, TemperatureMeasurement[]>>(new Map());
   readonly temperatureMeasurements = this.temperatureMeasurementsSignal.asReadonly();
 
-  // ==================== Oxygen Measurements ====================
   private readonly oxygenMeasurementsSignal = signal<Map<number, OxygenMeasurement[]>>(new Map());
   readonly oxygenMeasurements = this.oxygenMeasurementsSignal.asReadonly();
 
-  // ==================== Loading States ====================
   private readonly loadingDevicesSignal = signal<boolean>(false);
   readonly loadingDevices = this.loadingDevicesSignal.asReadonly();
-  
+
   private readonly loadingAlertsSignal = signal<boolean>(false);
   readonly loadingAlerts = this.loadingAlertsSignal.asReadonly();
-  
+
   private readonly loadingMeasurementsSignal = signal<boolean>(false);
   readonly loadingMeasurements = this.loadingMeasurementsSignal.asReadonly();
 
-  // ==================== Error States ====================
   private readonly errorSignal = signal<string | null>(null);
   readonly error = this.errorSignal.asReadonly();
 
+  private readonly degradedDevicesSignal = signal<Set<number>>(new Set());
+  private readonly lastSyncedAtSignal = signal<Map<number, string>>(new Map());
+
+  private measurementBatchPending = 0;
+  private measurementBatchFailures = 0;
+
   constructor(private deviceApi: DeviceApi) {}
 
-  // ==================== Device Operations ====================
+  isDeviceDataDegraded(deviceId: number): Signal<boolean> {
+    return computed(() => this.degradedDevicesSignal().has(deviceId));
+  }
 
-  /**
-   * Load all devices
-   */
+  getLastSyncedAt(deviceId: number): Signal<string | null> {
+    return computed(() => this.lastSyncedAtSignal().get(deviceId) ?? null);
+  }
+
   loadAllDevices(): void {
     this.loadingDevicesSignal.set(true);
     this.errorSignal.set(null);
@@ -75,19 +85,14 @@ export class DeviceStore {
       next: (devices) => {
         this.devicesSignal.set(devices);
         this.loadingDevicesSignal.set(false);
-        console.log('✅ DeviceStore: Loaded', devices.length, 'devices');
       },
       error: (error) => {
         this.errorSignal.set('Error loading devices: ' + error.message);
         this.loadingDevicesSignal.set(false);
-        console.error('❌ DeviceStore: Error loading devices:', error);
       }
     });
   }
 
-  /**
-   * Load device by ID and set as selected
-   */
   loadDeviceById(deviceId: number): void {
     this.loadingDevicesSignal.set(true);
     this.errorSignal.set(null);
@@ -95,7 +100,6 @@ export class DeviceStore {
     this.deviceApi.getDeviceById(deviceId).subscribe({
       next: (device) => {
         this.selectedDeviceSignal.set(device);
-        // Also update in devices array
         const devices = this.devicesSignal();
         const index = devices.findIndex(d => d.id === deviceId);
         if (index >= 0) {
@@ -105,19 +109,14 @@ export class DeviceStore {
           this.devicesSignal.set([...devices, device]);
         }
         this.loadingDevicesSignal.set(false);
-        console.log('✅ DeviceStore: Loaded device', deviceId);
       },
       error: (error) => {
         this.errorSignal.set('Error loading device: ' + error.message);
         this.loadingDevicesSignal.set(false);
-        console.error('❌ DeviceStore: Error loading device:', error);
       }
     });
   }
 
-  /**
-   * Create a new device
-   */
   createDevice(model: string, holderId: number, holderType: string): void {
     this.loadingDevicesSignal.set(true);
     this.errorSignal.set(null);
@@ -126,21 +125,14 @@ export class DeviceStore {
       next: (device) => {
         this.devicesSignal.update(devices => [...devices, device]);
         this.loadingDevicesSignal.set(false);
-        console.log('✅ DeviceStore: Created device', device.id);
       },
       error: (error) => {
         this.errorSignal.set('Error creating device: ' + error.message);
         this.loadingDevicesSignal.set(false);
-        console.error('❌ DeviceStore: Error creating device:', error);
       }
     });
   }
 
-  // ==================== Alert Operations ====================
-
-  /**
-   * Load all alerts
-   */
   loadAllAlerts(): void {
     this.loadingAlertsSignal.set(true);
     this.errorSignal.set(null);
@@ -149,67 +141,42 @@ export class DeviceStore {
       next: (alerts) => {
         this.alertsSignal.set(alerts);
         this.loadingAlertsSignal.set(false);
-        console.log('✅ DeviceStore: Loaded', alerts.length, 'alerts');
       },
       error: (error) => {
         this.errorSignal.set('Error loading alerts: ' + error.message);
         this.loadingAlertsSignal.set(false);
-        console.error('❌ DeviceStore: Error loading alerts:', error);
       }
     });
   }
 
-  /**
-   * Load alerts by device ID
-   */
   loadAlertsByDeviceId(deviceId: number): void {
     this.loadingAlertsSignal.set(true);
     this.errorSignal.set(null);
+    this.hydrateFromCache(deviceId);
 
-    // Evitar mostrar alertas de una carga anterior del mismo deviceId mientras llega la respuesta
-    this.deviceAlertsSignal.update(map => {
-      const next = new Map(map);
-      next.set(deviceId, []);
-      return next;
-    });
-
-    console.log(`📡 DeviceStore: Attempting to load alerts for device ${deviceId}`);
-    
     this.deviceApi.getAllAlertsByDeviceId(deviceId).subscribe({
       next: (alerts) => {
-        // Store in the map
         this.deviceAlertsSignal.update(map => {
           const newMap = new Map(map);
           newMap.set(deviceId, alerts);
           return newMap;
         });
+        this.markHealthy(deviceId);
+        this.persistSnapshot(deviceId);
         this.loadingAlertsSignal.set(false);
-        console.log('✅ DeviceStore: Loaded', alerts.length, 'alerts for device', deviceId);
       },
       error: (error) => {
-        const errorMsg = error?.message || 'Unknown error';
-        this.errorSignal.set('Error loading alerts: ' + errorMsg);
-        this.loadingAlertsSignal.set(false);
-        console.error('❌ DeviceStore: Error loading alerts for device', deviceId, ':', {
-          error: error,
-          message: errorMsg,
-          stack: error?.stack
-        });
-        
-        // If it's a network error, provide helpful message
-        if (errorMsg.includes('Network Error') || errorMsg.includes('Unable to connect')) {
-          console.warn('⚠️ DeviceStore: Backend connection issue. Please verify:');
-          console.warn('  1. Backend server is running');
-          console.warn('  2. Backend URL is correct in environment configuration');
-          console.warn('  3. CORS is properly configured on the backend');
+        const restored = this.restoreAlertsFromCache(deviceId);
+        if (restored) {
+          this.markDegraded(deviceId);
+        } else {
+          this.errorSignal.set('Error loading alerts: ' + (error?.message || 'Unknown error'));
         }
+        this.loadingAlertsSignal.set(false);
       }
     });
   }
 
-  /**
-   * Get alerts for a specific device (computed)
-   */
   getAlertsForDevice(deviceId: number): Signal<Alert[]> {
     return computed(() => {
       const map = this.deviceAlertsSignal();
@@ -217,20 +184,8 @@ export class DeviceStore {
     });
   }
 
-  // ==================== Heart Rate Measurements ====================
-
-  /**
-   * Load heart rate measurements for a device
-   */
   loadHeartRateMeasurements(deviceId: number): void {
-    this.loadingMeasurementsSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.heartRateMeasurementsSignal.update(map => {
-      const next = new Map(map);
-      next.set(deviceId, []);
-      return next;
-    });
+    this.beginMeasurementRequest();
 
     this.deviceApi.getAllHeartRateMeasurements(deviceId).subscribe({
       next: (measurements) => {
@@ -239,20 +194,15 @@ export class DeviceStore {
           newMap.set(deviceId, measurements);
           return newMap;
         });
-        this.loadingMeasurementsSignal.set(false);
-        console.log('✅ DeviceStore: Loaded', measurements.length, 'HR measurements for device', deviceId);
+        this.finishMeasurementRequest(deviceId, false);
       },
       error: (error) => {
         this.errorSignal.set('Error loading HR measurements: ' + error.message);
-        this.loadingMeasurementsSignal.set(false);
-        console.error('❌ DeviceStore: Error loading HR measurements:', error);
+        this.finishMeasurementRequest(deviceId, true);
       }
     });
   }
 
-  /**
-   * Add heart rate measurement
-   */
   addHeartRateMeasurement(deviceId: number, bpm: number): void {
     this.loadingMeasurementsSignal.set(true);
     this.errorSignal.set(null);
@@ -261,21 +211,14 @@ export class DeviceStore {
       bpm,
       measuredAt: new Date().toISOString()
     }).subscribe({
-      next: () => {
-        this.loadHeartRateMeasurements(deviceId);
-        console.log('✅ DeviceStore: Added HR measurement to device', deviceId);
-      },
+      next: () => this.loadAllMeasurementsForDevice(deviceId),
       error: (error) => {
         this.errorSignal.set('Error adding HR measurement: ' + error.message);
         this.loadingMeasurementsSignal.set(false);
-        console.error('❌ DeviceStore: Error adding HR measurement:', error);
       }
     });
   }
 
-  /**
-   * Get heart rate measurements for a device (computed)
-   */
   getHeartRateMeasurementsForDevice(deviceId: number): Signal<HeartRateMeasurement[]> {
     return computed(() => {
       const map = this.heartRateMeasurementsSignal();
@@ -283,20 +226,8 @@ export class DeviceStore {
     });
   }
 
-  // ==================== Temperature Measurements ====================
-
-  /**
-   * Load temperature measurements for a device
-   */
   loadTemperatureMeasurements(deviceId: number): void {
-    this.loadingMeasurementsSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.temperatureMeasurementsSignal.update(map => {
-      const next = new Map(map);
-      next.set(deviceId, []);
-      return next;
-    });
+    this.beginMeasurementRequest();
 
     this.deviceApi.getAllTemperatureMeasurements(deviceId).subscribe({
       next: (measurements) => {
@@ -305,43 +236,31 @@ export class DeviceStore {
           newMap.set(deviceId, measurements);
           return newMap;
         });
-        this.loadingMeasurementsSignal.set(false);
-        console.log('✅ DeviceStore: Loaded', measurements.length, 'temp measurements for device', deviceId);
+        this.finishMeasurementRequest(deviceId, false);
       },
       error: (error) => {
         this.errorSignal.set('Error loading temp measurements: ' + error.message);
-        this.loadingMeasurementsSignal.set(false);
-        console.error('❌ DeviceStore: Error loading temp measurements:', error);
+        this.finishMeasurementRequest(deviceId, true);
       }
     });
   }
 
-  /**
-   * Add temperature measurement
-   */
   addTemperatureMeasurement(deviceId: number, temperature: number): void {
     this.loadingMeasurementsSignal.set(true);
     this.errorSignal.set(null);
 
     this.deviceApi.addTemperatureMeasurement(deviceId, {
-      celsius: temperature,  // El backend espera "celsius"
+      celsius: temperature,
       measuredAt: new Date().toISOString()
     }).subscribe({
-      next: () => {
-        this.loadTemperatureMeasurements(deviceId);
-        console.log('✅ DeviceStore: Added temp measurement to device', deviceId);
-      },
+      next: () => this.loadAllMeasurementsForDevice(deviceId),
       error: (error) => {
         this.errorSignal.set('Error adding temp measurement: ' + error.message);
         this.loadingMeasurementsSignal.set(false);
-        console.error('❌ DeviceStore: Error adding temp measurement:', error);
       }
     });
   }
 
-  /**
-   * Get temperature measurements for a device (computed)
-   */
   getTemperatureMeasurementsForDevice(deviceId: number): Signal<TemperatureMeasurement[]> {
     return computed(() => {
       const map = this.temperatureMeasurementsSignal();
@@ -349,20 +268,8 @@ export class DeviceStore {
     });
   }
 
-  // ==================== Oxygen Measurements ====================
-
-  /**
-   * Load oxygen measurements for a device
-   */
   loadOxygenMeasurements(deviceId: number): void {
-    this.loadingMeasurementsSignal.set(true);
-    this.errorSignal.set(null);
-
-    this.oxygenMeasurementsSignal.update(map => {
-      const next = new Map(map);
-      next.set(deviceId, []);
-      return next;
-    });
+    this.beginMeasurementRequest();
 
     this.deviceApi.getAllOxygenMeasurements(deviceId).subscribe({
       next: (measurements) => {
@@ -371,43 +278,31 @@ export class DeviceStore {
           newMap.set(deviceId, measurements);
           return newMap;
         });
-        this.loadingMeasurementsSignal.set(false);
-        console.log('✅ DeviceStore: Loaded', measurements.length, 'O2 measurements for device', deviceId);
+        this.finishMeasurementRequest(deviceId, false);
       },
       error: (error) => {
         this.errorSignal.set('Error loading O2 measurements: ' + error.message);
-        this.loadingMeasurementsSignal.set(false);
-        console.error('❌ DeviceStore: Error loading O2 measurements:', error);
+        this.finishMeasurementRequest(deviceId, true);
       }
     });
   }
 
-  /**
-   * Add oxygen measurement
-   */
   addOxygenMeasurement(deviceId: number, saturation: number): void {
     this.loadingMeasurementsSignal.set(true);
     this.errorSignal.set(null);
 
     this.deviceApi.addOxygenMeasurement(deviceId, {
-      spo2: saturation,  // El backend espera "spo2"
+      spo2: saturation,
       measuredAt: new Date().toISOString()
     }).subscribe({
-      next: () => {
-        this.loadOxygenMeasurements(deviceId);
-        console.log('✅ DeviceStore: Added O2 measurement to device', deviceId);
-      },
+      next: () => this.loadAllMeasurementsForDevice(deviceId),
       error: (error) => {
         this.errorSignal.set('Error adding O2 measurement: ' + error.message);
         this.loadingMeasurementsSignal.set(false);
-        console.error('❌ DeviceStore: Error adding O2 measurement:', error);
       }
     });
   }
 
-  /**
-   * Get oxygen measurements for a device (computed)
-   */
   getOxygenMeasurementsForDevice(deviceId: number): Signal<OxygenMeasurement[]> {
     return computed(() => {
       const map = this.oxygenMeasurementsSignal();
@@ -415,21 +310,19 @@ export class DeviceStore {
     });
   }
 
-  // ==================== Utility Methods ====================
-
-  /**
-   * Load all measurements for a device
-   */
   loadAllMeasurementsForDevice(deviceId: number): void {
-    console.log(`📡 DeviceStore: Attempting to load all measurements for device ${deviceId}`);
+    this.measurementBatchPending = 3;
+    this.measurementBatchFailures = 0;
+    this.loadingMeasurementsSignal.set(true);
+    this.errorSignal.set(null);
+    this.hydrateFromCache(deviceId);
+    this.clearDegraded(deviceId);
+
     this.loadHeartRateMeasurements(deviceId);
     this.loadTemperatureMeasurements(deviceId);
     this.loadOxygenMeasurements(deviceId);
   }
 
-  /**
-   * Clear all data
-   */
   clearAll(): void {
     this.devicesSignal.set([]);
     this.selectedDeviceSignal.set(null);
@@ -438,13 +331,159 @@ export class DeviceStore {
     this.heartRateMeasurementsSignal.set(new Map());
     this.temperatureMeasurementsSignal.set(new Map());
     this.oxygenMeasurementsSignal.set(new Map());
+    this.degradedDevicesSignal.set(new Set());
+    this.lastSyncedAtSignal.set(new Map());
     this.errorSignal.set(null);
   }
 
-  /**
-   * Clear error
-   */
   clearError(): void {
     this.errorSignal.set(null);
+  }
+
+  private beginMeasurementRequest(): void {
+    if (this.measurementBatchPending === 0) {
+      this.loadingMeasurementsSignal.set(true);
+    }
+  }
+
+  private finishMeasurementRequest(deviceId: number, failed: boolean): void {
+    if (this.measurementBatchPending > 0) {
+      this.measurementBatchPending--;
+      if (failed) {
+        this.measurementBatchFailures++;
+      }
+    }
+
+    if (this.measurementBatchPending > 0) {
+      return;
+    }
+
+    this.loadingMeasurementsSignal.set(false);
+
+    if (this.measurementBatchFailures === 0) {
+      this.markHealthy(deviceId);
+      this.persistSnapshot(deviceId);
+      return;
+    }
+
+    const restored = this.restoreMeasurementsFromCache(deviceId);
+    if (restored) {
+      this.markDegraded(deviceId);
+    }
+  }
+
+  private hydrateFromCache(deviceId: number): void {
+    const snapshot = readDeviceVitalsSnapshot(deviceId);
+    if (!snapshot) {
+      return;
+    }
+
+    if (snapshotHasMeasurements(snapshot)) {
+      this.applyMeasurementsSnapshot(deviceId, snapshot);
+    }
+
+    if (snapshotHasAlerts(snapshot)) {
+      this.deviceAlertsSignal.update(map => {
+        const newMap = new Map(map);
+        newMap.set(deviceId, snapshot.alerts);
+        return newMap;
+      });
+    }
+
+    if (snapshot.syncedAt) {
+      this.lastSyncedAtSignal.update(map => {
+        const newMap = new Map(map);
+        newMap.set(deviceId, snapshot.syncedAt);
+        return newMap;
+      });
+    }
+  }
+
+  private restoreMeasurementsFromCache(deviceId: number): boolean {
+    const snapshot = readDeviceVitalsSnapshot(deviceId);
+    if (!snapshotHasMeasurements(snapshot)) {
+      return false;
+    }
+
+    this.applyMeasurementsSnapshot(deviceId, snapshot!);
+    return true;
+  }
+
+  private restoreAlertsFromCache(deviceId: number): boolean {
+    const snapshot = readDeviceVitalsSnapshot(deviceId);
+    if (!snapshotHasAlerts(snapshot)) {
+      return false;
+    }
+
+    this.deviceAlertsSignal.update(map => {
+      const newMap = new Map(map);
+      newMap.set(deviceId, snapshot!.alerts);
+      return newMap;
+    });
+    return true;
+  }
+
+  private applyMeasurementsSnapshot(deviceId: number, snapshot: DeviceVitalsSnapshot): void {
+    this.heartRateMeasurementsSignal.update(map => {
+      const newMap = new Map(map);
+      newMap.set(deviceId, snapshot.heartRate);
+      return newMap;
+    });
+    this.temperatureMeasurementsSignal.update(map => {
+      const newMap = new Map(map);
+      newMap.set(deviceId, snapshot.temperature);
+      return newMap;
+    });
+    this.oxygenMeasurementsSignal.update(map => {
+      const newMap = new Map(map);
+      newMap.set(deviceId, snapshot.oxygen);
+      return newMap;
+    });
+  }
+
+  private persistSnapshot(deviceId: number): void {
+    const syncedAt = new Date().toISOString();
+    const heartRate = this.heartRateMeasurementsSignal().get(deviceId) ?? [];
+    const temperature = this.temperatureMeasurementsSignal().get(deviceId) ?? [];
+    const oxygen = this.oxygenMeasurementsSignal().get(deviceId) ?? [];
+    const alerts = this.deviceAlertsSignal().get(deviceId) ?? [];
+
+    writeDeviceVitalsSnapshot(deviceId, {
+      syncedAt,
+      heartRate,
+      temperature,
+      oxygen,
+      alerts
+    });
+
+    this.lastSyncedAtSignal.update(map => {
+      const newMap = new Map(map);
+      newMap.set(deviceId, syncedAt);
+      return newMap;
+    });
+  }
+
+  private markDegraded(deviceId: number): void {
+    this.degradedDevicesSignal.update(set => {
+      const next = new Set(set);
+      next.add(deviceId);
+      return next;
+    });
+  }
+
+  private markHealthy(deviceId: number): void {
+    this.clearDegraded(deviceId);
+    this.persistSnapshot(deviceId);
+  }
+
+  private clearDegraded(deviceId: number): void {
+    this.degradedDevicesSignal.update(set => {
+      if (!set.has(deviceId)) {
+        return set;
+      }
+      const next = new Set(set);
+      next.delete(deviceId);
+      return next;
+    });
   }
 }

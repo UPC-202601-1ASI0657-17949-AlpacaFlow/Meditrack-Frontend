@@ -8,6 +8,7 @@ import {TranslatePipe} from "@ngx-translate/core";
 import {CommonModule} from "@angular/common";
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {MatChipsModule} from "@angular/material/chips";
+import {DeviceDegradedBanner} from "../../components/device-degraded-banner/device-degraded-banner";
 
 @Component({
   selector: 'app-senior-citizen-alert-list',
@@ -20,7 +21,8 @@ import {MatChipsModule} from "@angular/material/chips";
     MatCard,
     MatChipsModule,
     MatProgressSpinnerModule,
-    TranslatePipe
+    TranslatePipe,
+    DeviceDegradedBanner
   ],
   templateUrl: './senior-citizen-alert-list.html',
   styleUrl: './senior-citizen-alert-list.css'
@@ -34,6 +36,14 @@ export class SeniorCitizenAlertList implements OnInit, OnDestroy {
 
     seniorCitizen = computed(() => this.organizationStore.selectedSeniorCitizen());
     deviceId = computed(() => this.seniorCitizen()?.deviceId ?? 0);
+    isDegraded = computed(() => {
+        const id = this.deviceId();
+        return id > 0 && this.deviceStore.isDeviceDataDegraded(id)();
+    });
+    lastSyncedAt = computed(() => {
+        const id = this.deviceId();
+        return id > 0 ? this.deviceStore.getLastSyncedAt(id)() : null;
+    });
 
     // Loading state
     loading = computed(() => this.deviceStore.loadingAlerts());

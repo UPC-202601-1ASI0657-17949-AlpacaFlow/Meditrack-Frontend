@@ -10,6 +10,7 @@ import {Subscription} from "rxjs";
 import {CommonModule} from "@angular/common";
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {TranslatePipe} from "@ngx-translate/core";
+import {DeviceDegradedBanner} from "../../components/device-degraded-banner/device-degraded-banner";
 
 @Component({
   selector: 'app-senior-citizen-statistic',
@@ -20,7 +21,8 @@ import {TranslatePipe} from "@ngx-translate/core";
     OxygenSaturation,
     TemperatureRate,
     MatProgressSpinnerModule,
-    TranslatePipe
+    TranslatePipe,
+    DeviceDegradedBanner
   ],
   templateUrl: './senior-citizen-statistic.html',
   styleUrl: './senior-citizen-statistic.css'
@@ -36,6 +38,14 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
     seniorCitizen = computed(() => this.organizationStore.selectedSeniorCitizen());
     deviceId = computed(() => this.seniorCitizen()?.deviceId ?? 0);
     patientThreshold = computed(() => this.clinicalStore.patientThreshold());
+    isDegraded = computed(() => {
+        const id = this.deviceId();
+        return id > 0 && this.deviceStore.isDeviceDataDegraded(id)();
+    });
+    lastSyncedAt = computed(() => {
+        const id = this.deviceId();
+        return id > 0 ? this.deviceStore.getLastSyncedAt(id)() : null;
+    });
 
     thresholdMinBpm = computed(() => this.patientThreshold()?.minBpm ?? 60);
     thresholdMaxBpm = computed(() => this.patientThreshold()?.maxBpm ?? 100);

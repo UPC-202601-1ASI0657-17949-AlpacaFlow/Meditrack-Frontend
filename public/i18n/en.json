@@ -35,6 +35,13 @@
     "save": "Save",
     "saved": "Saved!"
   },
+  "devices": {
+    "degraded": {
+      "title": "Devices service unavailable",
+      "detail": "Showing the last known telemetry stored in this browser (TS9 degraded mode).",
+      "lastSync": "Last sync"
+    }
+  },
   "page-not-found": {
     "title": "Page Not Found",
     "content": "The page <strong>{{invalid_path}}</strong> was not found.",

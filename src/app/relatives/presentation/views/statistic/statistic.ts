@@ -13,6 +13,7 @@ import {TemperatureRate} from "../../components/temperature-rate/temperature-rat
 import {TranslatePipe} from '@ngx-translate/core';
 import {CommonModule} from '@angular/common';
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
+import {DeviceDegradedBanner} from "../../../../organization/presentation/components/device-degraded-banner/device-degraded-banner";
 
 @Component({
   selector: 'app-statistic',
@@ -23,7 +24,8 @@ import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
         TemperatureRate,
         TranslatePipe,
         CommonModule,
-        MatProgressSpinnerModule
+        MatProgressSpinnerModule,
+        DeviceDegradedBanner
     ],
   templateUrl: './statistic.html',
   styleUrl: './statistic.css'
@@ -39,6 +41,14 @@ export class Statistic implements OnInit {
     deviceId = computed(() => {
         const sc = this.relative()?.seniorCitizen;
         return sc?.deviceId ? Number(sc.deviceId) : 0;
+    });
+    isDegraded = computed(() => {
+        const id = this.deviceId();
+        return id > 0 && this.deviceStore.isDeviceDataDegraded(id)();
+    });
+    lastSyncedAt = computed(() => {
+        const id = this.deviceId();
+        return id > 0 ? this.deviceStore.getLastSyncedAt(id)() : null;
     });
 
     // Loading state

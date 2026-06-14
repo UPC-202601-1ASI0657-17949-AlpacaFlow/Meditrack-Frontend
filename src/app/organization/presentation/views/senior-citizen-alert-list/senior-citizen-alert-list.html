@@ -7,6 +7,9 @@
     }
 
     @else if (sortedAlerts().length) {
+        <app-device-degraded-banner
+            [visible]="isDegraded()"
+            [lastSyncedAt]="lastSyncedAt()" />
         <div class="alerts-grid">
             @for (alert of sortedAlerts(); track alert.id) {
                 <mat-card class="alert-card mat-elevation-z4" [ngClass]="getAlertSeverityClass(alert.alertType)">
@@ -63,6 +66,9 @@
                         <p class="device-info-text"><strong>{{ 'common.deviceId' | translate }}:</strong> {{ seniorCitizen()?.deviceId ?? ('common.notAssigned' | translate) }}</p>
                         <p>{{ 'senior-citizen.alert.hintAssignDevice' | translate }}</p>
                     } @else {
+                        <app-device-degraded-banner
+                            [visible]="isDegraded()"
+                            [lastSyncedAt]="lastSyncedAt()" />
                         <p>{{ 'senior-citizen.alert.noAlerts' | translate }}</p>
                         <p class="device-info-text"><strong>{{ 'common.deviceId' | translate }}:</strong> {{ deviceId() }}</p>
                     }

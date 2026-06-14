@@ -16,6 +16,9 @@
             <p>{{ 'relative.statistics.hintAssignDevice' | translate }}</p>
         </div>
     } @else {
+        <app-device-degraded-banner
+            [visible]="isDegraded()"
+            [lastSyncedAt]="lastSyncedAt()" />
         <div class="charts-grid">
             @if (heartRate().length) {
                 <div class="chart-wrapper">
