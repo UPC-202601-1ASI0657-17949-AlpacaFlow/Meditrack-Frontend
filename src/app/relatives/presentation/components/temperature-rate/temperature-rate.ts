@@ -1,6 +1,12 @@
 import { Component, Input, AfterViewInit, OnDestroy, ViewChild, ElementRef, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { Chart, ChartTypeRegistry, registerables } from 'chart.js';
 import { TranslateService } from '@ngx-translate/core';
+import {
+  formatChartAxisTick,
+  toVitalChartPoints,
+  VitalTimePoint,
+  vitalChartXBounds
+} from '../../../../shared/utils/vital-chart.utils';
 
 Chart.register(...registerables);
 
@@ -19,15 +25,9 @@ export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {
     private translateService = inject(TranslateService);
 
     @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
-    @Input() temperature: number[] = [];
+    @Input() points: VitalTimePoint[] = [];
 
-    private chartInstance?: Chart<keyof ChartTypeRegistry, number[], unknown>;
-
-    private weekdayLabels(): string[] {
-        return (['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const).map((k) =>
-            this.translateService.instant(`senior-citizen.statistics.weekdays.${k}`)
-        );
-    }
+    private chartInstance?: Chart<keyof ChartTypeRegistry, { x: number; y: number }[], unknown>;
 
     ngAfterViewInit() {
         this.initChart();
@@ -38,9 +38,29 @@ export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (this.chartInstance && changes['temperature']?.currentValue) {
-            this.updateChartData();
+        if (this.chartInstance && changes['points']) {
+            this.applyChartData();
         }
+    }
+
+    private chartData() {
+        return toVitalChartPoints(this.points);
+    }
+
+    private applyChartData() {
+        if (!this.chartInstance) return;
+        const data = this.chartData();
+        this.chartInstance.data.datasets[0].data = data;
+        this.applyXScaleBounds(data);
+        this.chartInstance.update('active');
+    }
+
+    private applyXScaleBounds(data: { x: number; y: number }[]) {
+        const bounds = vitalChartXBounds(data);
+        const xScale = this.chartInstance?.options.scales?.['x'];
+        if (!xScale || !bounds) return;
+        xScale.min = bounds.min;
+        xScale.max = bounds.max;
     }
 
     private initChart() {
@@ -55,43 +75,55 @@ export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {
 
         const temperatureLabel = this.translateService.instant('senior-citizen.statistics.temperatureUnit');
         const temperatureTitle = this.translateService.instant('senior-citizen.statistics.temperature');
-        const dayOfWeekLabel = this.translateService.instant('senior-citizen.statistics.dayOfWeek');
+        const timeAxisLabel = this.translateService.instant('senior-citizen.statistics.measuredAtTime');
+        const data = this.chartData();
+        const bounds = vitalChartXBounds(data);
 
         this.chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: this.weekdayLabels(),
                 datasets: [
                     {
                         label: temperatureLabel,
-                        data: this.temperature,
+                        data,
                         fill: true,
                         backgroundColor: gradient,
                         borderColor: 'rgba(255, 99, 132, 1)',
                         borderWidth: 2,
                         tension: 0.4,
                         pointRadius: 6,
+                        pointHoverRadius: 7,
                         pointBackgroundColor: 'rgba(255, 99, 132, 1)'
                     }
                 ]
             },
             options: {
                 responsive: true,
+                parsing: false,
                 plugins: {
                     legend: { display: true },
-                    title: { display: true, text: temperatureTitle }
+                    title: { display: true, text: temperatureTitle },
+                    tooltip: {
+                        callbacks: {
+                            title: (items) => formatChartAxisTick(items[0]?.parsed.x ?? 0),
+                            label: (item) => `${temperatureLabel}: ${item.parsed.y}°C`
+                        }
+                    }
                 },
                 scales: {
-                    x: { title: { display: true, text: dayOfWeekLabel } },
+                    x: {
+                        type: 'linear',
+                        min: bounds?.min,
+                        max: bounds?.max,
+                        title: { display: true, text: timeAxisLabel },
+                        ticks: {
+                            maxTicksLimit: 8,
+                            callback: (value) => formatChartAxisTick(value)
+                        }
+                    },
                     y: { min: 35, max: 38, title: { display: true, text: temperatureLabel } }
                 }
             }
         });
-    }
-
-    private updateChartData() {
-        if (!this.chartInstance) return;
-        this.chartInstance.data.datasets[0].data = this.temperature ?? [];
-        this.chartInstance.update('active');
     }
 }

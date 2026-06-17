@@ -1,4 +1,4 @@
-import {Component, computed, inject, OnInit, effect} from '@angular/core';
+import {Component, computed, inject, OnInit, OnDestroy, effect} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {RelativesStore} from "../../../application/relatives.store";
 import {DeviceStore} from "../../../../organization/application/device.store";
@@ -14,6 +14,9 @@ import {TranslatePipe} from '@ngx-translate/core';
 import {CommonModule} from '@angular/common';
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {DeviceDegradedBanner} from "../../../../organization/presentation/components/device-degraded-banner/device-degraded-banner";
+import { sortByMeasuredAt, VitalTimePoint } from "../../../../shared/utils/vital-chart.utils";
+
+const MEASUREMENT_REFRESH_MS = 15_000;
 
 @Component({
   selector: 'app-statistic',
@@ -30,11 +33,12 @@ import {DeviceDegradedBanner} from "../../../../organization/presentation/compon
   templateUrl: './statistic.html',
   styleUrl: './statistic.css'
 })
-export class Statistic implements OnInit {
+export class Statistic implements OnInit, OnDestroy {
 
     private relativeStore = inject(RelativesStore);
     private deviceStore = inject(DeviceStore);
     private route = inject(ActivatedRoute);
+    private measurementRefreshTimer?: ReturnType<typeof setInterval>;
 
     relative = computed(() => this.relativeStore.selectedRelative());
     
@@ -73,16 +77,25 @@ export class Statistic implements OnInit {
         return this.deviceStore.getOxygenMeasurementsForDevice(deviceId)();
     });
 
-    heartRate = computed<number[]>(() =>
-        this.heartRateMeasurements().map((m: HeartRateMeasurement) => m.bpm)
+    heartRatePoints = computed<VitalTimePoint[]>(() =>
+        sortByMeasuredAt(this.heartRateMeasurements()).map((m: HeartRateMeasurement) => ({
+            value: m.bpm,
+            measuredAt: m.measuredAt,
+        }))
     );
 
-    oxigenLevel = computed<{ ox: number }[]>(() =>
-        this.oxygenMeasurements().map((m: OxygenMeasurement) => ({ ox: m.saturation }))
+    oxygenPoints = computed<VitalTimePoint[]>(() =>
+        sortByMeasuredAt(this.oxygenMeasurements()).map((m: OxygenMeasurement) => ({
+            value: m.saturation,
+            measuredAt: m.measuredAt,
+        }))
     );
 
-    temperature = computed<number[]>(() =>
-        this.temperatureMeasurements().map((m: TemperatureMeasurement) => m.temperature)
+    temperaturePoints = computed<VitalTimePoint[]>(() =>
+        sortByMeasuredAt(this.temperatureMeasurements()).map((m: TemperatureMeasurement) => ({
+            value: m.temperature,
+            measuredAt: m.measuredAt,
+        }))
     );
 
     constructor() {
@@ -121,6 +134,19 @@ export class Statistic implements OnInit {
             if (id) {
                 this.relativeStore.loadRelativeById(id);
             }
+        }
+
+        this.measurementRefreshTimer = setInterval(() => {
+            const deviceId = this.deviceId();
+            if (deviceId > 0) {
+                this.deviceStore.loadAllMeasurementsForDevice(deviceId);
+            }
+        }, MEASUREMENT_REFRESH_MS);
+    }
+
+    ngOnDestroy() {
+        if (this.measurementRefreshTimer) {
+            clearInterval(this.measurementRefreshTimer);
         }
     }
 }

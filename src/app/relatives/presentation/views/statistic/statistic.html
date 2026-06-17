@@ -20,25 +20,25 @@
             [visible]="isDegraded()"
             [lastSyncedAt]="lastSyncedAt()" />
         <div class="charts-grid">
-            @if (heartRate().length) {
+            @if (heartRatePoints().length) {
                 <div class="chart-wrapper">
-                    <app-heart-rate [heartRate]="heartRate()"></app-heart-rate>
+                    <app-heart-rate [points]="heartRatePoints()"></app-heart-rate>
                 </div>
             }
 
-            @if (oxigenLevel().length) {
+            @if (oxygenPoints().length) {
                 <div class="chart-wrapper">
-                    <app-oxygen-saturation [oxygenLevel]="oxigenLevel()"></app-oxygen-saturation>
+                    <app-oxygen-saturation [points]="oxygenPoints()"></app-oxygen-saturation>
                 </div>
             }
 
-            @if (temperature().length) {
+            @if (temperaturePoints().length) {
                 <div class="chart-wrapper">
-                    <app-temperature-rate [temperature]="temperature()"></app-temperature-rate>
+                    <app-temperature-rate [points]="temperaturePoints()"></app-temperature-rate>
                 </div>
             }
 
-            @if (!heartRate().length && !oxigenLevel().length && !temperature().length) {
+            @if (!heartRatePoints().length && !oxygenPoints().length && !temperaturePoints().length) {
                 <div class="no-statistics">
                     <p>{{ 'relative.statistics.noData' | translate }}</p>
                 </div>

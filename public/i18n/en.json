@@ -233,9 +233,10 @@
     },
     "statistics": {
       "heartRate": "Heart Rate (bpm)",
-      "heartRateTitle": "Heart Rate - Last 7 Days",
-      "oxygenSaturation": "Oxygen Saturation (%) - Last 7 Days",
-      "temperature": "Body Temperature - Last 7 Days",
+      "heartRateTitle": "Heart rate — received signals",
+      "oxygenSaturation": "Oxygen saturation (%) — received signals",
+      "temperature": "Body temperature — received signals",
+      "measuredAtTime": "Measurement time",
       "dayOfWeek": "Day of the Week",
       "bpm": "bpm",
       "spO2": "SpO₂ (%)",

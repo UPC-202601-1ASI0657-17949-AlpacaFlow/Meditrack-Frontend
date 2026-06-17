@@ -22,32 +22,32 @@
         <div class="charts-grid">
             <div class="chart-wrapper">
                 <app-heart-rate
-                    [heartRate]="heartRate()"
+                    [points]="heartRatePoints()"
                     [thresholdMin]="thresholdMinBpm()"
                     [thresholdMax]="thresholdMaxBpm()">
                 </app-heart-rate>
-                @if (!heartRate().length) {
+                @if (!heartRatePoints().length) {
                     <div class="no-data-message">{{ 'senior-citizen.statistics.noHeartRateData' | translate }}</div>
                 }
             </div>
 
             <div class="chart-wrapper">
                 <app-oxygen-saturation
-                    [oxygenLevel]="oxygenLevel()"
+                    [points]="oxygenPoints()"
                     [thresholdMin]="thresholdMinSpo2()">
                 </app-oxygen-saturation>
-                @if (!oxygenLevel().length) {
+                @if (!oxygenPoints().length) {
                     <div class="no-data-message">{{ 'senior-citizen.statistics.noOxygenData' | translate }}</div>
                 }
             </div>
 
             <div class="chart-wrapper">
                 <app-temperature-rate
-                    [temperature]="temperature()"
+                    [points]="temperaturePoints()"
                     [thresholdMin]="thresholdMinCelsius()"
                     [thresholdMax]="thresholdMaxCelsius()">
                 </app-temperature-rate>
-                @if (!temperature().length) {
+                @if (!temperaturePoints().length) {
                     <div class="no-data-message">{{ 'senior-citizen.statistics.noTemperatureData' | translate }}</div>
                 }
             </div>

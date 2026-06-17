@@ -11,6 +11,9 @@ import {CommonModule} from "@angular/common";
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {TranslatePipe} from "@ngx-translate/core";
 import {DeviceDegradedBanner} from "../../components/device-degraded-banner/device-degraded-banner";
+import { sortByMeasuredAt, VitalTimePoint } from "../../../../shared/utils/vital-chart.utils";
+
+const MEASUREMENT_REFRESH_MS = 15_000;
 
 @Component({
   selector: 'app-senior-citizen-statistic',
@@ -34,6 +37,7 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
     private clinicalStore = inject(ClinicalStore);
     private route = inject(ActivatedRoute);
     private routeSubscription?: Subscription;
+    private measurementRefreshTimer?: ReturnType<typeof setInterval>;
 
     seniorCitizen = computed(() => this.organizationStore.selectedSeniorCitizen());
     deviceId = computed(() => this.seniorCitizen()?.deviceId ?? 0);
@@ -75,28 +79,26 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
         return this.deviceStore.getOxygenMeasurementsForDevice(deviceId)();
     });
 
-    heartRate = computed<number[]>(() => {
-        const min = this.thresholdMinBpm();
-        const max = this.thresholdMaxBpm();
-        return this.heartRateMeasurements()
-            .filter(m => m.bpm >= min && m.bpm <= max)
-            .map(m => m.bpm);
-    });
+    heartRatePoints = computed<VitalTimePoint[]>(() =>
+        sortByMeasuredAt(this.heartRateMeasurements()).map((m) => ({
+            value: m.bpm,
+            measuredAt: m.measuredAt,
+        }))
+    );
 
-    temperature = computed<number[]>(() => {
-        const min = this.thresholdMinCelsius();
-        const max = this.thresholdMaxCelsius();
-        return this.temperatureMeasurements()
-            .filter(m => m.temperature >= min && m.temperature <= max)
-            .map(m => m.temperature);
-    });
+    temperaturePoints = computed<VitalTimePoint[]>(() =>
+        sortByMeasuredAt(this.temperatureMeasurements()).map((m) => ({
+            value: m.temperature,
+            measuredAt: m.measuredAt,
+        }))
+    );
 
-    oxygenLevel = computed<number[]>(() => {
-        const min = this.thresholdMinSpo2();
-        return this.oxygenMeasurements()
-            .filter(m => m.saturation >= min)
-            .map(m => m.saturation);
-    });
+    oxygenPoints = computed<VitalTimePoint[]>(() =>
+        sortByMeasuredAt(this.oxygenMeasurements()).map((m) => ({
+            value: m.saturation,
+            measuredAt: m.measuredAt,
+        }))
+    );
 
     constructor() {
         // Effect to automatically load measurements when deviceId changes
@@ -128,10 +130,14 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        // Load senior citizen on init
         this.loadSeniorCitizen();
-        
-        // Subscribe to route changes to reload senior citizen when navigating between different senior citizens
+        this.measurementRefreshTimer = setInterval(() => {
+            const deviceId = this.deviceId();
+            if (deviceId > 0) {
+                this.deviceStore.loadAllMeasurementsForDevice(deviceId);
+            }
+        }, MEASUREMENT_REFRESH_MS);
+
         this.routeSubscription = this.route.paramMap.subscribe(params => {
             const seniorCitizenId = params.get('id');
             if (seniorCitizenId) {
@@ -161,6 +167,9 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        if (this.measurementRefreshTimer) {
+            clearInterval(this.measurementRefreshTimer);
+        }
         if (this.routeSubscription) {
             this.routeSubscription.unsubscribe();
         }
