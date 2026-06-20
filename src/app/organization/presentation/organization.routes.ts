@@ -18,6 +18,8 @@ const seniorCitizenAlertList = () =>
     import('./views/senior-citizen-alert-list/senior-citizen-alert-list').then(m => m.SeniorCitizenAlertList);
 const seniorCitizenStatistic = () =>
     import('./views/senior-citizen-statistic/senior-citizen-statistic').then(m => m.SeniorCitizenStatistic);
+const deviceList = () =>
+    import('./views/device-list/device-list').then(m => m.DeviceList);
 const support = () =>
     import('./views/support/support').then(m => m.Support);
 const pageNotFound = () =>
@@ -37,8 +39,8 @@ export const organizationRoutes: Routes = [
             { path: 'senior-citizens/:id/alerts', loadComponent: seniorCitizenAlertList, data: { title: 'Senior Citizen Alerts' } },
             { path: 'senior-citizens/:id/statistics', loadComponent: seniorCitizenStatistic, data: { title: 'Senior Citizen Statistics' } },
             { path: 'senior-citizens/:id', redirectTo: 'senior-citizens/:id/profile', pathMatch: 'full' },
+            { path: 'devices', loadComponent: deviceList, data: { title: 'Devices' } },
             { path: 'support', loadComponent: support, data: { title: 'Support' } },
-            // Catch-all route for invalid paths within organization
             { path: '**', loadComponent: pageNotFound, data: { title: 'Page Not Found' } }
         ]
     },
@@ -55,8 +57,8 @@ export const organizationRoutes: Routes = [
             { path: 'senior-citizens/:id/alerts', loadComponent: seniorCitizenAlertList, data: { title: 'Senior Citizen Alerts' } },
             { path: 'senior-citizens/:id/statistics', loadComponent: seniorCitizenStatistic, data: { title: 'Senior Citizen Statistics' } },
             { path: 'senior-citizens/:id', redirectTo: 'senior-citizens/:id/profile', pathMatch: 'full' },
+            { path: 'devices', loadComponent: deviceList, data: { title: 'Devices' } },
             { path: 'support', loadComponent: support, data: { title: 'Support' } },
-            // Catch-all route for invalid paths within organization
             { path: '**', loadComponent: pageNotFound, data: { title: 'Page Not Found' } }
         ]
     }

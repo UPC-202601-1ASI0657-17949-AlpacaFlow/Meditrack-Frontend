@@ -28,6 +28,9 @@
                     <mat-list-item>
                         <strong>{{ 'relative.profile.height' | translate }}:</strong> {{ senior.height }}{{ 'senior-citizen.units.cm' | translate }}
                     </mat-list-item>
+                    <mat-list-item>
+                        <strong>{{ 'common.deviceId' | translate }}:</strong> {{ senior.deviceId || ('common.notAssigned' | translate) }}
+                    </mat-list-item>
                 </mat-list>
             </mat-card-content>
         </mat-card>

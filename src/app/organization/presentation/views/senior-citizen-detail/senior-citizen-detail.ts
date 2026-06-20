@@ -2,9 +2,11 @@ import { Component, OnInit, OnDestroy, computed, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { OrganizationStore } from '../../../application/organization.store';
+import { DeviceStore } from '../../../application/device.store';
 import { SeniorCitizen } from '../../../domain/model/senior-citizen.entity';
 import { Caregiver } from '../../../domain/model/caregiver.entity';
 import { Doctor } from '../../../domain/model/doctor.entity';
@@ -15,7 +17,7 @@ import { SeniorCitizenThresholdConfig } from '../../../../clinical/presentation/
 @Component({
   selector: 'app-senior-citizen-detail',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatTabsModule, TranslatePipe, SeniorCitizenMedicalRecord, SeniorCitizenThresholdConfig],
+  imports: [CommonModule, MatButtonModule, MatCardModule, MatTabsModule, TranslatePipe, SeniorCitizenMedicalRecord, SeniorCitizenThresholdConfig],
   templateUrl: './senior-citizen-detail.html',
   styleUrls: ['./senior-citizen-detail.css']
 })
@@ -44,6 +46,14 @@ export class SeniorCitizenDetail implements OnInit, OnDestroy {
 
   doctorTitle = signal<string>('Dr.');
 
+  // Device info
+  deviceInfo = computed(() => {
+    const sc = this.seniorCitizen();
+    if (!sc || !sc.deviceId) return null;
+    return this.deviceStore.selectedDevice();
+  });
+  deviceLoading = computed(() => this.deviceStore.loadingDevices());
+
   /**
    * Determines if the senior citizen is assigned to a doctor or caregiver
    */
@@ -69,6 +79,7 @@ export class SeniorCitizenDetail implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private organizationStore: OrganizationStore,
+    private deviceStore: DeviceStore,
     private translateService: TranslateService
   ) {
     // Load doctor title translation
@@ -98,6 +109,11 @@ export class SeniorCitizenDetail implements OnInit, OnDestroy {
       console.log(`👤 SeniorCitizenDetail: Loading senior citizen ${id}`);
       // Load senior citizen by ID (this will set selectedSeniorCitizen in store)
       this.organizationStore.loadSeniorCitizenById(id);
+      // Also load device info if we already have a deviceId
+      const sc = this.seniorCitizen();
+      if (sc?.deviceId) {
+        this.deviceStore.loadDeviceById(sc.deviceId);
+      }
     }
   }
 

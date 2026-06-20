@@ -45,6 +45,11 @@ export class SeniorCitizenAlertList implements OnInit, OnDestroy {
         return this.deviceStore.getAlertsForDevice(deviceId)();
     });
 
+    // Connection error state
+    hasConnectionError = computed(() => {
+        return this.deviceId() > 0 && !!this.deviceStore.error();
+    });
+
     // Sort alerts by date (newest first)
     sortedAlerts = computed(() => {
         const alerts = this.alerts();

@@ -18,7 +18,8 @@
     "statistics": "Estadísticas",
     "alerts": "Alertas",
     "logout": "Cerrar Sesión",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "devices": "Dispositivos IoT"
   },
   "footer": {
     "copyright": "© 2024 MediTrack. Todos los derechos reservados."
@@ -34,6 +35,23 @@
     "alert": "Alerta",
     "save": "Guardar",
     "saved": "¡Guardado!"
+  },
+  "devices": {
+    "validate": {
+      "button": "Validar Dispositivo",
+      "checking": "Verificando...",
+      "success": "Dispositivo verificado correctamente",
+      "notFound": "Dispositivo no encontrado",
+      "error": "No se pudo verificar el dispositivo. Intente de nuevo."
+    },
+    "card": {
+      "title": "Dispositivo IoT",
+      "model": "Modelo",
+      "status": "Estado",
+      "notFound": "Información del dispositivo no disponible",
+      "noDevice": "No hay dispositivo asignado a este adulto mayor.",
+      "hintAssign": "Asigne un dispositivo para ver su información."
+    }
   },
   "page-not-found": {
     "title": "Página No Encontrada",
@@ -269,7 +287,8 @@
       "loadingSeniorCitizen": "Cargando información del adulto mayor...",
       "noDeviceMessage": "No hay un dispositivo asociado a este adulto mayor.",
       "hintAssignDevice": "Asegúrese de que el adulto mayor tenga un dispositivo asignado.",
-      "seniorCitizenIdLabel": "ID del adulto mayor"
+      "seniorCitizenIdLabel": "ID del adulto mayor",
+      "connectionError": "No se pudieron cargar las alertas. El servicio de dispositivos no está disponible temporalmente."
     },
     "statistics": {
       "heartRate": "Frecuencia Cardíaca (lpm)",
@@ -288,6 +307,7 @@
       "noHeartRateData": "No hay datos de frecuencia cardíaca disponibles",
       "noOxygenData": "No hay datos de saturación de oxígeno disponibles",
       "noTemperatureData": "No hay datos de temperatura disponibles",
+      "connectionError": "No se pudieron cargar las estadísticas. El servicio de dispositivos no está disponible temporalmente.",
       "weekdays": {
         "mon": "Lun",
         "tue": "Mar",

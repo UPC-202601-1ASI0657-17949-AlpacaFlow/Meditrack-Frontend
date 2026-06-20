@@ -15,6 +15,12 @@
             <p><strong>{{ 'common.deviceId' | translate }}:</strong> {{ seniorCitizen()?.deviceId ?? ('common.notAssigned' | translate) }}</p>
             <p>{{ 'senior-citizen.statistics.hintAssignDevice' | translate }}</p>
         </div>
+    } @else if (hasConnectionError()) {
+        <div class="error-container">
+            <div class="connection-error-banner">{{ 'senior-citizen.statistics.connectionError' | translate }}</div>
+            <p class="device-info-text"><strong>{{ 'common.deviceId' | translate }}:</strong> {{ deviceId() }}</p>
+            <p>{{ 'senior-citizen.statistics.hintAssignDevice' | translate }}</p>
+        </div>
     } @else {
         <div class="charts-grid">
             <div class="chart-wrapper">

@@ -80,6 +80,7 @@ export class OrganizationLayout implements OnInit, OnDestroy {
     { route: '/doctors', label: 'navigation.doctor-list', icon: 'person_add', organizationTypes: ['clinic'], roles: ['admin'] }, // Solo admins pueden ver doctor list
     { route: '/senior-citizens', label: 'navigation.senior-citizen-list', icon: 'people', organizationTypes: ['clinic', 'resident']},
     { route: '/caregivers', label: 'navigation.caregiver-list', icon: 'people', organizationTypes: ['resident'], roles: ['admin'] }, // Solo admins pueden ver caregiver list
+    { route: '/devices', label: 'navigation.devices', icon: 'devices', organizationTypes: ['clinic', 'resident'], roles: ['admin'] },
     { route: '/support', label: 'navigation.support', icon: 'headset_mic', organizationTypes: ['clinic', 'resident'] }
   ];
 
@@ -510,8 +511,8 @@ export class OrganizationLayout implements OnInit, OnDestroy {
   private isValidRouteForOrganizationType(url: string, organizationType: 'clinic' | 'resident'): boolean {
     // Rutas permitidas por tipo de organización
     const organizationTypeRoutes: Record<'clinic' | 'resident', string[]> = {
-      'clinic': ['doctors', 'senior-citizens', 'support'],
-      'resident': ['caregivers', 'senior-citizens', 'support']
+      'clinic': ['doctors', 'senior-citizens', 'support', 'devices'],
+      'resident': ['caregivers', 'senior-citizens', 'support', 'devices']
     };
     
     const allowedRoutes = organizationTypeRoutes[organizationType] || [];

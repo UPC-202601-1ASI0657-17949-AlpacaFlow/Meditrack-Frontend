@@ -199,3 +199,47 @@
     background: #e0e0e0;
     border-color: #ccc;
 }
+
+.device-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.device-input {
+    flex: 1;
+}
+
+.validate-btn {
+    background: #0C7BB5;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    white-space: nowrap;
+}
+
+.validate-btn:hover:not(:disabled) {
+    background: #0a5f8a;
+}
+
+.validate-btn:disabled {
+    background: #90caf9;
+    cursor: not-allowed;
+}
+
+.validation-success {
+    color: #2e7d32;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.validation-error {
+    color: #d32f2f;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}

@@ -18,7 +18,8 @@
     "statistics": "Statistics",
     "alerts": "Alerts",
     "logout": "Logout",
-    "profile": "Profile"
+    "profile": "Profile",
+    "devices": "IoT Devices"
   },
     "footer": {
       "copyright": "© 2024 MediTrack. All rights reserved."
@@ -34,6 +35,23 @@
     "alert": "Alert",
     "save": "Save",
     "saved": "Saved!"
+  },
+  "devices": {
+    "validate": {
+      "button": "Validate Device",
+      "checking": "Checking...",
+      "success": "Device verified successfully",
+      "notFound": "Device not found",
+      "error": "Could not verify device. Try again."
+    },
+    "card": {
+      "title": "IoT Device",
+      "model": "Model",
+      "status": "Status",
+      "notFound": "Device info not available",
+      "noDevice": "No device assigned to this senior citizen.",
+      "hintAssign": "Assign a device to view its information."
+    }
   },
   "page-not-found": {
     "title": "Page Not Found",
@@ -222,7 +240,8 @@
       "loadingSeniorCitizen": "Loading senior citizen information...",
       "noDeviceMessage": "No device is associated with this senior citizen.",
       "hintAssignDevice": "Please make sure the senior citizen has an assigned device.",
-      "seniorCitizenIdLabel": "Senior citizen ID"
+      "seniorCitizenIdLabel": "Senior citizen ID",
+      "connectionError": "Could not load alerts. The device service is temporarily unavailable."
     },
     "statistics": {
       "heartRate": "Heart Rate (bpm)",
@@ -241,6 +260,7 @@
       "noHeartRateData": "No heart rate data available",
       "noOxygenData": "No oxygen saturation data available",
       "noTemperatureData": "No temperature data available",
+      "connectionError": "Could not load statistics. The device service is temporarily unavailable.",
       "weekdays": {
         "mon": "Mon",
         "tue": "Tue",

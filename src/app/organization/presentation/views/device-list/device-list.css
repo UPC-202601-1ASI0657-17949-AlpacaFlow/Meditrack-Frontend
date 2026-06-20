@@ -1,0 +1,84 @@
+.device-list-container {
+    width: 100%;
+    min-height: calc(100vh - 160px);
+    padding: 20px;
+    box-sizing: border-box;
+    background: #fff;
+}
+
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+    color: #666;
+}
+
+.empty-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+}
+
+.empty-text {
+    font-size: 1.2rem;
+    color: #666;
+    font-style: italic;
+}
+
+.device-table-wrapper {
+    overflow-x: auto;
+}
+
+.device-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.device-table th,
+.device-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.device-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.device-table td {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.device-table tr:hover {
+    background: #fafafa;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.status-badge.status-active {
+    background: #e8f5e9;
+    color: #2e7d32;
+}

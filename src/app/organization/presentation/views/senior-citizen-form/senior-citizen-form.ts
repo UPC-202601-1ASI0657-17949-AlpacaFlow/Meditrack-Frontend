@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChange, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChange, SimpleChanges, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +7,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { finalize } from 'rxjs';
 import { OrganizationStore } from '../../../application/organization.store';
 import { SeniorCitizen } from '../../../domain/model/senior-citizen.entity';
+import { DeviceApi } from '../../../infrastructure/device-api';
 
 /** Construye Date UTC mediodía desde YYYY-MM-DD del input type="date". */
 function parseBirthDateFromForm(value: string): Date | null {
@@ -70,7 +71,9 @@ export class SeniorCitizenForm implements OnChanges {
   formErrorParams: Record<string, string> | null = null;
   submitInProgress = false;
 
-  constructor(private fb: FormBuilder, public organizationStore: OrganizationStore) {
+  deviceValidationStatus = signal<'idle' | 'checking' | 'valid' | 'invalid' | 'error'>('idle');
+
+  constructor(private fb: FormBuilder, public organizationStore: OrganizationStore, private deviceApi: DeviceApi) {
     const organizationId = this.organizationStore.getCurrentOrganizationId() || 0;
     this.form = this.fb.group({
       firstName: ['', Validators.required],
@@ -278,6 +281,27 @@ export class SeniorCitizenForm implements OnChanges {
       parts.push(err.message);
     }
     return parts.join(' ');
+  }
+
+  validateDevice(): void {
+    const deviceId = Number(this.form.value.deviceId);
+    if (isNaN(deviceId) || deviceId <= 0) {
+      this.deviceValidationStatus.set('invalid');
+      return;
+    }
+    this.deviceValidationStatus.set('checking');
+    this.deviceApi.getDeviceById(deviceId).subscribe({
+      next: () => {
+        this.deviceValidationStatus.set('valid');
+      },
+      error: (err: unknown) => {
+        if (err instanceof HttpErrorResponse && err.status === 404) {
+          this.deviceValidationStatus.set('invalid');
+        } else {
+          this.deviceValidationStatus.set('error');
+        }
+      }
+    });
   }
 
   onCancel(): void {

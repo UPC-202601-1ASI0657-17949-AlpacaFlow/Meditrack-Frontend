@@ -56,6 +56,11 @@ export class SeniorCitizenStatistic implements OnInit, OnDestroy {
         return this.deviceStore.getOxygenMeasurementsForDevice(deviceId)();
     });
 
+    // Connection error state
+    hasConnectionError = computed(() => {
+        return this.deviceId() > 0 && !!this.deviceStore.error();
+    });
+
     heartRate = computed<number[]>(() => this.heartRateMeasurements().map(m => m.bpm));
 
     temperature = computed<number[]>(() => this.temperatureMeasurements().map(m => m.temperature));
