@@ -101,7 +101,23 @@
 
             <div class="form-field">
                 <label>{{ 'senior-citizen.deviceId' | translate }}:</label>
-                <input type="number" formControlName="deviceId" class="form-input" [class.error]="form.get('deviceId')?.invalid && form.get('deviceId')?.touched" />
+                <div class="device-input-row">
+                    <input type="number" formControlName="deviceId" class="form-input device-input" [class.error]="form.get('deviceId')?.invalid && form.get('deviceId')?.touched" />
+                    <button type="button" class="validate-btn" (click)="validateDevice()" [disabled]="deviceValidationStatus() === 'checking' || !form.get('deviceId')?.value">
+                        @if (deviceValidationStatus() === 'checking') {
+                            {{ 'devices.validate.checking' | translate }}
+                        } @else {
+                            {{ 'devices.validate.button' | translate }}
+                        }
+                    </button>
+                </div>
+                @if (deviceValidationStatus() === 'valid') {
+                    <div class="validation-success">{{ 'devices.validate.success' | translate }}</div>
+                } @else if (deviceValidationStatus() === 'invalid') {
+                    <div class="validation-error">{{ 'devices.validate.notFound' | translate }}</div>
+                } @else if (deviceValidationStatus() === 'error') {
+                    <div class="validation-error">{{ 'devices.validate.error' | translate }}</div>
+                }
                 @if (form.get('deviceId')?.invalid && form.get('deviceId')?.touched) {
                     <div class="error-message">
                         @if (form.get('deviceId')?.hasError('required')) {

@@ -1,13 +1,15 @@
-import { Component, OnInit, OnDestroy, computed, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, signal, effect } from '@angular/core';
 import { ClinicalStore } from '../../../../clinical/application/clinical.store';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SeniorCitizenMedicalRecord } from '../../../../clinical/presentation/components/senior-citizen-medical-record/senior-citizen-medical-record';
 import { SeniorCitizenThresholdConfig } from '../../../../clinical/presentation/components/senior-citizen-threshold-config/senior-citizen-threshold-config';
 import { OrganizationStore } from '../../../application/organization.store';
+import { DeviceStore } from '../../../application/device.store';
 import { SeniorCitizen } from '../../../domain/model/senior-citizen.entity';
 import { Caregiver } from '../../../domain/model/caregiver.entity';
 import { Doctor } from '../../../domain/model/doctor.entity';
@@ -16,7 +18,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-senior-citizen-detail',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatTabsModule, TranslatePipe, SeniorCitizenMedicalRecord, SeniorCitizenThresholdConfig],
+  imports: [CommonModule, MatButtonModule, MatCardModule, MatTabsModule, TranslatePipe, SeniorCitizenMedicalRecord, SeniorCitizenThresholdConfig],
   templateUrl: './senior-citizen-detail.html',
   styleUrls: ['./senior-citizen-detail.css']
 })
@@ -52,6 +54,13 @@ export class SeniorCitizenDetail implements OnInit, OnDestroy {
     return role === 'doctor' || role === 'caregiver';
   });
 
+  deviceInfo = computed(() => {
+    const sc = this.seniorCitizen();
+    if (!sc || !sc.deviceId) return null;
+    return this.deviceStore.selectedDevice();
+  });
+  deviceLoading = computed(() => this.deviceStore.loadingDevices());
+
   /**
    * Determines if the senior citizen is assigned to a doctor or caregiver
    */
@@ -77,12 +86,20 @@ export class SeniorCitizenDetail implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private organizationStore: OrganizationStore,
+    private deviceStore: DeviceStore,
     private translateService: TranslateService,
     private clinicalStore: ClinicalStore
   ) {
     // Load doctor title translation
     this.translateService.get('doctor.title').subscribe(title => {
       this.doctorTitle.set(title);
+    });
+
+    effect(() => {
+      const sc = this.seniorCitizen();
+      if (sc?.deviceId) {
+        this.deviceStore.loadDeviceById(sc.deviceId);
+      }
     });
   }
 

@@ -61,6 +61,44 @@
       </div>
     </div>
     
+    <!-- Dispositivo IoT card -->
+    @if (seniorCitizen()!.deviceId) {
+      <mat-card class="device-card">
+        <mat-card-header>
+          <mat-card-title>{{ 'devices.card.title' | translate }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (deviceLoading()) {
+            <p>{{ 'common.loading' | translate }}</p>
+          } @else if (deviceInfo()) {
+            <div class="device-info-grid">
+              <div class="device-info-item">
+                <span class="info-label">{{ 'common.deviceId' | translate }}:</span>
+                <span class="info-value">{{ deviceInfo()!.id }}</span>
+              </div>
+              <div class="device-info-item">
+                <span class="info-label">{{ 'devices.card.model' | translate }}:</span>
+                <span class="info-value">{{ deviceInfo()!.model }}</span>
+              </div>
+              <div class="device-info-item">
+                <span class="info-label">{{ 'devices.card.status' | translate }}:</span>
+                <span class="info-value">{{ deviceInfo()!.status }}</span>
+              </div>
+            </div>
+          } @else if (!deviceLoading()) {
+            <p>{{ 'devices.card.notFound' | translate }}</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    } @else {
+      <mat-card class="device-card device-card-empty">
+        <mat-card-content>
+          <p>{{ 'devices.card.noDevice' | translate }}</p>
+          <p>{{ 'devices.card.hintAssign' | translate }}</p>
+        </mat-card-content>
+      </mat-card>
+    }
+
     <!-- Botón de regreso -->
     <div class="back-button-container">
       <button mat-raised-button color="primary" (click)="onBackToList()">

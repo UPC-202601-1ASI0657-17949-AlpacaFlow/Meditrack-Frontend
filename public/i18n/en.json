@@ -18,7 +18,8 @@
     "statistics": "Statistics",
     "alerts": "Alerts",
     "logout": "Logout",
-    "profile": "Profile"
+    "profile": "Profile",
+    "devices": "IoT Devices"
   },
     "footer": {
       "copyright": "© 2024 MediTrack. All rights reserved."
@@ -40,6 +41,25 @@
       "title": "Devices service unavailable",
       "detail": "Showing the last known telemetry stored in this browser (TS9 degraded mode).",
       "lastSync": "Last sync"
+    }
+  },
+  "devices": {
+    "validate": {
+      "button": "Validate Device",
+      "checking": "Checking...",
+      "success": "Device verified successfully",
+      "notFound": "Device not found",
+      "error": "Could not verify device. Try again."
+    },
+    "card": {
+      "title": "IoT Device",
+      "model": "Model",
+      "status": "Status",
+      "holderId": "Assigned Patient",
+      "holderType": "Holder Type",
+      "notFound": "Device info not available",
+      "noDevice": "No device assigned to this senior citizen.",
+      "hintAssign": "Assign a device to view its information."
     }
   },
   "page-not-found": {

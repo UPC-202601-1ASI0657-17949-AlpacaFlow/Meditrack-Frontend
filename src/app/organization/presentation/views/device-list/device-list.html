@@ -1,0 +1,42 @@
+<div class="device-list-container">
+    <h1 class="page-title">{{ 'navigation.devices' | translate }}</h1>
+
+    @if (deviceStore.loadingDevices()) {
+        <div class="loading-container">
+            <p>{{ 'common.loading' | translate }}</p>
+        </div>
+    } @else if (deviceStore.devices().length === 0) {
+        <div class="empty-state">
+            <p class="empty-text">{{ 'devices.card.noDevice' | translate }}</p>
+        </div>
+    } @else {
+        <div class="device-table-wrapper">
+            <table class="device-table">
+                <thead>
+                    <tr>
+                        <th>{{ 'common.deviceId' | translate }}</th>
+                        <th>{{ 'devices.card.model' | translate }}</th>
+                        <th>{{ 'devices.card.status' | translate }}</th>
+                        <th>{{ 'devices.card.holderId' | translate }}</th>
+                        <th>{{ 'devices.card.holderType' | translate }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (device of deviceStore.devices(); track trackById($index, device)) {
+                        <tr>
+                            <td>{{ device.id }}</td>
+                            <td>{{ device.model }}</td>
+                            <td>
+                                <span class="status-badge" [class.status-active]="device.status === 'active'">
+                                    {{ device.status }}
+                                </span>
+                            </td>
+                            <td>{{ device.holderId || ('common.notAssigned' | translate) }}</td>
+                            <td>{{ device.holderType || ('common.notAssigned' | translate) }}</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

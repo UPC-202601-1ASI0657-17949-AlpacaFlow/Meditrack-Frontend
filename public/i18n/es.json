@@ -18,7 +18,8 @@
     "statistics": "Estadísticas",
     "alerts": "Alertas",
     "logout": "Cerrar Sesión",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "devices": "Dispositivos IoT"
   },
   "footer": {
     "copyright": "© 2024 MediTrack. Todos los derechos reservados."
@@ -40,6 +41,25 @@
       "title": "Servicio de dispositivos no disponible",
       "detail": "Mostrando la última telemetría conocida almacenada en este navegador (modo degradado TS9).",
       "lastSync": "Última sincronización"
+    }
+  },
+  "devices": {
+    "validate": {
+      "button": "Validar Dispositivo",
+      "checking": "Verificando...",
+      "success": "Dispositivo verificado correctamente",
+      "notFound": "Dispositivo no encontrado",
+      "error": "No se pudo verificar el dispositivo. Intente de nuevo."
+    },
+    "card": {
+      "title": "Dispositivo IoT",
+      "model": "Modelo",
+      "status": "Estado",
+      "holderId": "Paciente asignado",
+      "holderType": "Tipo de titular",
+      "notFound": "Información del dispositivo no disponible",
+      "noDevice": "No hay dispositivo asignado a este adulto mayor.",
+      "hintAssign": "Asigne un dispositivo para ver su información."
     }
   },
   "page-not-found": {
