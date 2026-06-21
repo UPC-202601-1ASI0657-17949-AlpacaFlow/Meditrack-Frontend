@@ -1,13 +1,28 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChange, SimpleChanges, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnChanges, SimpleChange, SimpleChanges, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { TranslatePipe } from '@ngx-translate/core';
-import { finalize } from 'rxjs';
+import { catchError, EMPTY, finalize, map, of, switchMap } from 'rxjs';
 import { OrganizationStore } from '../../../application/organization.store';
+import { Device } from '../../../domain/model/device.entity';
 import { SeniorCitizen } from '../../../domain/model/senior-citizen.entity';
 import { DeviceApi } from '../../../infrastructure/device-api';
+import { OrganizationApi } from '../../../infrastructure/organization-api';
+import { readApiHttpError } from '../../../../shared/infrastructure/api-http-error';
+
+type DeviceValidationStatus = 'idle' | 'checking' | 'valid' | 'invalid' | 'alreadyAssigned' | 'error';
+
+interface DeviceAssignmentConflict {
+  holderId: number;
+  patientName: string;
+}
+
+interface SeniorCitizenSaveErrorContext {
+  deviceId: number;
+  originalDeviceId?: number;
+}
 
 /** Construye Date UTC mediodía desde YYYY-MM-DD del input type="date". */
 function parseBirthDateFromForm(value: string): Date | null {
@@ -59,7 +74,7 @@ function computeAgeYears(birthDate: Date): number {
   templateUrl: './senior-citizen-form.html',
   styleUrls: ['./senior-citizen-form.css']
 })
-export class SeniorCitizenForm implements OnChanges {
+export class SeniorCitizenForm implements OnChanges, OnInit {
   @Input() seniorCitizen: SeniorCitizen | null = null;
   @Output() saved = new EventEmitter<SeniorCitizen>();
   @Output() cancel = new EventEmitter<void>();
@@ -71,9 +86,15 @@ export class SeniorCitizenForm implements OnChanges {
   formErrorParams: Record<string, string> | null = null;
   submitInProgress = false;
 
-  deviceValidationStatus = signal<'idle' | 'checking' | 'valid' | 'invalid' | 'error'>('idle');
+  deviceValidationStatus = signal<DeviceValidationStatus>('idle');
+  deviceValidationParams = signal<Record<string, string> | null>(null);
 
-  constructor(private fb: FormBuilder, public organizationStore: OrganizationStore, private deviceApi: DeviceApi) {
+  constructor(
+    private fb: FormBuilder,
+    public organizationStore: OrganizationStore,
+    private deviceApi: DeviceApi,
+    private organizationApi: OrganizationApi
+  ) {
     const organizationId = this.organizationStore.getCurrentOrganizationId() || 0;
     this.form = this.fb.group({
       firstName: ['', Validators.required],
@@ -86,6 +107,13 @@ export class SeniorCitizenForm implements OnChanges {
       imageUrl: ['', [Validators.required, Validators.pattern(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)]],
       deviceId: [null, [Validators.required, Validators.min(1)]],
       organizationId: [organizationId]
+    });
+  }
+
+  ngOnInit(): void {
+    this.form.get('deviceId')?.valueChanges.subscribe(() => {
+      this.deviceValidationStatus.set('idle');
+      this.deviceValidationParams.set(null);
     });
   }
 
@@ -180,6 +208,12 @@ export class SeniorCitizenForm implements OnChanges {
       return;
     }
 
+    if (this.deviceValidationStatus() === 'alreadyAssigned') {
+      this.formErrorKey = 'senior-citizen.errors.deviceAlreadyAssigned';
+      this.formErrorParams = null;
+      return;
+    }
+
     const seniorCitizen = new SeniorCitizen({
       id: this.seniorCitizen ? this.seniorCitizen.id : 0,
       organizationId,
@@ -198,44 +232,106 @@ export class SeniorCitizenForm implements OnChanges {
       ? this.organizationStore.updateSeniorCitizen(seniorCitizen)
       : this.organizationStore.addSeniorCitizen(seniorCitizen);
 
+    const saveErrorContext: SeniorCitizenSaveErrorContext = {
+      deviceId,
+      originalDeviceId: this.seniorCitizen?.deviceId
+    };
+
     this.submitInProgress = true;
-    request$.pipe(finalize(() => (this.submitInProgress = false))).subscribe({
+    this.organizationApi
+      .getSeniorCitizensByOrganization(organizationId)
+      .pipe(
+        catchError(() => of(this.organizationStore.seniorCitizens())),
+        switchMap(seniors => {
+          const mergedSeniors = seniors.length > 0 ? seniors : this.organizationStore.seniorCitizens();
+          const deviceConflict = this.findDeviceAssignmentConflictInList(deviceId, mergedSeniors);
+          if (deviceConflict) {
+            this.formErrorKey = 'senior-citizen.errors.deviceAlreadyAssigned';
+            this.formErrorParams = null;
+            this.markDeviceAlreadyAssigned(deviceConflict);
+            return EMPTY;
+          }
+          return this.deviceApi.getDeviceById(deviceId, { fresh: true }).pipe(
+            switchMap(device => {
+              const holderConflict = this.findHolderAssignmentConflictInList(device, mergedSeniors);
+              if (holderConflict) {
+                this.formErrorKey = 'senior-citizen.errors.deviceAlreadyAssigned';
+                this.formErrorParams = null;
+                this.markDeviceAlreadyAssigned(holderConflict);
+                return EMPTY;
+              }
+              return request$;
+            }),
+            catchError(() => request$)
+          );
+        }),
+        finalize(() => (this.submitInProgress = false))
+      )
+      .subscribe({
       next: saved => {
         this.formErrorKey = null;
         this.formErrorParams = null;
         this.saved.emit(saved);
       },
       error: (err: unknown) => {
-        this.formErrorParams = null;
-        this.formErrorKey = this.mapSeniorCitizenApiError(err);
+        const mapped = this.mapSeniorCitizenApiError(err, saveErrorContext);
+        this.formErrorKey = mapped.key;
+        this.formErrorParams = mapped.params;
+        if (mapped.key === 'senior-citizen.errors.deviceAlreadyAssigned') {
+          const localConflict = this.findDeviceAssignmentConflict(deviceId);
+          if (localConflict) {
+            this.markDeviceAlreadyAssigned(localConflict);
+          } else {
+            this.deviceApi.getDeviceById(deviceId, { fresh: true }).subscribe({
+              next: device => {
+                this.markDeviceAlreadyAssigned(
+                  this.findHolderAssignmentConflict(device) ?? { holderId: device.holderId, patientName: '' }
+                );
+              },
+              error: () => this.markDeviceAlreadyAssigned(null)
+            });
+          }
+        }
       }
     });
   }
 
-  private mapSeniorCitizenApiError(err: unknown): string {
+  private mapSeniorCitizenApiError(
+    err: unknown,
+    context?: SeniorCitizenSaveErrorContext
+  ): { key: string; params: Record<string, string> | null } {
     const haystack = this.extractErrorHaystack(err);
+    if (this.isDeviceAlreadyAssignedError(err, haystack, context)) {
+      return { key: 'senior-citizen.errors.deviceAlreadyAssigned', params: null };
+    }
     if (err instanceof HttpErrorResponse && err.status === 409 && typeof err.error === 'string') {
       const body = err.error.trim();
-      if (body === 'MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED') {
-        return 'senior-citizen.errors.deviceAlreadyAssigned';
-      }
       if (body === 'MEDITRACK_SENIOR_CITIZEN_DUPLICATE_DNI') {
-        return 'senior-citizen.errors.duplicateDni';
+        return { key: 'senior-citizen.errors.duplicateDni', params: null };
       }
       if (body === 'MEDITRACK_SENIOR_CITIZEN_DUPLICATE_FULL_NAME') {
-        return 'senior-citizen.errors.duplicateFullName';
+        return { key: 'senior-citizen.errors.duplicateFullName', params: null };
       }
     }
-    if (haystack.includes('MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED')) {
-      return 'senior-citizen.errors.deviceAlreadyAssigned';
+    if (err instanceof HttpErrorResponse && err.status === 409 && err.error != null && typeof err.error === 'object') {
+      const code = String((err.error as { code?: string }).code ?? '');
+      if (code === 'MEDITRACK_SENIOR_CITIZEN_DUPLICATE_DNI') {
+        return { key: 'senior-citizen.errors.duplicateDni', params: null };
+      }
+      if (code === 'MEDITRACK_SENIOR_CITIZEN_DUPLICATE_FULL_NAME') {
+        return { key: 'senior-citizen.errors.duplicateFullName', params: null };
+      }
     }
     if (
       haystack.includes('MEDITRACK_SENIOR_CITIZEN_DUPLICATE_DNI') ||
       haystack.includes('MEDITRACK_SENIOR_CITIZEN_DUPLICATE_FULL_NAME')
     ) {
-      return haystack.includes('MEDITRACK_SENIOR_CITIZEN_DUPLICATE_DNI')
-        ? 'senior-citizen.errors.duplicateDni'
-        : 'senior-citizen.errors.duplicateFullName';
+      return {
+        key: haystack.includes('MEDITRACK_SENIOR_CITIZEN_DUPLICATE_DNI')
+          ? 'senior-citizen.errors.duplicateDni'
+          : 'senior-citizen.errors.duplicateFullName',
+        params: null
+      };
     }
     if (
       haystack.includes('birthDate') ||
@@ -247,7 +343,7 @@ export class SeniorCitizenForm implements OnChanges {
       haystack.includes('out of range') ||
       haystack.includes('calendar date')
     ) {
-      return 'senior-citizen.errors.invalidBirthDateServer';
+      return { key: 'senior-citizen.errors.invalidBirthDateServer', params: null };
     }
     if (
       haystack.includes('Age derived from birth date') ||
@@ -257,20 +353,87 @@ export class SeniorCitizenForm implements OnChanges {
       haystack.includes('Height must be between') ||
       haystack.includes('DNI must contain only digits')
     ) {
-      return 'senior-citizen.errors.validationServer';
+      return { key: 'senior-citizen.errors.validationServer', params: null };
     }
     if (haystack.includes('Invalid request:')) {
-      return 'senior-citizen.errors.validationServer';
+      return { key: 'senior-citizen.errors.validationServer', params: null };
     }
     if (haystack.includes('Http failure') || haystack.includes('Failed to create') || haystack.includes('Failed to update')) {
-      return 'senior-citizen.errors.saveFailed';
+      return { key: 'senior-citizen.errors.saveFailed', params: null };
     }
-    return 'senior-citizen.errors.saveFailed';
+    return { key: 'senior-citizen.errors.saveFailed', params: null };
+  }
+
+  private isDeviceAlreadyAssignedError(
+    err: unknown,
+    haystack: string,
+    context?: SeniorCitizenSaveErrorContext
+  ): boolean {
+    const apiErr = readApiHttpError(err);
+    if (apiErr?.status === 409) {
+      const code = (apiErr.code ?? '').toUpperCase();
+      if (code === 'DEVICE_ALREADY_ASSIGNED' || code === 'MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED') {
+        return true;
+      }
+      if (code === 'DUPLICATE_DNI' || code === 'DUPLICATE_FULL_NAME') {
+        return false;
+      }
+      const msg = apiErr.message.toLowerCase();
+      if (
+        msg.includes('device_already_assigned') ||
+        msg.includes('already assigned to another') ||
+        msg.includes('already assigned')
+      ) {
+        return true;
+      }
+      if (context && Number(context.deviceId) !== Number(context.originalDeviceId ?? 0)) {
+        return true;
+      }
+    }
+    if (err instanceof HttpErrorResponse) {
+      if (typeof err.error === 'string') {
+        const body = err.error.trim();
+        if (body === 'MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED') {
+          return true;
+        }
+      } else if (err.error != null && typeof err.error === 'object') {
+        const code = String((err.error as { code?: string }).code ?? '');
+        if (code === 'DEVICE_ALREADY_ASSIGNED' || code === 'MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED') {
+          return true;
+        }
+      }
+    }
+    if (
+      context &&
+      Number(context.deviceId) !== Number(context.originalDeviceId ?? 0) &&
+      err instanceof Error &&
+      /failed to (update|create) entity/i.test(err.message) &&
+      !haystack.includes('DUPLICATE_DNI') &&
+      !haystack.includes('DUPLICATE_FULL_NAME')
+    ) {
+      return true;
+    }
+    return (
+      haystack.includes('DEVICE_ALREADY_ASSIGNED') ||
+      haystack.includes('MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED') ||
+      /already assigned to another/i.test(haystack) ||
+      (/\b409\b/.test(haystack) &&
+        /http failure|failed to update entity|failed to create entity/i.test(haystack) &&
+        !haystack.includes('DUPLICATE_DNI') &&
+        !haystack.includes('DUPLICATE_FULL_NAME'))
+    );
   }
 
   private extractErrorHaystack(err: unknown): string {
     const parts: string[] = [];
-    if (err instanceof HttpErrorResponse) {
+    const apiErr = readApiHttpError(err);
+    if (apiErr) {
+      parts.push(apiErr.message);
+      if (apiErr.code) {
+        parts.push(apiErr.code);
+      }
+      parts.push(String(apiErr.status));
+    } else if (err instanceof HttpErrorResponse) {
       if (typeof err.error === 'string') {
         parts.push(err.error);
       } else if (err.error != null && typeof err.error === 'object') {
@@ -287,21 +450,138 @@ export class SeniorCitizenForm implements OnChanges {
     const deviceId = Number(this.form.value.deviceId);
     if (isNaN(deviceId) || deviceId <= 0) {
       this.deviceValidationStatus.set('invalid');
+      this.deviceValidationParams.set(null);
       return;
     }
+
     this.deviceValidationStatus.set('checking');
-    this.deviceApi.getDeviceById(deviceId).subscribe({
-      next: () => {
-        this.deviceValidationStatus.set('valid');
-      },
-      error: (err: unknown) => {
+    this.deviceValidationParams.set(null);
+
+    this.deviceApi
+      .getDeviceById(deviceId, { fresh: true })
+      .pipe(
+        switchMap(device => this.resolveDeviceAssignmentConflict(deviceId, device)),
+        catchError(err => of({ kind: 'deviceError' as const, err }))
+      )
+      .subscribe(result => {
+        if ('conflict' in result && result.conflict) {
+          this.markDeviceAlreadyAssigned(result.conflict);
+          return;
+        }
+        if ('kind' in result && result.kind === 'ok') {
+          this.deviceValidationStatus.set('valid');
+          return;
+        }
+        if (!('err' in result)) {
+          return;
+        }
+        this.deviceValidationParams.set(null);
+        const err = result.err;
         if (err instanceof HttpErrorResponse && err.status === 404) {
+          this.deviceValidationStatus.set('invalid');
+        } else if (err instanceof Error && /not found|404/i.test(err.message)) {
           this.deviceValidationStatus.set('invalid');
         } else {
           this.deviceValidationStatus.set('error');
         }
-      }
-    });
+      });
+  }
+
+  private resolveDeviceAssignmentConflict(deviceId: number, device: Device) {
+    const storeSeniors = this.organizationStore.seniorCitizens();
+    const holderConflict = this.findHolderAssignmentConflictInList(device, storeSeniors);
+    if (holderConflict) {
+      return of({ conflict: holderConflict });
+    }
+
+    const orgId = this.organizationStore.getCurrentOrganizationId();
+    const seniors$ = orgId
+      ? this.organizationApi.getSeniorCitizensByOrganization(orgId).pipe(
+          catchError(() => of(storeSeniors))
+        )
+      : of(storeSeniors);
+
+    return seniors$.pipe(
+      map(seniors => {
+        const mergedSeniors = seniors.length > 0 ? seniors : storeSeniors;
+        const orgConflict = this.findDeviceAssignmentConflictInList(deviceId, mergedSeniors);
+        if (orgConflict) {
+          return { conflict: orgConflict };
+        }
+        const holderWithNames = this.findHolderAssignmentConflictInList(device, mergedSeniors);
+        if (holderWithNames) {
+          return { conflict: holderWithNames };
+        }
+        return { kind: 'ok' as const };
+      })
+    );
+  }
+
+  private getCurrentSeniorId(): number {
+    return this.seniorCitizen?.id ?? 0;
+  }
+
+  private findDeviceAssignmentConflict(deviceId: number): DeviceAssignmentConflict | null {
+    return this.findDeviceAssignmentConflictInList(deviceId, this.organizationStore.seniorCitizens());
+  }
+
+  private findDeviceAssignmentConflictInList(
+    deviceId: number,
+    seniors: SeniorCitizen[]
+  ): DeviceAssignmentConflict | null {
+    const currentSeniorId = this.getCurrentSeniorId();
+    const conflict = seniors.find(
+      sc => Number(sc.deviceId) === deviceId && sc.id !== currentSeniorId
+    );
+    if (!conflict) {
+      return null;
+    }
+    return {
+      holderId: conflict.id,
+      patientName: `${conflict.firstName} ${conflict.lastName}`.trim()
+    };
+  }
+
+  private findHolderAssignmentConflict(device: Device): DeviceAssignmentConflict | null {
+    return this.findHolderAssignmentConflictInList(device, this.organizationStore.seniorCitizens());
+  }
+
+  private findHolderAssignmentConflictInList(
+    device: Device,
+    seniors: SeniorCitizen[]
+  ): DeviceAssignmentConflict | null {
+    const currentSeniorId = this.getCurrentSeniorId();
+    const holderId = this.readDeviceHolderId(device);
+    if (!Number.isFinite(holderId) || holderId <= 0 || holderId === currentSeniorId) {
+      return null;
+    }
+    const holder = seniors.find(sc => sc.id === holderId);
+    return {
+      holderId,
+      patientName: holder ? `${holder.firstName} ${holder.lastName}`.trim() : ''
+    };
+  }
+
+  private readDeviceHolderId(device: Device): number {
+    const raw = device.holderId;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private markDeviceAlreadyAssigned(conflict: DeviceAssignmentConflict | null): void {
+    this.deviceValidationStatus.set('alreadyAssigned');
+    if (conflict?.patientName) {
+      this.deviceValidationParams.set({
+        patientName: conflict.patientName,
+        holderId: String(conflict.holderId)
+      });
+      return;
+    }
+    if (conflict && conflict.holderId > 0) {
+      this.deviceValidationParams.set({ holderId: String(conflict.holderId), patientName: '' });
+      return;
+    }
+    this.deviceValidationParams.set(null);
   }
 
   onCancel(): void {

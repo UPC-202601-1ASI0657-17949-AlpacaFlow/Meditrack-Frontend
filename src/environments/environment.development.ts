@@ -7,7 +7,7 @@ export const environment = {
   platformProviderOrganizationsEndpointPath: '/api/v1/organizations',
   platformProviderAdminsEndpointPath: '/api/v1/admins',
   // API Gateway (meditrack-gateway) — single entry point for IAM + Organization
-  platformProviderApiBaseUrl: 'http://localhost:8088',
+  platformProviderApiBaseUrl: 'https://meditrack-gateway.duckdns.org',
   platformProviderRelativesEndpointPath: '/api/v1/relatives',
   platformProviderUsersEndpointPath: '/users',
   platformProviderCredentialsEndpointPath: '/credentials',

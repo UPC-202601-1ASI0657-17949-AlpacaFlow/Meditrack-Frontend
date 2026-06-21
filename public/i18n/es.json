@@ -49,6 +49,8 @@
       "checking": "Verificando...",
       "success": "Dispositivo verificado correctamente",
       "notFound": "Dispositivo no encontrado",
+      "alreadyAssigned": "Este dispositivo ya está asignado a otro adulto mayor. Use otro ID de dispositivo antes de guardar.",
+      "alreadyAssignedWithPatient": "Este dispositivo ya está asignado a {{patientName}} (adulto mayor #{{holderId}}). Use otro ID de dispositivo antes de guardar.",
       "error": "No se pudo verificar el dispositivo. Intente de nuevo."
     },
     "card": {

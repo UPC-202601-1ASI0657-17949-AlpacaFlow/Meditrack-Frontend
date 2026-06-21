@@ -102,7 +102,7 @@
             <div class="form-field">
                 <label>{{ 'senior-citizen.deviceId' | translate }}:</label>
                 <div class="device-input-row">
-                    <input type="number" formControlName="deviceId" class="form-input device-input" [class.error]="form.get('deviceId')?.invalid && form.get('deviceId')?.touched" />
+                    <input type="number" formControlName="deviceId" class="form-input device-input" [class.error]="(form.get('deviceId')?.invalid && form.get('deviceId')?.touched) || deviceValidationStatus() === 'alreadyAssigned'" />
                     <button type="button" class="validate-btn" (click)="validateDevice()" [disabled]="deviceValidationStatus() === 'checking' || !form.get('deviceId')?.value">
                         @if (deviceValidationStatus() === 'checking') {
                             {{ 'devices.validate.checking' | translate }}
@@ -113,6 +113,14 @@
                 </div>
                 @if (deviceValidationStatus() === 'valid') {
                     <div class="validation-success">{{ 'devices.validate.success' | translate }}</div>
+                } @else if (deviceValidationStatus() === 'alreadyAssigned') {
+                    <div class="validation-error" role="alert">
+                        @if (deviceValidationParams()?.['patientName']) {
+                            {{ 'devices.validate.alreadyAssignedWithPatient' | translate : deviceValidationParams() }}
+                        } @else {
+                            {{ 'devices.validate.alreadyAssigned' | translate }}
+                        }
+                    </div>
                 } @else if (deviceValidationStatus() === 'invalid') {
                     <div class="validation-error">{{ 'devices.validate.notFound' | translate }}</div>
                 } @else if (deviceValidationStatus() === 'error') {

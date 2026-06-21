@@ -49,6 +49,8 @@
       "checking": "Checking...",
       "success": "Device verified successfully",
       "notFound": "Device not found",
+      "alreadyAssigned": "This device is already assigned to another senior citizen. Use a different device ID before saving.",
+      "alreadyAssignedWithPatient": "This device is already assigned to {{patientName}} (patient #{{holderId}}). Use a different device ID before saving.",
       "error": "Could not verify device. Try again."
     },
     "card": {

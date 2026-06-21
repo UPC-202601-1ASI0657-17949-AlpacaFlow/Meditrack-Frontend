@@ -3,6 +3,7 @@ import {BaseResource, BaseResponse} from './base-response';
 import {BaseAssembler} from './base-assembler';
 import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {catchError, map, Observable, throwError} from 'rxjs';
+import {ApiHttpError} from './api-http-error';
 
 /**
  * Base class for API endpoint operations with generic CRUD functionality.
@@ -73,9 +74,26 @@ export abstract class BaseApiEndpoint<
           errorMessage = `${operation}: Invalid data. Please check all fields are correct.`;
         }
       } else if (error.status === 409) {
+        const body = this.parseErrorBody(error.error);
+        const code =
+          body != null && typeof body === 'object' && 'code' in body
+            ? String((body as { code?: string }).code ?? '')
+            : '';
         const backendMessage =
-          typeof error.error === 'string' ? error.error : error.error?.message || error.error?.error;
-        errorMessage = `${operation}: ${typeof backendMessage === 'string' ? backendMessage : 'Conflict'}`;
+          typeof body === 'string'
+            ? body
+            : body != null && typeof body === 'object'
+              ? (body as { message?: string; error?: string }).message ||
+                (body as { message?: string; error?: string }).error
+              : undefined;
+        const detail =
+          typeof backendMessage === 'string' && backendMessage.length > 0
+            ? backendMessage
+            : code || 'Conflict';
+        errorMessage = code
+          ? `${operation}: ${code}: ${detail}`
+          : `${operation}: ${detail}`;
+        return throwError(() => new ApiHttpError(errorMessage, 409, code || undefined));
       } else if (error.status === 500) {
         const backendMessage = error.error?.message || error.error?.error || error.error;
         errorMessage = `${operation}: Server error. ${typeof backendMessage === 'string' ? backendMessage : 'Please try again later.'}`;
@@ -88,6 +106,27 @@ export abstract class BaseApiEndpoint<
       }
       return  throwError(()=> new Error(errorMessage));
     };
+  }
+
+  private parseErrorBody(raw: unknown): Record<string, unknown> | string | null {
+    if (raw == null) {
+      return null;
+    }
+    if (typeof raw === 'object') {
+      return raw as Record<string, unknown>;
+    }
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim();
+      if (trimmed.startsWith('{')) {
+        try {
+          return JSON.parse(trimmed) as Record<string, unknown>;
+        } catch {
+          return raw;
+        }
+      }
+      return raw;
+    }
+    return null;
   }
 
   /**

@@ -91,12 +91,20 @@ export class DeviceApi {
   }
 
   /**
-   * Get device by ID
+   * Get device by ID. Pass fresh=true to bypass browser HTTP cache (important for holderId).
    */
-  getDeviceById(deviceId: number): Observable<Device> {
-    return this.http.get<DeviceResponse>(DeviceApiEndpoint.getDeviceById(deviceId))
+  getDeviceById(deviceId: number, options?: { fresh?: boolean }): Observable<Device> {
+    let url = DeviceApiEndpoint.getDeviceById(deviceId);
+    if (options?.fresh) {
+      url += `?t=${Date.now()}`;
+    }
+    return this.http
+      .get<DeviceResponse>(url, {
+        headers: options?.fresh
+          ? { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
+          : undefined
+      })
       .pipe(
-        retry(2),
         map(response => DeviceAssembler.toEntity(response)),
         catchError(this.handleError)
       );
