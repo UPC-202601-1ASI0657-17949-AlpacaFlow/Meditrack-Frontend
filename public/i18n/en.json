@@ -41,9 +41,7 @@
       "title": "Devices service unavailable",
       "detail": "Showing the last known telemetry stored in this browser (TS9 degraded mode).",
       "lastSync": "Last sync"
-    }
-  },
-  "devices": {
+    },
     "validate": {
       "button": "Validate Device",
       "checking": "Checking...",
@@ -52,6 +50,16 @@
       "alreadyAssigned": "This device is already assigned to another senior citizen. Use a different device ID before saving.",
       "alreadyAssignedWithPatient": "This device is already assigned to {{patientName}} (patient #{{holderId}}). Use a different device ID before saving.",
       "error": "Could not verify device. Try again."
+    },
+    "list": {
+      "actions": "Actions",
+      "remove": "Remove",
+      "hideDialog": {
+        "title": "Remove from list",
+        "message": "Remove device {{deviceId}} ({{model}}) from this table? It will not be deleted from the database and will stay hidden in this browser until you clear site data.",
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+      }
     },
     "card": {
       "title": "IoT Device",

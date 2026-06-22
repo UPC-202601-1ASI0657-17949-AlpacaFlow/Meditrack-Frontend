@@ -5,7 +5,7 @@
         <div class="loading-container">
             <p>{{ 'common.loading' | translate }}</p>
         </div>
-    } @else if (deviceStore.devices().length === 0) {
+    } @else if (deviceStore.visibleDevices().length === 0) {
         <div class="empty-state">
             <p class="empty-text">{{ 'devices.card.noDevice' | translate }}</p>
         </div>
@@ -19,20 +19,26 @@
                         <th>{{ 'devices.card.status' | translate }}</th>
                         <th>{{ 'devices.card.holderId' | translate }}</th>
                         <th>{{ 'devices.card.holderType' | translate }}</th>
+                        <th class="actions-col">{{ 'devices.list.actions' | translate }}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @for (device of deviceStore.devices(); track trackById($index, device)) {
+                    @for (device of deviceStore.visibleDevices(); track trackById($index, device)) {
                         <tr>
                             <td>{{ device.id }}</td>
                             <td>{{ device.model }}</td>
                             <td>
-                                <span class="status-badge" [class.status-active]="device.status === 'active'">
+                                <span class="status-badge" [class.status-active]="device.status?.toUpperCase() === 'ACTIVE'">
                                     {{ device.status }}
                                 </span>
                             </td>
                             <td>{{ device.holderId || ('common.notAssigned' | translate) }}</td>
                             <td>{{ device.holderType || ('common.notAssigned' | translate) }}</td>
+                            <td class="actions-col">
+                                <button type="button" class="remove-btn" (click)="confirmRemove(device)">
+                                    {{ 'devices.list.remove' | translate }}
+                                </button>
+                            </td>
                         </tr>
                     }
                 </tbody>

@@ -82,3 +82,25 @@
     background: #e8f5e9;
     color: #2e7d32;
 }
+
+.actions-col {
+    width: 120px;
+    text-align: center;
+}
+
+.remove-btn {
+    padding: 6px 12px;
+    border: 1px solid #d32f2f;
+    border-radius: 6px;
+    background: #fff;
+    color: #d32f2f;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.remove-btn:hover {
+    background: #d32f2f;
+    color: #fff;
+}

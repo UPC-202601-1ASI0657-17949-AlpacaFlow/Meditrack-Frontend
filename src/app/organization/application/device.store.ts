@@ -15,6 +15,32 @@ import {
   writeDeviceVitalsSnapshot
 } from '../infrastructure/device-vitals-cache';
 
+const HIDDEN_DEVICES_STORAGE_KEY = 'meditrack:ui-hidden-device-ids';
+
+function readHiddenDeviceIdsFromStorage(): Set<number> {
+  try {
+    const raw = localStorage.getItem(HIDDEN_DEVICES_STORAGE_KEY);
+    if (!raw) {
+      return new Set();
+    }
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return new Set();
+    }
+    return new Set(parsed.filter((id): id is number => typeof id === 'number' && id > 0));
+  } catch {
+    return new Set();
+  }
+}
+
+function writeHiddenDeviceIdsToStorage(ids: Set<number>): void {
+  try {
+    localStorage.setItem(HIDDEN_DEVICES_STORAGE_KEY, JSON.stringify([...ids]));
+  } catch {
+    // Ignore storage quota or private mode errors.
+  }
+}
+
 /**
  * DeviceStore
  * State management store for devices, measurements, and alerts using Angular signals.
@@ -26,6 +52,14 @@ import {
 export class DeviceStore {
   private readonly devicesSignal = signal<Device[]>([]);
   readonly devices = this.devicesSignal.asReadonly();
+
+  /** Device IDs hidden from the IoT list UI only (persisted in localStorage for this browser). */
+  private readonly hiddenFromListIdsSignal = signal<Set<number>>(readHiddenDeviceIdsFromStorage());
+  readonly hiddenFromListIds = this.hiddenFromListIdsSignal.asReadonly();
+
+  readonly visibleDevices = computed(() =>
+    this.devices().filter(device => device.id != null && !this.hiddenFromListIdsSignal().has(device.id))
+  );
 
   private readonly selectedDeviceSignal = signal<Device | null>(null);
   readonly selectedDevice = this.selectedDeviceSignal.asReadonly();
@@ -68,6 +102,19 @@ export class DeviceStore {
   private measurementBatchFailures = 0;
 
   constructor(private deviceApi: DeviceApi) {}
+
+  /** Hides a device from the IoT table only; does not delete it in the backend. */
+  hideDeviceFromList(deviceId: number): void {
+    if (deviceId <= 0) {
+      return;
+    }
+    this.hiddenFromListIdsSignal.update(ids => {
+      const next = new Set(ids);
+      next.add(deviceId);
+      writeHiddenDeviceIdsToStorage(next);
+      return next;
+    });
+  }
 
   isDeviceDataDegraded(deviceId: number): Signal<boolean> {
     return computed(() => this.degradedDevicesSignal().has(deviceId));

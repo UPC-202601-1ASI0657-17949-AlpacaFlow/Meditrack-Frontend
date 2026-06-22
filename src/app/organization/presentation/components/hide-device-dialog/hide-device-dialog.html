@@ -1,0 +1,12 @@
+<h2 mat-dialog-title>{{ 'devices.list.hideDialog.title' | translate }}</h2>
+<mat-dialog-content>
+  <p>{{ 'devices.list.hideDialog.message' | translate : { deviceId: data.deviceId, model: data.model } }}</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">
+    {{ 'devices.list.hideDialog.cancel' | translate }}
+  </button>
+  <button mat-raised-button color="warn" (click)="onConfirm()">
+    {{ 'devices.list.hideDialog.confirm' | translate }}
+  </button>
+</mat-dialog-actions>

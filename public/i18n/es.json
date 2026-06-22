@@ -41,9 +41,7 @@
       "title": "Servicio de dispositivos no disponible",
       "detail": "Mostrando la última telemetría conocida almacenada en este navegador (modo degradado TS9).",
       "lastSync": "Última sincronización"
-    }
-  },
-  "devices": {
+    },
     "validate": {
       "button": "Validar Dispositivo",
       "checking": "Verificando...",
@@ -52,6 +50,16 @@
       "alreadyAssigned": "Este dispositivo ya está asignado a otro adulto mayor. Use otro ID de dispositivo antes de guardar.",
       "alreadyAssignedWithPatient": "Este dispositivo ya está asignado a {{patientName}} (adulto mayor #{{holderId}}). Use otro ID de dispositivo antes de guardar.",
       "error": "No se pudo verificar el dispositivo. Intente de nuevo."
+    },
+    "list": {
+      "actions": "Acciones",
+      "remove": "Eliminar",
+      "hideDialog": {
+        "title": "Quitar de la lista",
+        "message": "¿Quitar el dispositivo {{deviceId}} ({{model}}) de esta tabla? No se eliminará de la base de datos y seguirá oculto en este navegador hasta que borre los datos del sitio.",
+        "confirm": "Confirmar",
+        "cancel": "Cancelar"
+      }
     },
     "card": {
       "title": "Dispositivo IoT",
