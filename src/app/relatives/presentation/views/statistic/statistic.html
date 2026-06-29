@@ -1,5 +1,5 @@
 <div class="statistics-container">
-    @if (loading()) {
+    @if (initialLoading()) {
         <div class="loading-container">
             <mat-spinner diameter="50"></mat-spinner>
             <p>{{ 'relative.statistics.loading' | translate }}</p>
@@ -19,30 +19,71 @@
         <app-device-degraded-banner
             [visible]="isDegraded()"
             [lastSyncedAt]="lastSyncedAt()" />
+
+        <div class="latest-vitals">
+            <div class="vital-card vital-card--heart" [class.vital-card--alert]="heartRateOutOfRange()">
+                <p class="vital-card__label">{{ 'senior-citizen.statistics.heartRate' | translate }}</p>
+                @if (latestHeartRate(); as latest) {
+                    <p class="vital-card__value">{{ latest.value | number:'1.0-0' }} <span class="vital-card__unit">{{ 'senior-citizen.statistics.bpm' | translate }}</span></p>
+                    <p class="vital-card__time">{{ 'senior-citizen.statistics.measuredAt' | translate }} {{ formatMeasuredAt(latest.measuredAt) }}</p>
+                } @else {
+                    <p class="vital-card__empty">{{ 'senior-citizen.statistics.noLatestReading' | translate }}</p>
+                }
+            </div>
+
+            <div class="vital-card vital-card--oxygen" [class.vital-card--alert]="oxygenOutOfRange()">
+                <p class="vital-card__label">{{ 'senior-citizen.statistics.spO2' | translate }}</p>
+                @if (latestOxygen(); as latest) {
+                    <p class="vital-card__value">{{ latest.value | number:'1.0-0' }}<span class="vital-card__unit">%</span></p>
+                    <p class="vital-card__time">{{ 'senior-citizen.statistics.measuredAt' | translate }} {{ formatMeasuredAt(latest.measuredAt) }}</p>
+                } @else {
+                    <p class="vital-card__empty">{{ 'senior-citizen.statistics.noLatestReading' | translate }}</p>
+                }
+            </div>
+
+            <div class="vital-card vital-card--temperature" [class.vital-card--alert]="temperatureOutOfRange()">
+                <p class="vital-card__label">{{ 'senior-citizen.statistics.temperatureUnit' | translate }}</p>
+                @if (latestTemperature(); as latest) {
+                    <p class="vital-card__value">{{ latest.value | number:'1.1-1' }}<span class="vital-card__unit">°C</span></p>
+                    <p class="vital-card__time">{{ 'senior-citizen.statistics.measuredAt' | translate }} {{ formatMeasuredAt(latest.measuredAt) }}</p>
+                } @else {
+                    <p class="vital-card__empty">{{ 'senior-citizen.statistics.noLatestReading' | translate }}</p>
+                }
+            </div>
+        </div>
+
         <div class="charts-grid">
-            @if (heartRatePoints().length) {
-                <div class="chart-wrapper">
-                    <app-heart-rate [points]="heartRatePoints()"></app-heart-rate>
-                </div>
-            }
+            <div class="chart-wrapper">
+                <app-heart-rate
+                    [points]="heartRatePoints()"
+                    [thresholdMin]="thresholdMinBpm()"
+                    [thresholdMax]="thresholdMaxBpm()">
+                </app-heart-rate>
+                @if (!heartRatePoints().length) {
+                    <div class="no-data-message">{{ 'senior-citizen.statistics.noHeartRateData' | translate }}</div>
+                }
+            </div>
 
-            @if (oxygenPoints().length) {
-                <div class="chart-wrapper">
-                    <app-oxygen-saturation [points]="oxygenPoints()"></app-oxygen-saturation>
-                </div>
-            }
+            <div class="chart-wrapper">
+                <app-oxygen-saturation
+                    [points]="oxygenPoints()"
+                    [thresholdMin]="thresholdMinSpo2()">
+                </app-oxygen-saturation>
+                @if (!oxygenPoints().length) {
+                    <div class="no-data-message">{{ 'senior-citizen.statistics.noOxygenData' | translate }}</div>
+                }
+            </div>
 
-            @if (temperaturePoints().length) {
-                <div class="chart-wrapper">
-                    <app-temperature-rate [points]="temperaturePoints()"></app-temperature-rate>
-                </div>
-            }
-
-            @if (!heartRatePoints().length && !oxygenPoints().length && !temperaturePoints().length) {
-                <div class="no-statistics">
-                    <p>{{ 'relative.statistics.noData' | translate }}</p>
-                </div>
-            }
+            <div class="chart-wrapper">
+                <app-temperature-rate
+                    [points]="temperaturePoints()"
+                    [thresholdMin]="thresholdMinCelsius()"
+                    [thresholdMax]="thresholdMaxCelsius()">
+                </app-temperature-rate>
+                @if (!temperaturePoints().length) {
+                    <div class="no-data-message">{{ 'senior-citizen.statistics.noTemperatureData' | translate }}</div>
+                }
+            </div>
         </div>
     }
 </div>

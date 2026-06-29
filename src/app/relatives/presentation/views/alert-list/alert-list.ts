@@ -1,143 +1,126 @@
-import {Component, computed, inject, OnInit, effect} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {RelativesStore} from "../../../application/relatives.store";
-import {DeviceStore} from "../../../../organization/application/device.store";
-import {MatCard, MatCardContent, MatCardHeader, MatCardTitle} from "@angular/material/card";
-import {TranslatePipe} from '@ngx-translate/core';
-import {CommonModule} from '@angular/common';
-import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
-import {MatChipsModule} from "@angular/material/chips";
-import {DeviceDegradedBanner} from "../../../../organization/presentation/components/device-degraded-banner/device-degraded-banner";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  OnInit,
+  Signal,
+} from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslatePipe } from '@ngx-translate/core';
+import { RelativesStore } from '../../../application/relatives.store';
+import { DeviceStore } from '../../../../organization/application/device.store';
+import { Alert } from '../../../../organization/domain/model/alert.entity';
+import { DeviceDegradedBanner } from '../../../../organization/presentation/components/device-degraded-banner/device-degraded-banner';
+import { alertTimestampMs, formatAlertWhen } from '../../../../shared/utils/vital-chart.utils';
+
+const MAX_ALERTS_DISPLAY = 25;
 
 @Component({
   selector: 'app-alert-list',
-    standalone: true,
-    imports: [
-        CommonModule,
-        MatCardContent,
-        MatCardTitle,
-        MatCardHeader,
-        MatCard,
-        MatChipsModule,
-        MatProgressSpinnerModule,
-        TranslatePipe,
-        DeviceDegradedBanner
-    ],
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatProgressSpinnerModule,
+    TranslatePipe,
+    DeviceDegradedBanner,
+  ],
   templateUrl: './alert-list.html',
-  styleUrl: './alert-list.css'
+  styleUrl: './alert-list.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AlertList implements OnInit {
+  private relativesStore = inject(RelativesStore);
+  private deviceStore = inject(DeviceStore);
+  private route = inject(ActivatedRoute);
+  private readonly emptyAlerts = computed(() => [] as Alert[]);
+  private alertsSignal?: Signal<Alert[]>;
+  private cachedDeviceId = 0;
 
-    private relativesStore = inject(RelativesStore);
-    private deviceStore = inject(DeviceStore);
-    private route = inject(ActivatedRoute);
+  relative = computed(() => this.relativesStore.selectedRelative());
+  deviceId = computed(() => {
+    const sc = this.relative()?.seniorCitizen;
+    return sc?.deviceId ? Number(sc.deviceId) : 0;
+  });
+  isDegraded = computed(() => {
+    const id = this.deviceId();
+    return id > 0 && this.deviceStore.isDeviceDataDegraded(id)();
+  });
+  lastSyncedAt = computed(() => {
+    const id = this.deviceId();
+    return id > 0 ? this.deviceStore.getLastSyncedAt(id)() : null;
+  });
 
-    relative = computed(() => this.relativesStore.selectedRelative());
-    
-    deviceId = computed(() => {
-        const sc = this.relative()?.seniorCitizen;
-        return sc?.deviceId ? Number(sc.deviceId) : 0;
-    });
-    isDegraded = computed(() => {
-        const id = this.deviceId();
-        return id > 0 && this.deviceStore.isDeviceDataDegraded(id)();
-    });
-    lastSyncedAt = computed(() => {
-        const id = this.deviceId();
-        return id > 0 ? this.deviceStore.getLastSyncedAt(id)() : null;
-    });
+  loading = computed(() => this.deviceStore.loadingAlerts());
 
-    // Loading state
-    loading = computed(() => this.deviceStore.loadingAlerts());
-
-    // Solo alertas del API de dispositivos (sin fallback a datos estáticos del modelo).
-    alerts = computed(() => {
-        const deviceId = this.deviceId();
-        if (!deviceId) return [];
-        return this.deviceStore.getAlertsForDevice(deviceId)();
-    });
-
-    // Sort alerts by date (newest first)
-    sortedAlerts = computed(() => {
-        const alerts = this.alerts();
-        return [...alerts].sort((a, b) => {
-            const dateA = a.registeredAt ? new Date(a.registeredAt).getTime() : 
-                         (a.date ? new Date(a.date).getTime() : 0);
-            const dateB = b.registeredAt ? new Date(b.registeredAt).getTime() : 
-                         (b.date ? new Date(b.date).getTime() : 0);
-            return dateB - dateA; // Descending order
-        });
-    });
-
-    constructor() {
-        // Effect to automatically load alerts when deviceId changes
-        effect(() => {
-            const relative = this.relative();
-            const deviceId = this.deviceId();
-            
-            console.log('🚨 Relative AlertList Effect:', {
-                relative: relative ? { id: relative.id, name: `${relative.firstName} ${relative.lastName}` } : null,
-                seniorCitizen: relative?.seniorCitizen ? { 
-                    id: relative.seniorCitizen.firstName, 
-                    deviceId: relative.seniorCitizen.deviceId 
-                } : null,
-                deviceId: deviceId
-            });
-            
-            if (deviceId && deviceId > 0) {
-                console.log('🚨 Relative AlertList: Loading alerts for device', deviceId);
-                this.deviceStore.loadAlertsByDeviceId(deviceId);
-            } else if (relative?.seniorCitizen && !deviceId) {
-                console.warn('⚠️ Relative AlertList: Senior citizen loaded but deviceId is missing or 0', {
-                    relativeId: relative.id,
-                    deviceId: relative.seniorCitizen.deviceId
-                });
-            } else if (!relative) {
-                console.warn('⚠️ Relative AlertList: Relative not loaded yet');
-            }
-        });
+  displayedAlerts = computed(() => {
+    const alerts = this.resolveAlertsSignal()();
+    if (!alerts.length) {
+      return [];
     }
+    return [...alerts]
+      .sort((a, b) => alertTimestampMs(b.registeredAt) - alertTimestampMs(a.registeredAt))
+      .slice(0, MAX_ALERTS_DISPLAY);
+  });
 
-    ngOnInit() {
-        const relativeId = this.route.snapshot.parent?.params['id'];
-        if (relativeId) {
-            const id = parseInt(relativeId, 10);
-            if (id) {
-                this.relativesStore.loadRelativeById(id);
-            }
-        }
-    }
+  totalAlertCount = computed(() => this.resolveAlertsSignal()().length);
+  hasMoreAlerts = computed(() => this.totalAlertCount() > MAX_ALERTS_DISPLAY);
 
-    formatDate(date: string): string {
-        if (!date) return '-';
-        return new Date(date).toLocaleDateString('es-ES', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
+  constructor() {
+    effect(() => {
+      const deviceId = this.deviceId();
+      if (deviceId > 0) {
+        this.deviceStore.loadAlertsByDeviceId(deviceId);
+      }
+    });
+  }
 
-    formatTime(date: string): string {
-        if (!date) return '-';
-        return new Date(date).toLocaleTimeString('es-ES', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
+  ngOnInit(): void {
+    this.loadRelative();
+  }
 
-    getAlertSeverityClass(alertType: string | undefined): string {
-        if (!alertType) return 'alert-info';
-        
-        const type = alertType.toLowerCase();
-        if (type.includes('high') || type.includes('critical') || type.includes('danger')) {
-            return 'alert-danger';
-        } else if (type.includes('warning') || type.includes('medium')) {
-            return 'alert-warning';
-        } else if (type.includes('low') || type.includes('info')) {
-            return 'alert-info';
-        }
-        return 'alert-info';
+  formatWhen(alert: Alert): string {
+    if (alert.registeredAt?.trim()) {
+      return formatAlertWhen(alert.registeredAt);
     }
+    if (alert.date && alert.time) {
+      return `${alert.date} ${alert.time}`;
+    }
+    return alert.time || alert.date || '-';
+  }
+
+  severityClass(alertType: string | undefined): string {
+    const type = (alertType ?? '').toLowerCase();
+    if (type.includes('high') || type.includes('critical') || type.includes('danger')) {
+      return 'alert-danger';
+    }
+    if (type.includes('warning') || type.includes('medium')) {
+      return 'alert-warning';
+    }
+    return 'alert-info';
+  }
+
+  private resolveAlertsSignal(): Signal<Alert[]> {
+    const deviceId = this.deviceId();
+    if (deviceId !== this.cachedDeviceId) {
+      this.cachedDeviceId = deviceId;
+      this.alertsSignal = deviceId > 0
+        ? this.deviceStore.getAlertsForDevice(deviceId)
+        : undefined;
+    }
+    return this.alertsSignal ?? this.emptyAlerts;
+  }
+
+  private loadRelative(): void {
+    const relativeId = this.route.snapshot.parent?.params['id'];
+    if (relativeId) {
+      const id = parseInt(relativeId, 10);
+      if (id) {
+        this.relativesStore.loadRelativeById(id);
+      }
+    }
+  }
 }

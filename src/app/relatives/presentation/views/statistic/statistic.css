@@ -3,15 +3,6 @@
     width: 100%;
 }
 
-.loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    gap: 16px;
-}
-
 .error-container {
     padding: 24px;
     max-width: 640px;
@@ -30,6 +21,82 @@
     color: #c62828;
 }
 
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 16px;
+}
+
+.latest-vitals {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.vital-card {
+    background: white;
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #90a4ae;
+}
+
+.vital-card--heart {
+    border-left-color: rgb(226, 99, 255);
+}
+
+.vital-card--oxygen {
+    border-left-color: rgb(99, 255, 135);
+}
+
+.vital-card--temperature {
+    border-left-color: rgb(255, 99, 132);
+}
+
+.vital-card--alert {
+    background: #fff5f5;
+    border-left-color: #c62828;
+}
+
+.vital-card__label {
+    margin: 0 0 8px;
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.vital-card__value {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.1;
+    color: #212121;
+}
+
+.vital-card__unit {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #666;
+    margin-left: 4px;
+}
+
+.vital-card__time {
+    margin: 8px 0 0;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.vital-card__empty {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #999;
+    font-style: italic;
+}
+
 .charts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
@@ -42,19 +109,26 @@
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    min-height: 350px;
 }
 
-.no-statistics {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 400px;
-    padding: 2rem;
-}
-
-.no-statistics p {
-    font-size: 1.1rem;
+.no-data-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     color: #666;
+    font-style: italic;
     text-align: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    pointer-events: none;
 }
 
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}

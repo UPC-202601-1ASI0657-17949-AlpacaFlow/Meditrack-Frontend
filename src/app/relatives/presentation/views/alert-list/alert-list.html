@@ -4,76 +4,44 @@
             <mat-spinner diameter="50"></mat-spinner>
             <p>{{ 'relative.alerts.loading' | translate }}</p>
         </div>
-    }
-
-    @else if (sortedAlerts().length) {
+    } @else if (displayedAlerts().length) {
         <app-device-degraded-banner
             [visible]="isDegraded()"
             [lastSyncedAt]="lastSyncedAt()" />
-        <div class="alerts-grid">
-            @for (alert of sortedAlerts(); track alert.id) {
-                <mat-card class="alert-card mat-elevation-z4" [ngClass]="getAlertSeverityClass(alert.alertType)">
-                    <mat-card-header>
-                        <mat-card-title class="alert-title">
-                            {{ alert.alertTitle || alert.alertType || ('common.alert' | translate) }}
-                        </mat-card-title>
-                        <div class="alert-type-chip">
-                            <mat-chip [ngClass]="getAlertSeverityClass(alert.alertType)">
-                                {{ alert.alertType || ('common.info' | translate) }}
-                            </mat-chip>
-                        </div>
-                    </mat-card-header>
 
-                    <mat-card-content>
-                        <div class="alert-content">
-                            <div class="alert-row">
-                                <strong>{{ 'relative.alerts.date' | translate }}:</strong>
-                                {{ alert.registeredAt ? formatDate(alert.registeredAt) : formatDate(alert.date) }}
-                            </div>
-                            <div class="alert-row">
-                                <strong>{{ 'relative.alerts.time' | translate }}:</strong>
-                                {{ alert.registeredAt ? formatTime(alert.registeredAt) : alert.time }}
-                            </div>
-                            <div class="alert-row">
-                                <strong>{{ 'relative.alerts.dataRegistered' | translate }}:</strong>
-                                <span class="data-value">{{ alert.dataRegistered }}</span>
-                            </div>
-                            <div class="alert-row reason">
-                                <strong>{{ 'relative.alerts.reason' | translate }}:</strong>
-                                {{ alert.reason || '-' }}
-                            </div>
-                            @if (alert.deviceId) {
-                                <div class="alert-row device-info">
-                                    <strong>{{ 'common.deviceId' | translate }}:</strong> {{ alert.deviceId }}
-                                </div>
-                            }
-                        </div>
-                    </mat-card-content>
-                </mat-card>
+        @if (hasMoreAlerts()) {
+            <p class="alerts-summary">
+                {{ 'senior-citizen.alert.showingRecent' | translate:{ shown: displayedAlerts().length, total: totalAlertCount() } }}
+            </p>
+        }
+
+        <ul class="alerts-list">
+            @for (alert of displayedAlerts(); track alert.id) {
+                <li class="alert-item" [ngClass]="severityClass(alert.alertType)">
+                    <div class="alert-item__head">
+                        <strong>{{ alert.alertTitle || alert.alertType || ('common.alert' | translate) }}</strong>
+                        <span class="alert-item__when">{{ formatWhen(alert) }}</span>
+                    </div>
+                    <p class="alert-item__value">{{ alert.dataRegistered }}</p>
+                    <p class="alert-item__reason">{{ alert.reason || '-' }}</p>
+                </li>
             }
-        </div>
-    }
-
-    @else if (!loading()) {
+        </ul>
+    } @else {
         <div class="no-alerts">
-            <mat-card class="mat-elevation-z2">
-                <mat-card-content>
-                    @if (!relative()) {
-                        <p class="message-warn">{{ 'relative.alerts.loadingRelative' | translate }}</p>
-                    } @else if (!deviceId() || deviceId() === 0) {
-                        <p class="message-error">{{ 'relative.alerts.noDeviceMessage' | translate }}</p>
-                        <p class="device-info-text"><strong>{{ 'relative.statistics.relativeIdLabel' | translate }}:</strong> {{ relative()?.id }}</p>
-                        <p class="device-info-text"><strong>{{ 'common.deviceId' | translate }}:</strong> {{ relative()?.seniorCitizen?.deviceId ?? ('common.notAssigned' | translate) }}</p>
-                        <p>{{ 'relative.alerts.hintAssignDevice' | translate }}</p>
-                    } @else {
-                        <app-device-degraded-banner
-                            [visible]="isDegraded()"
-                            [lastSyncedAt]="lastSyncedAt()" />
-                        <p>{{ 'relative.alerts.noAlerts' | translate }}</p>
-                        <p class="device-info-text"><strong>{{ 'common.deviceId' | translate }}:</strong> {{ deviceId() }}</p>
-                    }
-                </mat-card-content>
-            </mat-card>
+            @if (!relative()) {
+                <p class="message-warn">{{ 'relative.alerts.loadingRelative' | translate }}</p>
+            } @else if (!deviceId() || deviceId() === 0) {
+                <p class="message-error">{{ 'relative.alerts.noDeviceMessage' | translate }}</p>
+                <p><strong>{{ 'relative.statistics.relativeIdLabel' | translate }}:</strong> {{ relative()?.id }}</p>
+                <p><strong>{{ 'common.deviceId' | translate }}:</strong> {{ relative()?.seniorCitizen?.deviceId ?? ('common.notAssigned' | translate) }}</p>
+                <p>{{ 'relative.alerts.hintAssignDevice' | translate }}</p>
+            } @else {
+                <app-device-degraded-banner
+                    [visible]="isDegraded()"
+                    [lastSyncedAt]="lastSyncedAt()" />
+                <p>{{ 'relative.alerts.noAlerts' | translate }}</p>
+            }
         </div>
     }
 </div>

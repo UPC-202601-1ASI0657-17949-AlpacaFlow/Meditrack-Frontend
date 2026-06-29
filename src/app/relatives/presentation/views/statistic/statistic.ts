@@ -1,152 +1,195 @@
-import {Component, computed, inject, OnInit, OnDestroy, effect} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {RelativesStore} from "../../../application/relatives.store";
-import {DeviceStore} from "../../../../organization/application/device.store";
+import { Component, computed, effect, inject, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslatePipe } from '@ngx-translate/core';
+import { RelativesStore } from '../../../application/relatives.store';
+import { DeviceStore } from '../../../../organization/application/device.store';
+import { ClinicalStore } from '../../../../clinical/application/clinical.store';
+import { HeartRate } from '../../../../organization/presentation/components/heart-rate/heart-rate';
+import { OxygenSaturation } from '../../../../organization/presentation/components/oxygen-saturation/oxygen-saturation';
+import { TemperatureRate } from '../../../../organization/presentation/components/temperature-rate/temperature-rate';
+import { DeviceDegradedBanner } from '../../../../organization/presentation/components/device-degraded-banner/device-degraded-banner';
 import {
-    HeartRateMeasurement,
-    TemperatureMeasurement,
-    OxygenMeasurement
-} from "../../../../organization/domain/model/measurement.entity";
-import {HeartRate} from "../../components/hear-rate/hear-rate";
-import {OxygenSaturation} from "../../components/oxigen-saturation/oxigen-saturation";
-import {TemperatureRate} from "../../components/temperature-rate/temperature-rate";
-import {TranslatePipe} from '@ngx-translate/core';
-import {CommonModule} from '@angular/common';
-import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
-import {DeviceDegradedBanner} from "../../../../organization/presentation/components/device-degraded-banner/device-degraded-banner";
-import { sortByMeasuredAt, VitalTimePoint } from "../../../../shared/utils/vital-chart.utils";
+  formatVitalTimeLabel,
+  sortByMeasuredAt,
+  VitalTimePoint,
+} from '../../../../shared/utils/vital-chart.utils';
 
 const MEASUREMENT_REFRESH_MS = 15_000;
 
+export interface LatestVitalReading {
+  value: number;
+  measuredAt: string;
+}
+
 @Component({
   selector: 'app-statistic',
-    standalone: true,
-    imports: [
-        HeartRate,
-        OxygenSaturation,
-        TemperatureRate,
-        TranslatePipe,
-        CommonModule,
-        MatProgressSpinnerModule,
-        DeviceDegradedBanner
-    ],
+  standalone: true,
+  imports: [
+    CommonModule,
+    HeartRate,
+    OxygenSaturation,
+    TemperatureRate,
+    MatProgressSpinnerModule,
+    TranslatePipe,
+    DeviceDegradedBanner,
+  ],
   templateUrl: './statistic.html',
-  styleUrl: './statistic.css'
+  styleUrl: './statistic.css',
 })
 export class Statistic implements OnInit, OnDestroy {
+  private relativeStore = inject(RelativesStore);
+  private deviceStore = inject(DeviceStore);
+  private clinicalStore = inject(ClinicalStore);
+  private route = inject(ActivatedRoute);
+  private measurementRefreshTimer?: ReturnType<typeof setInterval>;
 
-    private relativeStore = inject(RelativesStore);
-    private deviceStore = inject(DeviceStore);
-    private route = inject(ActivatedRoute);
-    private measurementRefreshTimer?: ReturnType<typeof setInterval>;
+  relative = computed(() => this.relativeStore.selectedRelative());
+  seniorCitizenId = computed(() => this.relative()?.seniorCitizenId ?? null);
+  deviceId = computed(() => {
+    const sc = this.relative()?.seniorCitizen;
+    return sc?.deviceId ? Number(sc.deviceId) : 0;
+  });
+  patientThreshold = computed(() => this.clinicalStore.patientThreshold());
+  isDegraded = computed(() => {
+    const id = this.deviceId();
+    return id > 0 && this.deviceStore.isDeviceDataDegraded(id)();
+  });
+  lastSyncedAt = computed(() => {
+    const id = this.deviceId();
+    return id > 0 ? this.deviceStore.getLastSyncedAt(id)() : null;
+  });
 
-    relative = computed(() => this.relativeStore.selectedRelative());
-    
-    deviceId = computed(() => {
-        const sc = this.relative()?.seniorCitizen;
-        return sc?.deviceId ? Number(sc.deviceId) : 0;
+  thresholdMinBpm = computed(() => this.patientThreshold()?.minBpm ?? 60);
+  thresholdMaxBpm = computed(() => this.patientThreshold()?.maxBpm ?? 100);
+  thresholdMinSpo2 = computed(() => this.patientThreshold()?.minSpo2 ?? 90);
+  thresholdMinCelsius = computed(() => this.patientThreshold()?.minCelsius ?? 36.0);
+  thresholdMaxCelsius = computed(() => this.patientThreshold()?.maxCelsius ?? 37.5);
+
+  initialLoading = computed(
+    () => this.deviceStore.loadingMeasurements() && !this.hasAnyMeasurements()
+  );
+
+  heartRateMeasurements = computed(() => {
+    const deviceId = this.deviceId();
+    if (!deviceId) return [];
+    return this.deviceStore.getHeartRateMeasurementsForDevice(deviceId)();
+  });
+
+  temperatureMeasurements = computed(() => {
+    const deviceId = this.deviceId();
+    if (!deviceId) return [];
+    return this.deviceStore.getTemperatureMeasurementsForDevice(deviceId)();
+  });
+
+  oxygenMeasurements = computed(() => {
+    const deviceId = this.deviceId();
+    if (!deviceId) return [];
+    return this.deviceStore.getOxygenMeasurementsForDevice(deviceId)();
+  });
+
+  heartRatePoints = computed<VitalTimePoint[]>(() =>
+    sortByMeasuredAt(this.heartRateMeasurements()).map((m) => ({
+      value: m.bpm,
+      measuredAt: m.measuredAt,
+    }))
+  );
+
+  temperaturePoints = computed<VitalTimePoint[]>(() =>
+    sortByMeasuredAt(this.temperatureMeasurements()).map((m) => ({
+      value: m.temperature,
+      measuredAt: m.measuredAt,
+    }))
+  );
+
+  oxygenPoints = computed<VitalTimePoint[]>(() =>
+    sortByMeasuredAt(this.oxygenMeasurements()).map((m) => ({
+      value: m.saturation,
+      measuredAt: m.measuredAt,
+    }))
+  );
+
+  latestHeartRate = computed(() => this.latestFromPoints(this.heartRatePoints()));
+  latestOxygen = computed(() => this.latestFromPoints(this.oxygenPoints()));
+  latestTemperature = computed(() => this.latestFromPoints(this.temperaturePoints()));
+
+  heartRateOutOfRange = computed(() => {
+    const latest = this.latestHeartRate();
+    if (!latest) return false;
+    return latest.value < this.thresholdMinBpm() || latest.value > this.thresholdMaxBpm();
+  });
+
+  oxygenOutOfRange = computed(() => {
+    const latest = this.latestOxygen();
+    if (!latest) return false;
+    return latest.value < this.thresholdMinSpo2();
+  });
+
+  temperatureOutOfRange = computed(() => {
+    const latest = this.latestTemperature();
+    if (!latest) return false;
+    return latest.value < this.thresholdMinCelsius() || latest.value > this.thresholdMaxCelsius();
+  });
+
+  formatMeasuredAt(measuredAt: string): string {
+    return formatVitalTimeLabel(measuredAt);
+  }
+
+  constructor() {
+    effect(() => {
+      const deviceId = this.deviceId();
+      const seniorCitizenId = this.seniorCitizenId();
+      if (deviceId > 0) {
+        this.deviceStore.loadAllMeasurementsForDevice(deviceId);
+      }
+      if (seniorCitizenId) {
+        this.clinicalStore.loadPatientThreshold(seniorCitizenId);
+      }
     });
-    isDegraded = computed(() => {
-        const id = this.deviceId();
-        return id > 0 && this.deviceStore.isDeviceDataDegraded(id)();
-    });
-    lastSyncedAt = computed(() => {
-        const id = this.deviceId();
-        return id > 0 ? this.deviceStore.getLastSyncedAt(id)() : null;
-    });
+  }
 
-    // Loading state
-    loading = computed(() => this.deviceStore.loadingMeasurements());
+  ngOnInit(): void {
+    this.loadRelative();
+    this.measurementRefreshTimer = setInterval(() => {
+      const deviceId = this.deviceId();
+      if (deviceId > 0) {
+        this.deviceStore.loadAllMeasurementsForDevice(deviceId, { showLoading: false });
+      }
+    }, MEASUREMENT_REFRESH_MS);
+  }
 
-    // Real-time measurements from device API
-    heartRateMeasurements = computed(() => {
-        const deviceId = this.deviceId();
-        if (!deviceId) return [];
-        return this.deviceStore.getHeartRateMeasurementsForDevice(deviceId)();
-    });
-
-    temperatureMeasurements = computed(() => {
-        const deviceId = this.deviceId();
-        if (!deviceId) return [];
-        return this.deviceStore.getTemperatureMeasurementsForDevice(deviceId)();
-    });
-
-    oxygenMeasurements = computed(() => {
-        const deviceId = this.deviceId();
-        if (!deviceId) return [];
-        return this.deviceStore.getOxygenMeasurementsForDevice(deviceId)();
-    });
-
-    heartRatePoints = computed<VitalTimePoint[]>(() =>
-        sortByMeasuredAt(this.heartRateMeasurements()).map((m: HeartRateMeasurement) => ({
-            value: m.bpm,
-            measuredAt: m.measuredAt,
-        }))
-    );
-
-    oxygenPoints = computed<VitalTimePoint[]>(() =>
-        sortByMeasuredAt(this.oxygenMeasurements()).map((m: OxygenMeasurement) => ({
-            value: m.saturation,
-            measuredAt: m.measuredAt,
-        }))
-    );
-
-    temperaturePoints = computed<VitalTimePoint[]>(() =>
-        sortByMeasuredAt(this.temperatureMeasurements()).map((m: TemperatureMeasurement) => ({
-            value: m.temperature,
-            measuredAt: m.measuredAt,
-        }))
-    );
-
-    constructor() {
-        // Effect to automatically load measurements when deviceId changes
-        effect(() => {
-            const relative = this.relative();
-            const deviceId = this.deviceId();
-            
-            console.log('📊 Relative Statistic Effect:', {
-                relative: relative ? { id: relative.id, name: `${relative.firstName} ${relative.lastName}` } : null,
-                seniorCitizen: relative?.seniorCitizen ? { 
-                    id: relative.seniorCitizen.firstName, 
-                    deviceId: relative.seniorCitizen.deviceId 
-                } : null,
-                deviceId: deviceId
-            });
-            
-            if (deviceId && deviceId > 0) {
-                console.log('📊 Relative Statistic: Loading measurements for device', deviceId);
-                this.deviceStore.loadAllMeasurementsForDevice(deviceId);
-            } else if (relative?.seniorCitizen && !deviceId) {
-                console.warn('⚠️ Relative Statistic: Senior citizen loaded but deviceId is missing or 0', {
-                    relativeId: relative.id,
-                    deviceId: relative.seniorCitizen.deviceId
-                });
-            } else if (!relative) {
-                console.warn('⚠️ Relative Statistic: Relative not loaded yet');
-            }
-        });
+  ngOnDestroy(): void {
+    if (this.measurementRefreshTimer) {
+      clearInterval(this.measurementRefreshTimer);
     }
-
-    ngOnInit() {
-        const relativeId = this.route.snapshot.parent?.params['id'];
-        if (relativeId) {
-            const id = parseInt(relativeId, 10);
-            if (id) {
-                this.relativeStore.loadRelativeById(id);
-            }
-        }
-
-        this.measurementRefreshTimer = setInterval(() => {
-            const deviceId = this.deviceId();
-            if (deviceId > 0) {
-                this.deviceStore.loadAllMeasurementsForDevice(deviceId);
-            }
-        }, MEASUREMENT_REFRESH_MS);
+    const deviceId = this.deviceId();
+    if (deviceId > 0) {
+      this.deviceStore.clearMeasurementsForDevice(deviceId);
     }
+  }
 
-    ngOnDestroy() {
-        if (this.measurementRefreshTimer) {
-            clearInterval(this.measurementRefreshTimer);
-        }
+  private hasAnyMeasurements(): boolean {
+    return this.heartRatePoints().length > 0
+      || this.temperaturePoints().length > 0
+      || this.oxygenPoints().length > 0;
+  }
+
+  private loadRelative(): void {
+    const relativeId = this.route.snapshot.parent?.params['id'];
+    if (relativeId) {
+      const id = parseInt(relativeId, 10);
+      if (id) {
+        this.relativeStore.loadRelativeById(id);
+      }
     }
+  }
+
+  private latestFromPoints(points: VitalTimePoint[]): LatestVitalReading | null {
+    const last = points.at(-1);
+    if (!last || !Number.isFinite(last.value)) {
+      return null;
+    }
+    return { value: last.value, measuredAt: last.measuredAt };
+  }
 }
