@@ -309,7 +309,8 @@
       "loadingSeniorCitizen": "Cargando información del adulto mayor...",
       "noDeviceMessage": "No hay un dispositivo asociado a este adulto mayor.",
       "hintAssignDevice": "Asegúrese de que el adulto mayor tenga un dispositivo asignado.",
-      "seniorCitizenIdLabel": "ID del adulto mayor"
+      "seniorCitizenIdLabel": "ID del adulto mayor",
+      "showingRecent": "Mostrando las {{shown}} alertas más recientes de {{total}}."
     },
     "statistics": {
       "heartRate": "Frecuencia Cardíaca (lpm)",
@@ -329,6 +330,10 @@
       "noHeartRateData": "No hay datos de frecuencia cardíaca disponibles",
       "noOxygenData": "No hay datos de saturación de oxígeno disponibles",
       "noTemperatureData": "No hay datos de temperatura disponibles",
+      "latestReading": "Última lectura",
+      "noLatestReading": "Sin dato reciente",
+      "measuredAt": "Medido a las",
+      "chartTrendSubtitle": "Promedio por minuto · últimas 4 h",
       "weekdays": {
         "mon": "Lun",
         "tue": "Mar",

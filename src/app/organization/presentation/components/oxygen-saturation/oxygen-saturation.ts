@@ -1,129 +1,149 @@
-import { Component, Input, AfterViewInit, OnDestroy, OnChanges, ViewChild, ElementRef, inject } from '@angular/core';
-import { Chart, ChartTypeRegistry, LineController, LineElement, PointElement, LinearScale, Tooltip, Legend } from 'chart.js';
-import {TranslateService} from "@ngx-translate/core";
+import { Component, Input, AfterViewInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
+import { Chart } from 'chart.js';
+import { TranslateService } from '@ngx-translate/core';
+import { ensureVitalChartsRegistered } from '../../../../shared/utils/vital-chart.setup';
 import {
   formatChartAxisTick,
+  formatVitalTimeLabel,
   toVitalChartPoints,
+  VitalChartDatum,
   VitalTimePoint,
-  vitalChartXBounds
+  vitalChartPointRadius,
+  vitalChartXBounds,
 } from '../../../../shared/utils/vital-chart.utils';
 
-Chart.register(LineController, LineElement, PointElement, LinearScale, Tooltip, Legend);
+ensureVitalChartsRegistered();
 
 @Component({
-    selector: 'app-oxygen-saturation',
-    standalone: true,
-    template: `<canvas #chartCanvas height="300"></canvas>`,
-    styleUrls: ['oxygen-saturation.css']
+  selector: 'app-oxygen-saturation',
+  standalone: true,
+  template: `<canvas #chartCanvas height="300"></canvas>`,
+  styleUrls: ['oxygen-saturation.css'],
 })
-export class OxygenSaturation implements AfterViewInit, OnDestroy, OnChanges {
+export class OxygenSaturation implements AfterViewInit, OnDestroy {
+  private translateService = inject(TranslateService);
 
-    private translateService = inject(TranslateService);
+  @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
-    @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
+  @Input() thresholdMin = 90;
 
-    @Input() points: VitalTimePoint[] = [];
-    @Input() thresholdMin = 90;
+  @Input() set points(value: VitalTimePoint[]) {
+    this._points = value ?? [];
+    this.refresh();
+  }
 
-    private chartInstance?: Chart<keyof ChartTypeRegistry, { x: number; y: number }[], unknown>;
+  private _points: VitalTimePoint[] = [];
+  private chartInstance?: Chart<'line', VitalChartDatum[], unknown>;
 
-    ngAfterViewInit() {
-        this.initChart();
+  ngAfterViewInit(): void {
+    this.initChart();
+    this.refresh();
+  }
+
+  ngOnDestroy(): void {
+    this.chartInstance?.destroy();
+  }
+
+  private chartData(): VitalChartDatum[] {
+    return toVitalChartPoints(this._points);
+  }
+
+  private refresh(): void {
+    if (!this.chartCanvas) {
+      return;
+    }
+    if (!this.chartInstance) {
+      this.initChart();
+      return;
+    }
+    this.applyChartData();
+  }
+
+  private applyChartData(): void {
+    if (!this.chartInstance) {
+      return;
+    }
+    const data = this.chartData();
+    this.chartInstance.data.datasets[0].data = data;
+    this.chartInstance.data.datasets[0].pointRadius = vitalChartPointRadius(data.length);
+    const bounds = vitalChartXBounds(data);
+    const xScale = this.chartInstance.options.scales?.['x'];
+    if (xScale) {
+      xScale.min = bounds.min;
+      xScale.max = bounds.max;
+    }
+    this.chartInstance.update('none');
+  }
+
+  private initChart(): void {
+    if (!this.chartCanvas || this.chartInstance) {
+      return;
+    }
+    const ctx = this.chartCanvas.nativeElement.getContext('2d');
+    if (!ctx) {
+      return;
     }
 
-    ngOnChanges() {
-        if (this.chartInstance) {
-            this.applyChartData();
-        }
-    }
+    const title = this.translateService.instant('senior-citizen.statistics.oxygenSaturation');
+    const trendSubtitle = this.translateService.instant('senior-citizen.statistics.chartTrendSubtitle');
+    const timeAxisLabel = this.translateService.instant('senior-citizen.statistics.measuredAtTime');
+    const spO2Label = this.translateService.instant('senior-citizen.statistics.spO2');
+    const data = this.chartData();
+    const bounds = vitalChartXBounds(data);
+    const yMin = Math.max(50, this.thresholdMin - 5);
+    const pointRadius = vitalChartPointRadius(data.length);
 
-    ngOnDestroy() {
-        this.chartInstance?.destroy();
-    }
-
-    private chartData() {
-        return toVitalChartPoints(this.points);
-    }
-
-    private applyChartData() {
-        if (!this.chartInstance) return;
-        const data = this.chartData();
-        this.chartInstance.data.datasets[0].data = data;
-        this.applyXScaleBounds(data);
-        if (this.chartInstance.options.scales?.['y']) {
-            this.chartInstance.options.scales['y'].min = Math.max(50, this.thresholdMin - 5);
-            this.chartInstance.options.scales['y'].max = 100;
-        }
-        this.chartInstance.update();
-    }
-
-    private applyXScaleBounds(data: { x: number; y: number }[]) {
-        const bounds = vitalChartXBounds(data);
-        const xScale = this.chartInstance?.options.scales?.['x'];
-        if (!xScale || !bounds) return;
-        xScale.min = bounds.min;
-        xScale.max = bounds.max;
-    }
-
-    private initChart() {
-        if (!this.chartCanvas) return;
-
-        const ctx = this.chartCanvas.nativeElement.getContext('2d');
-        if (!ctx) return;
-
-        const oxygenSaturationTitle = this.translateService.instant('senior-citizen.statistics.oxygenSaturation');
-        const timeAxisLabel = this.translateService.instant('senior-citizen.statistics.measuredAtTime');
-        const spO2Label = this.translateService.instant('senior-citizen.statistics.spO2');
-        const data = this.chartData();
-        const bounds = vitalChartXBounds(data);
-
-        this.chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: [
-                    {
-                        label: spO2Label,
-                        data,
-                        borderColor: 'rgb(99,255,135)',
-                        backgroundColor: 'rgba(99,255,135,0.2)',
-                        borderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        fill: true
-                    }
-                ]
+    this.chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [{
+          label: spO2Label,
+          data,
+          borderColor: 'rgb(46, 168, 92)',
+          borderWidth: 2.5,
+          tension: 0,
+          stepped: 'after',
+          fill: false,
+          spanGaps: false,
+          pointRadius,
+          pointHoverRadius: 6,
+          pointBackgroundColor: 'rgb(46, 168, 92)',
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        parsing: false,
+        animation: false,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: [title, trendSubtitle],
+            padding: { bottom: 12 },
+          },
+          tooltip: {
+            callbacks: {
+              title: (items) => formatVitalTimeLabel(new Date(items[0]?.parsed.x ?? 0).toISOString()),
+              label: (item) => `${spO2Label}: ${item.parsed.y}%`,
             },
-            options: {
-                responsive: true,
-                parsing: false,
-                plugins: {
-                    legend: { display: true },
-                    title: { display: true, text: oxygenSaturationTitle },
-                    tooltip: {
-                        callbacks: {
-                            title: (items) => formatChartAxisTick(items[0]?.parsed.x ?? 0),
-                            label: (item) => `${spO2Label}: ${item.parsed.y}%`
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        type: 'linear',
-                        min: bounds?.min,
-                        max: bounds?.max,
-                        title: { display: true, text: timeAxisLabel },
-                        ticks: {
-                            maxTicksLimit: 8,
-                            callback: (value) => formatChartAxisTick(value)
-                        }
-                    },
-                    y: {
-                        min: Math.max(50, this.thresholdMin - 5),
-                        max: 100,
-                        title: { display: true, text: spO2Label }
-                    }
-                }
-            }
-        });
-    }
+          },
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            min: bounds.min,
+            max: bounds.max,
+            title: { display: true, text: timeAxisLabel },
+            ticks: { maxTicksLimit: 6, callback: (value) => formatChartAxisTick(value) },
+          },
+          y: {
+            min: yMin,
+            max: 100,
+            title: { display: true, text: spO2Label },
+          },
+        },
+      },
+    });
+  }
 }

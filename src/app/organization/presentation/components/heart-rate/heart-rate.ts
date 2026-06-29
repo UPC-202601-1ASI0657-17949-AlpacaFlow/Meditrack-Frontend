@@ -1,145 +1,154 @@
-import { Component, Input, AfterViewInit, OnDestroy, ViewChild, ElementRef, OnChanges, inject } from '@angular/core';
-import { Chart, ChartTypeRegistry, LineController, LineElement, PointElement, LinearScale, Tooltip, Legend } from 'chart.js';
-import {TranslateService} from "@ngx-translate/core";
+import { Component, Input, AfterViewInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
+import { Chart } from 'chart.js';
+import { TranslateService } from '@ngx-translate/core';
+import { ensureVitalChartsRegistered } from '../../../../shared/utils/vital-chart.setup';
 import {
   formatChartAxisTick,
+  formatVitalTimeLabel,
   toVitalChartPoints,
+  VitalChartDatum,
   VitalTimePoint,
-  vitalChartXBounds
+  vitalChartPointRadius,
+  vitalChartXBounds,
 } from '../../../../shared/utils/vital-chart.utils';
 
-Chart.register(LineController, LineElement, PointElement, LinearScale, Tooltip, Legend);
+ensureVitalChartsRegistered();
 
 @Component({
-    selector: 'app-heart-rate',
-    standalone: true,
-    template: `<canvas #chartCanvas height="300"></canvas>`,
-    styleUrls: ['heart-rate.css']
+  selector: 'app-heart-rate',
+  standalone: true,
+  template: `<canvas #chartCanvas height="300"></canvas>`,
+  styleUrls: ['heart-rate.css'],
 })
-export class HeartRate implements AfterViewInit, OnDestroy, OnChanges {
+export class HeartRate implements AfterViewInit, OnDestroy {
+  private translateService = inject(TranslateService);
 
-    private translateService = inject(TranslateService);
+  @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
-    @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
+  @Input() thresholdMin = 60;
+  @Input() thresholdMax = 100;
 
-    @Input() points: VitalTimePoint[] = [];
-    @Input() thresholdMin = 60;
-    @Input() thresholdMax = 100;
-    private chartInstance?: Chart<keyof ChartTypeRegistry, { x: number; y: number }[], unknown>;
+  @Input() set points(value: VitalTimePoint[]) {
+    this._points = value ?? [];
+    this.refresh();
+  }
 
-    ngAfterViewInit() {
-        this.initChart();
+  private _points: VitalTimePoint[] = [];
+  private chartInstance?: Chart<'line', VitalChartDatum[], unknown>;
+
+  ngAfterViewInit(): void {
+    this.initChart();
+    this.refresh();
+  }
+
+  ngOnDestroy(): void {
+    this.chartInstance?.destroy();
+  }
+
+  private chartData(): VitalChartDatum[] {
+    return toVitalChartPoints(this._points);
+  }
+
+  private refresh(): void {
+    if (!this.chartCanvas) {
+      return;
+    }
+    if (!this.chartInstance) {
+      this.initChart();
+      return;
+    }
+    this.applyChartData();
+  }
+
+  private applyChartData(): void {
+    if (!this.chartInstance) {
+      return;
+    }
+    const data = this.chartData();
+    this.chartInstance.data.datasets[0].data = data;
+    this.chartInstance.data.datasets[0].pointRadius = vitalChartPointRadius(data.length);
+    const bounds = vitalChartXBounds(data);
+    const xScale = this.chartInstance.options.scales?.['x'];
+    if (xScale) {
+      xScale.min = bounds.min;
+      xScale.max = bounds.max;
+    }
+    if (this.chartInstance.options.scales?.['y']) {
+      this.chartInstance.options.scales['y'].min = this.thresholdMin - 5;
+      this.chartInstance.options.scales['y'].max = this.thresholdMax + 5;
+    }
+    this.chartInstance.update('none');
+  }
+
+  private initChart(): void {
+    if (!this.chartCanvas || this.chartInstance) {
+      return;
+    }
+    const ctx = this.chartCanvas.nativeElement.getContext('2d');
+    if (!ctx) {
+      return;
     }
 
-    ngOnChanges() {
-        if (this.chartInstance) {
-            this.applyChartData();
-        }
-    }
+    const heartRateLabel = this.translateService.instant('senior-citizen.statistics.heartRate');
+    const heartRateTitle = this.translateService.instant('senior-citizen.statistics.heartRateTitle');
+    const trendSubtitle = this.translateService.instant('senior-citizen.statistics.chartTrendSubtitle');
+    const bpmLabel = this.translateService.instant('senior-citizen.statistics.bpm');
+    const timeAxisLabel = this.translateService.instant('senior-citizen.statistics.measuredAtTime');
+    const data = this.chartData();
+    const bounds = vitalChartXBounds(data);
+    const pointRadius = vitalChartPointRadius(data.length);
 
-    ngOnDestroy() {
-        this.chartInstance?.destroy();
-    }
-
-    private chartData() {
-        return toVitalChartPoints(this.points);
-    }
-
-    private applyChartData() {
-        if (!this.chartInstance) return;
-        const data = this.chartData();
-        this.chartInstance.data.datasets[0].data = data;
-        this.applyXScaleBounds(data);
-        if (this.chartInstance.options.scales?.['y']) {
-            this.chartInstance.options.scales['y'].min = this.thresholdMin - 5;
-            this.chartInstance.options.scales['y'].max = this.thresholdMax + 5;
-        }
-        this.chartInstance.update();
-    }
-
-    private applyXScaleBounds(data: { x: number; y: number }[]) {
-        const bounds = vitalChartXBounds(data);
-        const xScale = this.chartInstance?.options.scales?.['x'];
-        if (!xScale || !bounds) return;
-        xScale.min = bounds.min;
-        xScale.max = bounds.max;
-    }
-
-    private initChart() {
-        if (!this.chartCanvas) return;
-
-        const ctx = this.chartCanvas.nativeElement.getContext('2d');
-        if (!ctx) return;
-
-        const heartRateLabel = this.translateService.instant('senior-citizen.statistics.heartRate');
-        const heartRateTitle = this.translateService.instant('senior-citizen.statistics.heartRateTitle');
-        const bpmLabel = this.translateService.instant('senior-citizen.statistics.bpm');
-        const timeAxisLabel = this.translateService.instant('senior-citizen.statistics.measuredAtTime');
-        const data = this.chartData();
-        const bounds = vitalChartXBounds(data);
-
-        this.chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: [
-                    {
-                        label: heartRateLabel,
-                        data,
-                        borderColor: 'rgb(226,99,255)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        tension: 0.3,
-                        fill: true,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        yAxisID: 'y'
-                    }
-                ]
+    this.chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [{
+          label: heartRateLabel,
+          data,
+          borderColor: 'rgb(226,99,255)',
+          borderWidth: 2.5,
+          tension: 0,
+          stepped: 'after',
+          fill: false,
+          spanGaps: false,
+          pointRadius,
+          pointHoverRadius: 6,
+          pointBackgroundColor: 'rgb(226,99,255)',
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        parsing: false,
+        animation: false,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: [heartRateTitle, trendSubtitle],
+            padding: { bottom: 12 },
+          },
+          tooltip: {
+            callbacks: {
+              title: (items) => formatVitalTimeLabel(new Date(items[0]?.parsed.x ?? 0).toISOString()),
+              label: (item) => `${heartRateLabel}: ${item.parsed.y} ${bpmLabel}`,
             },
-            options: {
-                responsive: true,
-                parsing: false,
-                interaction: {
-                    mode: 'nearest',
-                    intersect: false,
-                    axis: 'x'
-                },
-                plugins: {
-                    legend: { position: 'top' },
-                    title: {
-                        display: true,
-                        text: heartRateTitle
-                    },
-                    tooltip: {
-                        callbacks: {
-                            title: (items) => formatChartAxisTick(items[0]?.parsed.x ?? 0),
-                            label: (item) => `${heartRateLabel}: ${item.parsed.y} ${bpmLabel}`
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        type: 'linear',
-                        min: bounds?.min,
-                        max: bounds?.max,
-                        title: { display: true, text: timeAxisLabel },
-                        ticks: {
-                            maxTicksLimit: 8,
-                            callback: (value) => formatChartAxisTick(value)
-                        }
-                    },
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        min: this.thresholdMin - 5,
-                        max: this.thresholdMax + 5,
-                        title: {
-                            display: true,
-                            text: bpmLabel
-                        }
-                    }
-                }
-            }
-        });
-    }
+          },
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            min: bounds.min,
+            max: bounds.max,
+            title: { display: true, text: timeAxisLabel },
+            ticks: { maxTicksLimit: 6, callback: (value) => formatChartAxisTick(value) },
+          },
+          y: {
+            min: this.thresholdMin - 5,
+            max: this.thresholdMax + 5,
+            title: { display: true, text: bpmLabel },
+          },
+        },
+      },
+    });
+  }
 }

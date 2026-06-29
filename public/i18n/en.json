@@ -261,7 +261,8 @@
       "loadingSeniorCitizen": "Loading senior citizen information...",
       "noDeviceMessage": "No device is associated with this senior citizen.",
       "hintAssignDevice": "Please make sure the senior citizen has an assigned device.",
-      "seniorCitizenIdLabel": "Senior citizen ID"
+      "seniorCitizenIdLabel": "Senior citizen ID",
+      "showingRecent": "Showing the {{shown}} most recent alerts of {{total}}."
     },
     "statistics": {
       "heartRate": "Heart Rate (bpm)",
@@ -281,6 +282,10 @@
       "noHeartRateData": "No heart rate data available",
       "noOxygenData": "No oxygen saturation data available",
       "noTemperatureData": "No temperature data available",
+      "latestReading": "Latest reading",
+      "noLatestReading": "No recent data",
+      "measuredAt": "Measured at",
+      "chartTrendSubtitle": "Minute average · last 4 h",
       "weekdays": {
         "mon": "Mon",
         "tue": "Tue",

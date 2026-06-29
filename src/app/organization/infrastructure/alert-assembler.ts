@@ -1,5 +1,6 @@
 import { Alert } from "../domain/model/alert.entity";
 import { AlertResponse } from "./alert-response";
+import { formatVitalTimeLabel, parseMeasuredAt } from "../../shared/utils/vital-chart.utils";
 
 /**
  * AlertAssembler
@@ -7,22 +8,25 @@ import { AlertResponse } from "./alert-response";
  */
 export class AlertAssembler {
   static toEntity(response: AlertResponse): Alert {
-    // Parse the registeredAt to extract date and time
-    const registeredDate = new Date(response.registeredAt);
-    const date = registeredDate.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-    const time = registeredDate.toLocaleTimeString('en-US', { 
-      hour12: false, 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    const registeredAt = response.registeredAt?.trim() ?? '';
+    const registeredDate = parseMeasuredAt(registeredAt);
+    const date = Number.isNaN(registeredDate.getTime())
+      ? ''
+      : registeredDate.toLocaleDateString('en-CA');
+    const time = Number.isNaN(registeredDate.getTime())
+      ? ''
+      : formatVitalTimeLabel(registeredAt);
 
     return new Alert({
       id: response.id,
       alertTitle: response.alertType,
-      date: date,
-      time: time,
+      alertType: response.alertType,
+      deviceId: response.deviceId,
+      date,
+      time,
       dataRegistered: response.dataRegistered.toString(),
-      reason: response.message
+      reason: response.message,
+      registeredAt,
     });
   }
 

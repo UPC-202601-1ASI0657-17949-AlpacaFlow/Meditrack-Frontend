@@ -43,6 +43,7 @@ export class OrganizationLayout implements OnInit, OnDestroy {
   private timeSubscription?: Subscription;
   private routerSubscription?: Subscription;
   private paramMapSubscription?: Subscription;
+  private lastNavSeniorCitizenId: number | null = null;
 
   private userRoleSignal = signal<string>('');
   private currentUserIdSignal = signal<number | null>(null);
@@ -162,12 +163,7 @@ export class OrganizationLayout implements OnInit, OnDestroy {
         .map(item => ({ ...item, route: '', organizationTypes: item.organizationTypes } as typeof filtered[0]));
       filtered = [...filtered, ...seniorCitizenItems];
     }
-    
-    console.log(`Filtering navigation for organization type "${organizationType}", role "${role}", seniorCitizenId: ${seniorCitizenId || 'none'}, route: ${currentRoute}:`, {
-      totalItems: items.length,
-      filteredCount: filtered.length,
-      filteredItems: filtered.map(i => i.label)
-    });
+
     return filtered;
   });
   
@@ -384,7 +380,8 @@ export class OrganizationLayout implements OnInit, OnDestroy {
              }
              
             const seniorCitizenId = this.getSeniorCitizenIdFromRoute();
-             if (seniorCitizenId && seniorCitizenId > 0) {
+             if (seniorCitizenId && seniorCitizenId > 0 && seniorCitizenId !== this.lastNavSeniorCitizenId) {
+               this.lastNavSeniorCitizenId = seniorCitizenId;
                this.organizationStore.loadSeniorCitizenById(seniorCitizenId);
              }
              this.updateNavigationState();

@@ -14,8 +14,28 @@ import {
   snapshotHasMeasurements,
   writeDeviceVitalsSnapshot
 } from '../infrastructure/device-vitals-cache';
+import { sortByMeasuredAt, alertTimestampMs } from '../../shared/utils/vital-chart.utils';
 
 const HIDDEN_DEVICES_STORAGE_KEY = 'meditrack:ui-hidden-device-ids';
+/** Keep memory and sessionStorage bounded for chart / degraded mode. */
+const MAX_MEASUREMENTS_PER_DEVICE = 400;
+const MAX_ALERTS_PER_DEVICE = 50;
+
+function trimMeasurements<T extends { measuredAt: string }>(items: T[]): T[] {
+  if (items.length <= MAX_MEASUREMENTS_PER_DEVICE) {
+    return items;
+  }
+  return sortByMeasuredAt(items).slice(-MAX_MEASUREMENTS_PER_DEVICE);
+}
+
+function trimAlerts(alerts: Alert[]): Alert[] {
+  if (alerts.length <= MAX_ALERTS_PER_DEVICE) {
+    return alerts;
+  }
+  return [...alerts]
+    .sort((a, b) => alertTimestampMs(b.registeredAt) - alertTimestampMs(a.registeredAt))
+    .slice(0, MAX_ALERTS_PER_DEVICE);
+}
 
 function readHiddenDeviceIdsFromStorage(): Set<number> {
   try {
@@ -100,8 +120,30 @@ export class DeviceStore {
 
   private measurementBatchPending = 0;
   private measurementBatchFailures = 0;
+  private readonly alertsInFlight = new Set<number>();
+  private readonly measurementsInFlight = new Set<number>();
+
+  private readonly alertsForDeviceCache = new Map<number, Signal<Alert[]>>();
+  private readonly heartRateForDeviceCache = new Map<number, Signal<HeartRateMeasurement[]>>();
+  private readonly temperatureForDeviceCache = new Map<number, Signal<TemperatureMeasurement[]>>();
+  private readonly oxygenForDeviceCache = new Map<number, Signal<OxygenMeasurement[]>>();
+  private readonly degradedForDeviceCache = new Map<number, Signal<boolean>>();
+  private readonly lastSyncedForDeviceCache = new Map<number, Signal<string | null>>();
 
   constructor(private deviceApi: DeviceApi) {}
+
+  private cachedDeviceSignal<T>(
+    cache: Map<number, Signal<T>>,
+    deviceId: number,
+    selector: () => T,
+  ): Signal<T> {
+    let cached = cache.get(deviceId);
+    if (!cached) {
+      cached = computed(selector);
+      cache.set(deviceId, cached);
+    }
+    return cached;
+  }
 
   /** Hides a device from the IoT table only; does not delete it in the backend. */
   hideDeviceFromList(deviceId: number): void {
@@ -117,11 +159,19 @@ export class DeviceStore {
   }
 
   isDeviceDataDegraded(deviceId: number): Signal<boolean> {
-    return computed(() => this.degradedDevicesSignal().has(deviceId));
+    return this.cachedDeviceSignal(
+      this.degradedForDeviceCache,
+      deviceId,
+      () => this.degradedDevicesSignal().has(deviceId),
+    );
   }
 
   getLastSyncedAt(deviceId: number): Signal<string | null> {
-    return computed(() => this.lastSyncedAtSignal().get(deviceId) ?? null);
+    return this.cachedDeviceSignal(
+      this.lastSyncedForDeviceCache,
+      deviceId,
+      () => this.lastSyncedAtSignal().get(deviceId) ?? null,
+    );
   }
 
   loadAllDevices(): void {
@@ -197,20 +247,26 @@ export class DeviceStore {
   }
 
   loadAlertsByDeviceId(deviceId: number): void {
+    if (deviceId <= 0 || this.alertsInFlight.has(deviceId)) {
+      return;
+    }
+
+    this.alertsInFlight.add(deviceId);
     this.loadingAlertsSignal.set(true);
     this.errorSignal.set(null);
-    this.hydrateFromCache(deviceId);
+    this.hydrateAlertsFromCache(deviceId);
 
     this.deviceApi.getAllAlertsByDeviceId(deviceId).subscribe({
       next: (alerts) => {
+        const trimmed = trimAlerts(alerts);
         this.deviceAlertsSignal.update(map => {
           const newMap = new Map(map);
-          newMap.set(deviceId, alerts);
+          newMap.set(deviceId, trimmed);
           return newMap;
         });
-        this.markHealthy(deviceId);
-        this.persistSnapshot(deviceId);
+        this.syncAlertsOnly(deviceId);
         this.loadingAlertsSignal.set(false);
+        this.alertsInFlight.delete(deviceId);
       },
       error: (error) => {
         const restored = this.restoreAlertsFromCache(deviceId);
@@ -220,15 +276,17 @@ export class DeviceStore {
           this.errorSignal.set('Error loading alerts: ' + (error?.message || 'Unknown error'));
         }
         this.loadingAlertsSignal.set(false);
+        this.alertsInFlight.delete(deviceId);
       }
     });
   }
 
   getAlertsForDevice(deviceId: number): Signal<Alert[]> {
-    return computed(() => {
-      const map = this.deviceAlertsSignal();
-      return map.get(deviceId) || [];
-    });
+    return this.cachedDeviceSignal(
+      this.alertsForDeviceCache,
+      deviceId,
+      () => this.deviceAlertsSignal().get(deviceId) || [],
+    );
   }
 
   loadHeartRateMeasurements(deviceId: number): void {
@@ -236,9 +294,10 @@ export class DeviceStore {
 
     this.deviceApi.getAllHeartRateMeasurements(deviceId).subscribe({
       next: (measurements) => {
+        const trimmed = trimMeasurements(measurements);
         this.heartRateMeasurementsSignal.update(map => {
           const newMap = new Map(map);
-          newMap.set(deviceId, measurements);
+          newMap.set(deviceId, trimmed);
           return newMap;
         });
         this.finishMeasurementRequest(deviceId, false);
@@ -267,10 +326,11 @@ export class DeviceStore {
   }
 
   getHeartRateMeasurementsForDevice(deviceId: number): Signal<HeartRateMeasurement[]> {
-    return computed(() => {
-      const map = this.heartRateMeasurementsSignal();
-      return map.get(deviceId) || [];
-    });
+    return this.cachedDeviceSignal(
+      this.heartRateForDeviceCache,
+      deviceId,
+      () => this.heartRateMeasurementsSignal().get(deviceId) || [],
+    );
   }
 
   loadTemperatureMeasurements(deviceId: number): void {
@@ -278,9 +338,10 @@ export class DeviceStore {
 
     this.deviceApi.getAllTemperatureMeasurements(deviceId).subscribe({
       next: (measurements) => {
+        const trimmed = trimMeasurements(measurements);
         this.temperatureMeasurementsSignal.update(map => {
           const newMap = new Map(map);
-          newMap.set(deviceId, measurements);
+          newMap.set(deviceId, trimmed);
           return newMap;
         });
         this.finishMeasurementRequest(deviceId, false);
@@ -309,10 +370,11 @@ export class DeviceStore {
   }
 
   getTemperatureMeasurementsForDevice(deviceId: number): Signal<TemperatureMeasurement[]> {
-    return computed(() => {
-      const map = this.temperatureMeasurementsSignal();
-      return map.get(deviceId) || [];
-    });
+    return this.cachedDeviceSignal(
+      this.temperatureForDeviceCache,
+      deviceId,
+      () => this.temperatureMeasurementsSignal().get(deviceId) || [],
+    );
   }
 
   loadOxygenMeasurements(deviceId: number): void {
@@ -320,9 +382,10 @@ export class DeviceStore {
 
     this.deviceApi.getAllOxygenMeasurements(deviceId).subscribe({
       next: (measurements) => {
+        const trimmed = trimMeasurements(measurements);
         this.oxygenMeasurementsSignal.update(map => {
           const newMap = new Map(map);
-          newMap.set(deviceId, measurements);
+          newMap.set(deviceId, trimmed);
           return newMap;
         });
         this.finishMeasurementRequest(deviceId, false);
@@ -351,23 +414,74 @@ export class DeviceStore {
   }
 
   getOxygenMeasurementsForDevice(deviceId: number): Signal<OxygenMeasurement[]> {
-    return computed(() => {
-      const map = this.oxygenMeasurementsSignal();
-      return map.get(deviceId) || [];
-    });
+    return this.cachedDeviceSignal(
+      this.oxygenForDeviceCache,
+      deviceId,
+      () => this.oxygenMeasurementsSignal().get(deviceId) || [],
+    );
   }
 
-  loadAllMeasurementsForDevice(deviceId: number): void {
+  loadAllMeasurementsForDevice(deviceId: number, options: { showLoading?: boolean } = {}): void {
+    if (deviceId <= 0) {
+      return;
+    }
+    if (this.measurementsInFlight.has(deviceId)) {
+      return;
+    }
+    this.measurementsInFlight.add(deviceId);
+
+    const hasCachedMeasurements = this.hasMeasurementsForDevice(deviceId);
+    const showLoading = options.showLoading ?? !hasCachedMeasurements;
+
     this.measurementBatchPending = 3;
     this.measurementBatchFailures = 0;
-    this.loadingMeasurementsSignal.set(true);
+    if (showLoading) {
+      this.loadingMeasurementsSignal.set(true);
+    }
     this.errorSignal.set(null);
-    this.hydrateFromCache(deviceId);
+    this.hydrateMeasurementsFromCache(deviceId);
     this.clearDegraded(deviceId);
 
     this.loadHeartRateMeasurements(deviceId);
     this.loadTemperatureMeasurements(deviceId);
     this.loadOxygenMeasurements(deviceId);
+  }
+
+  private hasMeasurementsForDevice(deviceId: number): boolean {
+    const heartRate = this.heartRateMeasurementsSignal().get(deviceId)?.length ?? 0;
+    const temperature = this.temperatureMeasurementsSignal().get(deviceId)?.length ?? 0;
+    const oxygen = this.oxygenMeasurementsSignal().get(deviceId)?.length ?? 0;
+    return heartRate + temperature + oxygen > 0;
+  }
+
+  clearMeasurementsForDevice(deviceId: number): void {
+    if (deviceId <= 0) {
+      return;
+    }
+    this.heartRateMeasurementsSignal.update(map => {
+      if (!map.has(deviceId)) {
+        return map;
+      }
+      const newMap = new Map(map);
+      newMap.delete(deviceId);
+      return newMap;
+    });
+    this.temperatureMeasurementsSignal.update(map => {
+      if (!map.has(deviceId)) {
+        return map;
+      }
+      const newMap = new Map(map);
+      newMap.delete(deviceId);
+      return newMap;
+    });
+    this.oxygenMeasurementsSignal.update(map => {
+      if (!map.has(deviceId)) {
+        return map;
+      }
+      const newMap = new Map(map);
+      newMap.delete(deviceId);
+      return newMap;
+    });
   }
 
   clearAll(): void {
@@ -409,7 +523,7 @@ export class DeviceStore {
 
     if (this.measurementBatchFailures === 0) {
       this.markHealthy(deviceId);
-      this.persistSnapshot(deviceId);
+      this.measurementsInFlight.delete(deviceId);
       return;
     }
 
@@ -417,33 +531,45 @@ export class DeviceStore {
     if (restored) {
       this.markDegraded(deviceId);
     }
+    this.measurementsInFlight.delete(deviceId);
   }
 
   private hydrateFromCache(deviceId: number): void {
+    this.hydrateMeasurementsFromCache(deviceId);
+    this.hydrateAlertsFromCache(deviceId);
+    this.hydrateSyncedAtFromCache(deviceId);
+  }
+
+  private hydrateMeasurementsFromCache(deviceId: number): void {
     const snapshot = readDeviceVitalsSnapshot(deviceId);
-    if (!snapshot) {
+    if (!snapshotHasMeasurements(snapshot)) {
       return;
     }
+    this.applyMeasurementsSnapshot(deviceId, snapshot!);
+  }
 
-    if (snapshotHasMeasurements(snapshot)) {
-      this.applyMeasurementsSnapshot(deviceId, snapshot);
+  private hydrateAlertsFromCache(deviceId: number): void {
+    const snapshot = readDeviceVitalsSnapshot(deviceId);
+    if (!snapshotHasAlerts(snapshot)) {
+      return;
     }
+    this.deviceAlertsSignal.update(map => {
+      const newMap = new Map(map);
+      newMap.set(deviceId, snapshot!.alerts);
+      return newMap;
+    });
+  }
 
-    if (snapshotHasAlerts(snapshot)) {
-      this.deviceAlertsSignal.update(map => {
-        const newMap = new Map(map);
-        newMap.set(deviceId, snapshot.alerts);
-        return newMap;
-      });
+  private hydrateSyncedAtFromCache(deviceId: number): void {
+    const snapshot = readDeviceVitalsSnapshot(deviceId);
+    if (!snapshot?.syncedAt) {
+      return;
     }
-
-    if (snapshot.syncedAt) {
-      this.lastSyncedAtSignal.update(map => {
-        const newMap = new Map(map);
-        newMap.set(deviceId, snapshot.syncedAt);
-        return newMap;
-      });
-    }
+    this.lastSyncedAtSignal.update(map => {
+      const newMap = new Map(map);
+      newMap.set(deviceId, snapshot.syncedAt);
+      return newMap;
+    });
   }
 
   private restoreMeasurementsFromCache(deviceId: number): boolean {
@@ -473,17 +599,17 @@ export class DeviceStore {
   private applyMeasurementsSnapshot(deviceId: number, snapshot: DeviceVitalsSnapshot): void {
     this.heartRateMeasurementsSignal.update(map => {
       const newMap = new Map(map);
-      newMap.set(deviceId, snapshot.heartRate);
+      newMap.set(deviceId, trimMeasurements(snapshot.heartRate));
       return newMap;
     });
     this.temperatureMeasurementsSignal.update(map => {
       const newMap = new Map(map);
-      newMap.set(deviceId, snapshot.temperature);
+      newMap.set(deviceId, trimMeasurements(snapshot.temperature));
       return newMap;
     });
     this.oxygenMeasurementsSignal.update(map => {
       const newMap = new Map(map);
-      newMap.set(deviceId, snapshot.oxygen);
+      newMap.set(deviceId, trimMeasurements(snapshot.oxygen));
       return newMap;
     });
   }
@@ -495,13 +621,15 @@ export class DeviceStore {
     const oxygen = this.oxygenMeasurementsSignal().get(deviceId) ?? [];
     const alerts = this.deviceAlertsSignal().get(deviceId) ?? [];
 
-    writeDeviceVitalsSnapshot(deviceId, {
+    const payload: DeviceVitalsSnapshot = {
       syncedAt,
-      heartRate,
-      temperature,
-      oxygen,
-      alerts
-    });
+      heartRate: trimMeasurements(heartRate),
+      temperature: trimMeasurements(temperature),
+      oxygen: trimMeasurements(oxygen),
+      alerts: trimAlerts(alerts),
+    };
+
+    queueMicrotask(() => writeDeviceVitalsSnapshot(deviceId, payload));
 
     this.lastSyncedAtSignal.update(map => {
       const newMap = new Map(map);
@@ -515,6 +643,29 @@ export class DeviceStore {
       const next = new Set(set);
       next.add(deviceId);
       return next;
+    });
+  }
+
+  private syncAlertsOnly(deviceId: number): void {
+    this.clearDegraded(deviceId);
+    const syncedAt = new Date().toISOString();
+    const alerts = trimAlerts(this.deviceAlertsSignal().get(deviceId) ?? []);
+    const existing = readDeviceVitalsSnapshot(deviceId);
+
+    this.lastSyncedAtSignal.update(map => {
+      const newMap = new Map(map);
+      newMap.set(deviceId, syncedAt);
+      return newMap;
+    });
+
+    queueMicrotask(() => {
+      writeDeviceVitalsSnapshot(deviceId, {
+        syncedAt,
+        heartRate: existing?.heartRate ?? [],
+        temperature: existing?.temperature ?? [],
+        oxygen: existing?.oxygen ?? [],
+        alerts,
+      });
     });
   }
 

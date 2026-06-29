@@ -1,129 +1,157 @@
-import { Component, Input, AfterViewInit, OnDestroy, ViewChild, ElementRef, OnChanges, SimpleChanges, inject } from '@angular/core';
-import { Chart, ChartTypeRegistry, registerables } from 'chart.js';
+import { Component, Input, AfterViewInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
+import { Chart } from 'chart.js';
 import { TranslateService } from '@ngx-translate/core';
+import { ensureVitalChartsRegistered } from '../../../../shared/utils/vital-chart.setup';
 import {
   formatChartAxisTick,
+  formatVitalTimeLabel,
   toVitalChartPoints,
+  VitalChartDatum,
   VitalTimePoint,
-  vitalChartXBounds
+  vitalChartPointRadius,
+  vitalChartTemperatureYBounds,
+  vitalChartXBounds,
 } from '../../../../shared/utils/vital-chart.utils';
 
-Chart.register(...registerables);
+ensureVitalChartsRegistered();
 
 @Component({
-    selector: 'app-temperature-rate',
-    template: `
-        <div class="p-4">
-            <canvas #chartCanvas height="300"></canvas>
-        </div>
-    `,
-    standalone: true,
-    styleUrls: ['./temperature-rate.css']
+  selector: 'app-temperature-rate',
+  standalone: true,
+  template: `<canvas #chartCanvas height="300"></canvas>`,
+  styleUrls: ['temperature-rate.css'],
 })
-export class TemperatureRate implements AfterViewInit, OnDestroy, OnChanges {
+export class TemperatureRate implements AfterViewInit, OnDestroy {
+  private translateService = inject(TranslateService);
 
-    private translateService = inject(TranslateService);
+  @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
-    @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
-    @Input() points: VitalTimePoint[] = [];
+  @Input() thresholdMin = 36.0;
+  @Input() thresholdMax = 37.5;
 
-    private chartInstance?: Chart<keyof ChartTypeRegistry, { x: number; y: number }[], unknown>;
+  @Input() set points(value: VitalTimePoint[]) {
+    this._points = value ?? [];
+    this.refresh();
+  }
 
-    ngAfterViewInit() {
-        this.initChart();
+  private _points: VitalTimePoint[] = [];
+  private chartInstance?: Chart<'line', VitalChartDatum[], unknown>;
+
+  ngAfterViewInit(): void {
+    this.initChart();
+    this.refresh();
+  }
+
+  ngOnDestroy(): void {
+    this.chartInstance?.destroy();
+  }
+
+  private chartData(): VitalChartDatum[] {
+    return toVitalChartPoints(this._points);
+  }
+
+  private refresh(): void {
+    if (!this.chartCanvas) {
+      return;
+    }
+    if (!this.chartInstance) {
+      this.initChart();
+      return;
+    }
+    this.applyChartData();
+  }
+
+  private applyChartData(): void {
+    if (!this.chartInstance) {
+      return;
+    }
+    const data = this.chartData();
+    this.chartInstance.data.datasets[0].data = data;
+    this.chartInstance.data.datasets[0].pointRadius = vitalChartPointRadius(data.length);
+    const xBounds = vitalChartXBounds(data);
+    const yBounds = vitalChartTemperatureYBounds(data, this.thresholdMin, this.thresholdMax);
+    const xScale = this.chartInstance.options.scales?.['x'];
+    const yScale = this.chartInstance.options.scales?.['y'];
+    if (xScale) {
+      xScale.min = xBounds.min;
+      xScale.max = xBounds.max;
+    }
+    if (yScale) {
+      yScale.min = yBounds.min;
+      yScale.max = yBounds.max;
+    }
+    this.chartInstance.update('none');
+  }
+
+  private initChart(): void {
+    if (!this.chartCanvas || this.chartInstance) {
+      return;
+    }
+    const ctx = this.chartCanvas.nativeElement.getContext('2d');
+    if (!ctx) {
+      return;
     }
 
-    ngOnDestroy() {
-        this.chartInstance?.destroy();
-    }
+    const temperatureLabel = this.translateService.instant('senior-citizen.statistics.temperatureUnit');
+    const temperatureTitle = this.translateService.instant('senior-citizen.statistics.temperature');
+    const trendSubtitle = this.translateService.instant('senior-citizen.statistics.chartTrendSubtitle');
+    const timeAxisLabel = this.translateService.instant('senior-citizen.statistics.measuredAtTime');
+    const data = this.chartData();
+    const xBounds = vitalChartXBounds(data);
+    const yBounds = vitalChartTemperatureYBounds(data, this.thresholdMin, this.thresholdMax);
+    const pointRadius = vitalChartPointRadius(data.length);
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (this.chartInstance && changes['points']) {
-            this.applyChartData();
-        }
-    }
-
-    private chartData() {
-        return toVitalChartPoints(this.points);
-    }
-
-    private applyChartData() {
-        if (!this.chartInstance) return;
-        const data = this.chartData();
-        this.chartInstance.data.datasets[0].data = data;
-        this.applyXScaleBounds(data);
-        this.chartInstance.update('active');
-    }
-
-    private applyXScaleBounds(data: { x: number; y: number }[]) {
-        const bounds = vitalChartXBounds(data);
-        const xScale = this.chartInstance?.options.scales?.['x'];
-        if (!xScale || !bounds) return;
-        xScale.min = bounds.min;
-        xScale.max = bounds.max;
-    }
-
-    private initChart() {
-        if (!this.chartCanvas) return;
-        const ctx = this.chartCanvas.nativeElement.getContext('2d');
-        if (!ctx) return;
-
-        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, "rgba(255, 0, 0, 0.5)");
-        gradient.addColorStop(0.5, "rgba(255, 255, 0, 0.3)");
-        gradient.addColorStop(1, "rgba(0, 123, 255, 0.2)");
-
-        const temperatureLabel = this.translateService.instant('senior-citizen.statistics.temperatureUnit');
-        const temperatureTitle = this.translateService.instant('senior-citizen.statistics.temperature');
-        const timeAxisLabel = this.translateService.instant('senior-citizen.statistics.measuredAtTime');
-        const data = this.chartData();
-        const bounds = vitalChartXBounds(data);
-
-        this.chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: [
-                    {
-                        label: temperatureLabel,
-                        data,
-                        fill: true,
-                        backgroundColor: gradient,
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointRadius: 6,
-                        pointHoverRadius: 7,
-                        pointBackgroundColor: 'rgba(255, 99, 132, 1)'
-                    }
-                ]
+    this.chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [{
+          label: temperatureLabel,
+          data,
+          borderColor: 'rgb(230, 74, 96)',
+          borderWidth: 2.5,
+          tension: 0,
+          stepped: 'after',
+          fill: false,
+          spanGaps: false,
+          pointRadius,
+          pointHoverRadius: 6,
+          pointBackgroundColor: 'rgb(230, 74, 96)',
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        parsing: false,
+        animation: false,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: [temperatureTitle, trendSubtitle],
+            padding: { bottom: 12 },
+          },
+          tooltip: {
+            callbacks: {
+              title: (items) => formatVitalTimeLabel(new Date(items[0]?.parsed.x ?? 0).toISOString()),
+              label: (item) => `${temperatureLabel}: ${item.parsed.y}°C`,
             },
-            options: {
-                responsive: true,
-                parsing: false,
-                plugins: {
-                    legend: { display: true },
-                    title: { display: true, text: temperatureTitle },
-                    tooltip: {
-                        callbacks: {
-                            title: (items) => formatChartAxisTick(items[0]?.parsed.x ?? 0),
-                            label: (item) => `${temperatureLabel}: ${item.parsed.y}°C`
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        type: 'linear',
-                        min: bounds?.min,
-                        max: bounds?.max,
-                        title: { display: true, text: timeAxisLabel },
-                        ticks: {
-                            maxTicksLimit: 8,
-                            callback: (value) => formatChartAxisTick(value)
-                        }
-                    },
-                    y: { min: 35, max: 38, title: { display: true, text: temperatureLabel } }
-                }
-            }
-        });
-    }
+          },
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            min: xBounds.min,
+            max: xBounds.max,
+            title: { display: true, text: timeAxisLabel },
+            ticks: { maxTicksLimit: 6, callback: (value) => formatChartAxisTick(value) },
+          },
+          y: {
+            min: yBounds.min,
+            max: yBounds.max,
+            title: { display: true, text: temperatureLabel },
+          },
+        },
+      },
+    });
+  }
 }
