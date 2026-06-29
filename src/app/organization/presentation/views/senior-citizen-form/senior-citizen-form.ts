@@ -262,7 +262,7 @@ export class SeniorCitizenForm implements OnChanges, OnInit {
               }
               return request$;
             }),
-            catchError(() => request$)
+            catchError(() => request$) // 404: device not in cloud yet; organization registers it after save
           );
         }),
         finalize(() => (this.submitInProgress = false))
@@ -301,7 +301,16 @@ export class SeniorCitizenForm implements OnChanges, OnInit {
     context?: SeniorCitizenSaveErrorContext
   ): { key: string; params: Record<string, string> | null } {
     const haystack = this.extractErrorHaystack(err);
-    if (this.isDeviceAlreadyAssignedError(err, haystack, context)) {
+    if (this.isDeviceNotFoundError(err, haystack)) {
+      return {
+        key: 'senior-citizen.errors.deviceNotFound',
+        params: context ? { deviceId: String(context.deviceId) } : null
+      };
+    }
+    if (this.isServiceUnavailableError(err, haystack)) {
+      return { key: 'senior-citizen.errors.serviceUnavailable', params: null };
+    }
+    if (this.isDeviceAlreadyAssignedError(err, haystack)) {
       return { key: 'senior-citizen.errors.deviceAlreadyAssigned', params: null };
     }
     if (err instanceof HttpErrorResponse && err.status === 409 && typeof err.error === 'string') {
@@ -364,11 +373,42 @@ export class SeniorCitizenForm implements OnChanges, OnInit {
     return { key: 'senior-citizen.errors.saveFailed', params: null };
   }
 
-  private isDeviceAlreadyAssignedError(
-    err: unknown,
-    haystack: string,
-    context?: SeniorCitizenSaveErrorContext
-  ): boolean {
+  private isDeviceNotFoundError(err: unknown, haystack?: string): boolean {
+    const apiErr = readApiHttpError(err);
+    if (apiErr?.status === 404) {
+      return true;
+    }
+    if (err instanceof HttpErrorResponse && err.status === 404) {
+      return true;
+    }
+    const text = (haystack ?? this.extractErrorHaystack(err)).toLowerCase();
+    return (
+      /\b404\b/.test(text) ||
+      text.includes('resource not found') ||
+      text.includes('does not exist in devices context') ||
+      text.includes('device does not exist')
+    );
+  }
+
+  private isServiceUnavailableError(err: unknown, haystack?: string): boolean {
+    const apiErr = readApiHttpError(err);
+    if (apiErr?.status === 503 || apiErr?.status === 502 || apiErr?.status === 504) {
+      return true;
+    }
+    if (err instanceof HttpErrorResponse && (err.status === 503 || err.status === 502 || err.status === 504)) {
+      return true;
+    }
+    const text = (haystack ?? this.extractErrorHaystack(err)).toLowerCase();
+    return (
+      /\b503\b/.test(text) ||
+      /\b502\b/.test(text) ||
+      /\b504\b/.test(text) ||
+      text.includes('service unavailable') ||
+      text.includes('device unavailable')
+    );
+  }
+
+  private isDeviceAlreadyAssignedError(err: unknown, haystack: string): boolean {
     const apiErr = readApiHttpError(err);
     if (apiErr?.status === 409) {
       const code = (apiErr.code ?? '').toUpperCase();
@@ -381,16 +421,13 @@ export class SeniorCitizenForm implements OnChanges, OnInit {
       const msg = apiErr.message.toLowerCase();
       if (
         msg.includes('device_already_assigned') ||
-        msg.includes('already assigned to another') ||
-        msg.includes('already assigned')
+        msg.includes('already assigned to another senior') ||
+        msg.includes('already assigned to another')
       ) {
         return true;
       }
-      if (context && Number(context.deviceId) !== Number(context.originalDeviceId ?? 0)) {
-        return true;
-      }
     }
-    if (err instanceof HttpErrorResponse) {
+    if (err instanceof HttpErrorResponse && err.status === 409) {
       if (typeof err.error === 'string') {
         const body = err.error.trim();
         if (body === 'MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED') {
@@ -403,24 +440,10 @@ export class SeniorCitizenForm implements OnChanges, OnInit {
         }
       }
     }
-    if (
-      context &&
-      Number(context.deviceId) !== Number(context.originalDeviceId ?? 0) &&
-      err instanceof Error &&
-      /failed to (update|create) entity/i.test(err.message) &&
-      !haystack.includes('DUPLICATE_DNI') &&
-      !haystack.includes('DUPLICATE_FULL_NAME')
-    ) {
-      return true;
-    }
     return (
       haystack.includes('DEVICE_ALREADY_ASSIGNED') ||
       haystack.includes('MEDITRACK_SENIOR_CITIZEN_DEVICE_ALREADY_ASSIGNED') ||
-      /already assigned to another/i.test(haystack) ||
-      (/\b409\b/.test(haystack) &&
-        /http failure|failed to update entity|failed to create entity/i.test(haystack) &&
-        !haystack.includes('DUPLICATE_DNI') &&
-        !haystack.includes('DUPLICATE_FULL_NAME'))
+      /already assigned to another senior/i.test(haystack)
     );
   }
 

@@ -46,7 +46,7 @@
       "button": "Validate Device",
       "checking": "Checking...",
       "success": "Device verified successfully",
-      "notFound": "Device not found",
+      "notFound": "Not registered in the cloud yet. It will be created automatically when you save the patient.",
       "alreadyAssigned": "This device is already assigned to another senior citizen. Use a different device ID before saving.",
       "alreadyAssignedWithPatient": "This device is already assigned to {{patientName}} (patient #{{holderId}}). Use a different device ID before saving.",
       "error": "Could not verify device. Try again."
@@ -226,6 +226,8 @@
       "duplicateDni": "A senior citizen with this DNI is already registered in the organization. Use another ID or review the existing record.",
       "duplicateFullName": "A senior citizen with the same first and last name already exists in the organization. Change the name or review the existing record.",
       "deviceAlreadyAssigned": "This device ID is already assigned to another senior citizen. Use an available device or verify the wearable hardware ID.",
+      "deviceNotFound": "Could not register device {{deviceId}} in the cloud. Check that the devices service is running and try again.",
+      "serviceUnavailable": "The devices service is temporarily unavailable. Please try again in a few seconds.",
       "saveFailed": "The senior citizen could not be saved. Check the data or try again."
     },
     "clickToView": "Click to view details",

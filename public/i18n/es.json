@@ -46,7 +46,7 @@
       "button": "Validar Dispositivo",
       "checking": "Verificando...",
       "success": "Dispositivo verificado correctamente",
-      "notFound": "Dispositivo no encontrado",
+      "notFound": "Aún no está registrado en la nube. Se creará automáticamente al guardar el paciente.",
       "alreadyAssigned": "Este dispositivo ya está asignado a otro adulto mayor. Use otro ID de dispositivo antes de guardar.",
       "alreadyAssignedWithPatient": "Este dispositivo ya está asignado a {{patientName}} (adulto mayor #{{holderId}}). Use otro ID de dispositivo antes de guardar.",
       "error": "No se pudo verificar el dispositivo. Intente de nuevo."
@@ -274,6 +274,8 @@
       "duplicateDni": "Ya existe un adulto mayor con este DNI en la organización. Use otro documento o revise el registro existente.",
       "duplicateFullName": "Ya existe un adulto mayor con el mismo nombre y apellido en la organización. Cambie los datos o revise el registro existente.",
       "deviceAlreadyAssigned": "Este ID de dispositivo ya está asignado a otro adulto mayor. Elija un dispositivo libre o verifique el número físico del wearable.",
+      "deviceNotFound": "No se pudo registrar el dispositivo {{deviceId}} en la nube. Verifique que el servicio de dispositivos esté activo e intente de nuevo.",
+      "serviceUnavailable": "El servicio de dispositivos no está disponible en este momento. Intente de nuevo en unos segundos.",
       "saveFailed": "No se pudo guardar el adulto mayor. Revise los datos o intente de nuevo."
     },
     "photo": "Foto",
