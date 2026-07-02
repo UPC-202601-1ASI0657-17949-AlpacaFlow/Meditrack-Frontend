@@ -17,3 +17,9 @@
   font-weight: 500;
   margin-left: 1rem;
 }
+
+.error-indicator {
+  color: #d32f2f;
+  font-weight: 500;
+  margin-left: 1rem;
+}

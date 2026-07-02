@@ -546,7 +546,8 @@
   "medical-record": {
     "title": "Medical Record / History",
     "medicalHistoryDescription": "Medical History & Notes",
-    "allergies": "Allergies"
+    "allergies": "Allergies",
+    "saveFailed": "Could not save medical record. Please try again."
   },
   "patient-threshold": {
     "title": "Threshold Configuration",
@@ -554,6 +555,7 @@
     "maxBpm": "Max Heart Rate (BPM)",
     "minSpo2": "Min SpO₂ (%)",
     "minCelsius": "Min Temperature (°C)",
-    "maxCelsius": "Max Temperature (°C)"
+    "maxCelsius": "Max Temperature (°C)",
+    "saveFailed": "Could not save threshold configuration. Please try again."
   }
 }

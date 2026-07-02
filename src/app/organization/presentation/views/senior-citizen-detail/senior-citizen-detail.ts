@@ -101,6 +101,14 @@ export class SeniorCitizenDetail implements OnInit, OnDestroy {
         this.deviceStore.loadDeviceById(sc.deviceId);
       }
     });
+
+    effect(() => {
+      const sc = this.seniorCitizen();
+      if (sc?.id && this.canViewClinicalData()) {
+        this.clinicalStore.loadMedicalRecord(sc.id);
+        this.clinicalStore.loadPatientThreshold(sc.id);
+      }
+    });
   }
 
   ngOnInit(): void {

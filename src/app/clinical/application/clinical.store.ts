@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { MedicalRecord } from '../domain/model/medical-record.entity';
 import { PatientThreshold } from '../domain/model/patient-threshold.entity';
 import { ClinicalApi } from '../infrastructure/clinical-api';
-import { switchMap, take } from 'rxjs';
+import { Observable, switchMap, tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ClinicalStore {
@@ -19,9 +19,15 @@ export class ClinicalStore {
     readonly patientThresholdLoading = this.patientThresholdLoadingSignal.asReadonly();
 
     private readonly loadedMedicalRecordSeniorIdSignal = signal<number | null>(null);
+    readonly loadedMedicalRecordSeniorId = this.loadedMedicalRecordSeniorIdSignal.asReadonly();
+
     private readonly loadedThresholdSeniorIdSignal = signal<number | null>(null);
+    readonly loadedThresholdSeniorId = this.loadedThresholdSeniorIdSignal.asReadonly();
+
     private medicalRecordRequestId = 0;
     private thresholdRequestId = 0;
+    private loadingMedicalRecordSeniorId: number | null = null;
+    private loadingThresholdSeniorId: number | null = null;
 
     constructor(private clinicalApi: ClinicalApi) {}
 
@@ -32,11 +38,23 @@ export class ClinicalStore {
         this.loadedThresholdSeniorIdSignal.set(null);
         this.medicalRecordLoadingSignal.set(false);
         this.patientThresholdLoadingSignal.set(false);
+        this.loadingMedicalRecordSeniorId = null;
+        this.loadingThresholdSeniorId = null;
     }
 
     loadMedicalRecord(seniorCitizenId: number): void {
         if (!seniorCitizenId) return;
+        if (this.loadingMedicalRecordSeniorId === seniorCitizenId) {
+            return;
+        }
+        if (
+            this.loadedMedicalRecordSeniorIdSignal() === seniorCitizenId
+            && !this.medicalRecordLoadingSignal()
+        ) {
+            return;
+        }
         const requestId = ++this.medicalRecordRequestId;
+        this.loadingMedicalRecordSeniorId = seniorCitizenId;
         this.medicalRecordLoadingSignal.set(true);
         this.medicalRecordSignal.set(null);
         this.loadedMedicalRecordSeniorIdSignal.set(null);
@@ -46,6 +64,7 @@ export class ClinicalStore {
                 this.medicalRecordSignal.set(record);
                 this.loadedMedicalRecordSeniorIdSignal.set(seniorCitizenId);
                 this.medicalRecordLoadingSignal.set(false);
+                this.loadingMedicalRecordSeniorId = null;
             },
             error: (err) => {
                 if (requestId !== this.medicalRecordRequestId) return;
@@ -53,11 +72,15 @@ export class ClinicalStore {
                 this.medicalRecordSignal.set(null);
                 this.loadedMedicalRecordSeniorIdSignal.set(seniorCitizenId);
                 this.medicalRecordLoadingSignal.set(false);
+                this.loadingMedicalRecordSeniorId = null;
             },
         });
     }
 
-    saveMedicalRecord(seniorCitizenId: number, data: { medicalHistoryDescription: string; allergies: string }): void {
+    saveMedicalRecord(
+        seniorCitizenId: number,
+        data: { medicalHistoryDescription: string; allergies: string }
+    ): Observable<MedicalRecord> {
         const current = this.medicalRecordSignal();
         const hasExistingRecord = current
             && current.id > 0
@@ -66,18 +89,30 @@ export class ClinicalStore {
         const request = hasExistingRecord
             ? this.clinicalApi.updateMedicalRecord(seniorCitizenId, data)
             : this.clinicalApi.createMedicalRecord({ seniorCitizenId, ...data });
-        request.pipe(take(1)).subscribe({
-            next: (record) => {
-                this.medicalRecordSignal.set(record);
-                this.loadedMedicalRecordSeniorIdSignal.set(seniorCitizenId);
-            },
-            error: (err) => console.error('Error saving medical record', err),
-        });
+        return request.pipe(
+            tap({
+                next: (record) => {
+                    this.medicalRecordSignal.set(record);
+                    this.loadedMedicalRecordSeniorIdSignal.set(seniorCitizenId);
+                },
+                error: (err) => console.error('Error saving medical record', err),
+            })
+        );
     }
 
     loadPatientThreshold(seniorCitizenId: number): void {
         if (!seniorCitizenId) return;
+        if (this.loadingThresholdSeniorId === seniorCitizenId) {
+            return;
+        }
+        if (
+            this.loadedThresholdSeniorIdSignal() === seniorCitizenId
+            && !this.patientThresholdLoadingSignal()
+        ) {
+            return;
+        }
         const requestId = ++this.thresholdRequestId;
+        this.loadingThresholdSeniorId = seniorCitizenId;
         this.patientThresholdLoadingSignal.set(true);
         this.patientThresholdSignal.set(null);
         this.loadedThresholdSeniorIdSignal.set(null);
@@ -87,6 +122,7 @@ export class ClinicalStore {
                 this.patientThresholdSignal.set(threshold);
                 this.loadedThresholdSeniorIdSignal.set(seniorCitizenId);
                 this.patientThresholdLoadingSignal.set(false);
+                this.loadingThresholdSeniorId = null;
             },
             error: (err) => {
                 if (requestId !== this.thresholdRequestId) return;
@@ -94,13 +130,17 @@ export class ClinicalStore {
                 this.patientThresholdSignal.set(null);
                 this.loadedThresholdSeniorIdSignal.set(seniorCitizenId);
                 this.patientThresholdLoadingSignal.set(false);
+                this.loadingThresholdSeniorId = null;
             },
         });
     }
 
-    savePatientThreshold(seniorCitizenId: number, data: {
-        minBpm: number; maxBpm: number; minSpo2: number; minCelsius: number; maxCelsius: number;
-    }): void {
+    savePatientThreshold(
+        seniorCitizenId: number,
+        data: {
+            minBpm: number; maxBpm: number; minSpo2: number; minCelsius: number; maxCelsius: number;
+        }
+    ): Observable<PatientThreshold> {
         const payload = {
             minBpm: Number(data.minBpm),
             maxBpm: Number(data.maxBpm),
@@ -118,12 +158,14 @@ export class ClinicalStore {
             : this.clinicalApi.createPatientThreshold(seniorCitizenId).pipe(
                 switchMap(() => this.clinicalApi.updatePatientThreshold(seniorCitizenId, payload))
             );
-        request.pipe(take(1)).subscribe({
-            next: (threshold) => {
-                this.patientThresholdSignal.set(threshold);
-                this.loadedThresholdSeniorIdSignal.set(seniorCitizenId);
-            },
-            error: (err) => console.error('Error saving patient threshold', err),
-        });
+        return request.pipe(
+            tap({
+                next: (threshold) => {
+                    this.patientThresholdSignal.set(threshold);
+                    this.loadedThresholdSeniorIdSignal.set(seniorCitizenId);
+                },
+                error: (err) => console.error('Error saving patient threshold', err),
+            })
+        );
     }
 }

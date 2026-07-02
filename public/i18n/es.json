@@ -594,7 +594,8 @@
   "medical-record": {
     "title": "Historial Médico / Antecedentes",
     "medicalHistoryDescription": "Historial Médico y Notas",
-    "allergies": "Alergias"
+    "allergies": "Alergias",
+    "saveFailed": "No se pudo guardar el historial médico. Intente de nuevo."
   },
   "patient-threshold": {
     "title": "Configuración de Umbrales",
@@ -602,6 +603,7 @@
     "maxBpm": "Máx. Pulso (BPM)",
     "minSpo2": "Mín. SpO₂ (%)",
     "minCelsius": "Mín. Temperatura (°C)",
-    "maxCelsius": "Máx. Temperatura (°C)"
+    "maxCelsius": "Máx. Temperatura (°C)",
+    "saveFailed": "No se pudo guardar la configuración de umbrales. Intente de nuevo."
   }
 }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, effect } from '@angular/core';
+import { Component, effect, input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ClinicalStore } from '../../../application/clinical.store';
+import { take } from 'rxjs';
 
 const DEFAULT_THRESHOLDS = {
   minBpm: 60,
@@ -23,11 +24,13 @@ const DEFAULT_THRESHOLDS = {
   templateUrl: './senior-citizen-threshold-config.html',
   styleUrls: ['./senior-citizen-threshold-config.css']
 })
-export class SeniorCitizenThresholdConfig implements OnInit, OnChanges {
-  @Input() seniorCitizenId!: number;
+export class SeniorCitizenThresholdConfig implements OnInit {
+  readonly seniorCitizenId = input.required<number>();
 
   form: FormGroup;
   saved = false;
+  saveError = false;
+  saving = false;
 
   constructor(
     private fb: FormBuilder,
@@ -41,8 +44,12 @@ export class SeniorCitizenThresholdConfig implements OnInit, OnChanges {
       maxCelsius: [DEFAULT_THRESHOLDS.maxCelsius, [Validators.required, Validators.min(34), Validators.max(43)]],
     });
     effect(() => {
+      const id = this.seniorCitizenId();
       const threshold = this.store.patientThreshold();
-      if (threshold && threshold.seniorCitizenId === this.seniorCitizenId) {
+      const loading = this.store.patientThresholdLoading();
+      const loadedForId = this.store.loadedThresholdSeniorId();
+
+      if (threshold && threshold.seniorCitizenId === id) {
         this.form.patchValue({
           minBpm: threshold.minBpm,
           maxBpm: threshold.maxBpm,
@@ -50,27 +57,14 @@ export class SeniorCitizenThresholdConfig implements OnInit, OnChanges {
           minCelsius: threshold.minCelsius,
           maxCelsius: threshold.maxCelsius,
         }, { emitEvent: false });
-      } else if (!this.store.patientThresholdLoading() && this.store.patientThreshold() === null) {
+      } else if (!loading && threshold === null && loadedForId === id) {
         this.resetForm();
       }
     });
   }
 
   ngOnInit(): void {
-    this.loadForCurrentSenior();
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['seniorCitizenId'] && !changes['seniorCitizenId'].firstChange) {
-      this.loadForCurrentSenior();
-    }
-  }
-
-  private loadForCurrentSenior(): void {
-    this.resetForm();
-    if (this.seniorCitizenId) {
-      this.store.loadPatientThreshold(this.seniorCitizenId);
-    }
+    this.store.loadPatientThreshold(this.seniorCitizenId());
   }
 
   private resetForm(): void {
@@ -78,17 +72,32 @@ export class SeniorCitizenThresholdConfig implements OnInit, OnChanges {
   }
 
   onSave(): void {
-    if (this.form.valid) {
-      const data = {
-        minBpm: Number(this.form.value.minBpm),
-        maxBpm: Number(this.form.value.maxBpm),
-        minSpo2: Number(this.form.value.minSpo2),
-        minCelsius: Number(this.form.value.minCelsius),
-        maxCelsius: Number(this.form.value.maxCelsius),
-      };
-      this.store.savePatientThreshold(this.seniorCitizenId, data);
-      this.saved = true;
-      setTimeout(() => this.saved = false, 2000);
+    if (!this.form.valid || this.saving) {
+      return;
     }
+
+    const data = {
+      minBpm: Number(this.form.value.minBpm),
+      maxBpm: Number(this.form.value.maxBpm),
+      minSpo2: Number(this.form.value.minSpo2),
+      minCelsius: Number(this.form.value.minCelsius),
+      maxCelsius: Number(this.form.value.maxCelsius),
+    };
+
+    this.saving = true;
+    this.saveError = false;
+    this.saved = false;
+
+    this.store.savePatientThreshold(this.seniorCitizenId(), data).pipe(take(1)).subscribe({
+      next: () => {
+        this.saving = false;
+        this.saved = true;
+        setTimeout(() => this.saved = false, 2000);
+      },
+      error: () => {
+        this.saving = false;
+        this.saveError = true;
+      },
+    });
   }
 }

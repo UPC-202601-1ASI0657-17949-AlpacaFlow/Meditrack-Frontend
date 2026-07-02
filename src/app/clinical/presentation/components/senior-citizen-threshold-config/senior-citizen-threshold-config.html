@@ -33,11 +33,14 @@
     </form>
   </mat-card-content>
   <mat-card-actions align="end">
-    <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid">
+    <button mat-raised-button color="primary" (click)="onSave()" [disabled]="form.invalid || saving">
       {{ 'common.save' | translate }}
     </button>
     @if (saved) {
       <span class="saved-indicator">{{ 'common.saved' | translate }}</span>
+    }
+    @if (saveError) {
+      <span class="error-indicator">{{ 'patient-threshold.saveFailed' | translate }}</span>
     }
   </mat-card-actions>
 </mat-card>
