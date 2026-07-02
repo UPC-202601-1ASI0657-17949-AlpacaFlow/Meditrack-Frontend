@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { MedicalRecord } from '../domain/model/medical-record.entity';
 import { PatientThreshold } from '../domain/model/patient-threshold.entity';
 import { ClinicalApi } from '../infrastructure/clinical-api';
-import { Observable, switchMap, tap } from 'rxjs';
+import { Observable, catchError, switchMap, tap, throwError } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ClinicalStore {
@@ -81,15 +81,23 @@ export class ClinicalStore {
         seniorCitizenId: number,
         data: { medicalHistoryDescription: string; allergies: string }
     ): Observable<MedicalRecord> {
-        const current = this.medicalRecordSignal();
-        const hasExistingRecord = current
-            && current.id > 0
-            && current.seniorCitizenId === seniorCitizenId
-            && this.loadedMedicalRecordSeniorIdSignal() === seniorCitizenId;
-        const request = hasExistingRecord
-            ? this.clinicalApi.updateMedicalRecord(seniorCitizenId, data)
-            : this.clinicalApi.createMedicalRecord({ seniorCitizenId, ...data });
-        return request.pipe(
+        const update$ = this.clinicalApi.updateMedicalRecord(seniorCitizenId, data);
+        const create$ = this.clinicalApi.createMedicalRecord({ seniorCitizenId, ...data });
+
+        return update$.pipe(
+            catchError(err => {
+                if (err?.status === 404) {
+                    return create$.pipe(
+                        catchError(createErr => {
+                            if (createErr?.status === 400) {
+                                return update$;
+                            }
+                            return throwError(() => createErr);
+                        })
+                    );
+                }
+                return throwError(() => err);
+            }),
             tap({
                 next: (record) => {
                     this.medicalRecordSignal.set(record);
@@ -148,17 +156,26 @@ export class ClinicalStore {
             minCelsius: Number(data.minCelsius),
             maxCelsius: Number(data.maxCelsius),
         };
-        const current = this.patientThresholdSignal();
-        const hasExistingThreshold = current
-            && current.id > 0
-            && current.seniorCitizenId === seniorCitizenId
-            && this.loadedThresholdSeniorIdSignal() === seniorCitizenId;
-        const request = hasExistingThreshold
-            ? this.clinicalApi.updatePatientThreshold(seniorCitizenId, payload)
-            : this.clinicalApi.createPatientThreshold(seniorCitizenId).pipe(
-                switchMap(() => this.clinicalApi.updatePatientThreshold(seniorCitizenId, payload))
-            );
-        return request.pipe(
+
+        const update$ = this.clinicalApi.updatePatientThreshold(seniorCitizenId, payload);
+        const createThenUpdate$ = this.clinicalApi.createPatientThreshold(seniorCitizenId).pipe(
+            switchMap(() => this.clinicalApi.updatePatientThreshold(seniorCitizenId, payload))
+        );
+
+        return update$.pipe(
+            catchError(err => {
+                if (err?.status === 404) {
+                    return createThenUpdate$.pipe(
+                        catchError(createErr => {
+                            if (createErr?.status === 400) {
+                                return update$;
+                            }
+                            return throwError(() => createErr);
+                        })
+                    );
+                }
+                return throwError(() => err);
+            }),
             tap({
                 next: (threshold) => {
                     this.patientThresholdSignal.set(threshold);

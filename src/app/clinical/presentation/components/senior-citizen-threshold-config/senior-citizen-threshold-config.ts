@@ -1,4 +1,4 @@
-import { Component, effect, input, OnInit } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,7 +24,7 @@ const DEFAULT_THRESHOLDS = {
   templateUrl: './senior-citizen-threshold-config.html',
   styleUrls: ['./senior-citizen-threshold-config.css']
 })
-export class SeniorCitizenThresholdConfig implements OnInit {
+export class SeniorCitizenThresholdConfig {
   readonly seniorCitizenId = input.required<number>();
 
   form: FormGroup;
@@ -43,28 +43,44 @@ export class SeniorCitizenThresholdConfig implements OnInit {
       minCelsius: [DEFAULT_THRESHOLDS.minCelsius, [Validators.required, Validators.min(34), Validators.max(42)]],
       maxCelsius: [DEFAULT_THRESHOLDS.maxCelsius, [Validators.required, Validators.min(34), Validators.max(43)]],
     });
-    effect(() => {
-      const id = this.seniorCitizenId();
-      const threshold = this.store.patientThreshold();
-      const loading = this.store.patientThresholdLoading();
-      const loadedForId = this.store.loadedThresholdSeniorId();
 
-      if (threshold && threshold.seniorCitizenId === id) {
-        this.form.patchValue({
-          minBpm: threshold.minBpm,
-          maxBpm: threshold.maxBpm,
-          minSpo2: threshold.minSpo2,
-          minCelsius: threshold.minCelsius,
-          maxCelsius: threshold.maxCelsius,
-        }, { emitEvent: false });
-      } else if (!loading && threshold === null && loadedForId === id) {
-        this.resetForm();
-      }
+    effect(() => {
+      const id = Number(this.seniorCitizenId());
+      if (!id) return;
+      this.store.loadPatientThreshold(id);
+    });
+
+    effect(() => {
+      this.syncFormFromStore();
     });
   }
 
-  ngOnInit(): void {
-    this.store.loadPatientThreshold(this.seniorCitizenId());
+  private syncFormFromStore(): void {
+    const id = Number(this.seniorCitizenId());
+    if (!id) return;
+
+    const threshold = this.store.patientThreshold();
+    const loading = this.store.patientThresholdLoading();
+    const loadedForId = Number(this.store.loadedThresholdSeniorId());
+
+    if (loading && loadedForId !== id) {
+      return;
+    }
+
+    if (threshold && Number(threshold.seniorCitizenId) === id) {
+      this.form.patchValue({
+        minBpm: threshold.minBpm,
+        maxBpm: threshold.maxBpm,
+        minSpo2: threshold.minSpo2,
+        minCelsius: threshold.minCelsius,
+        maxCelsius: threshold.maxCelsius,
+      }, { emitEvent: false });
+      return;
+    }
+
+    if (!loading && loadedForId === id && !threshold) {
+      this.resetForm();
+    }
   }
 
   private resetForm(): void {

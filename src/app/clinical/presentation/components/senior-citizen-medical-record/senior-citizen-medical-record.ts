@@ -1,4 +1,4 @@
-import { Component, effect, input, OnInit } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,7 +16,7 @@ import { take } from 'rxjs';
   templateUrl: './senior-citizen-medical-record.html',
   styleUrls: ['./senior-citizen-medical-record.css']
 })
-export class SeniorCitizenMedicalRecord implements OnInit {
+export class SeniorCitizenMedicalRecord {
   readonly seniorCitizenId = input.required<number>();
 
   form: FormGroup;
@@ -32,25 +32,41 @@ export class SeniorCitizenMedicalRecord implements OnInit {
       medicalHistoryDescription: [''],
       allergies: [''],
     });
-    effect(() => {
-      const id = this.seniorCitizenId();
-      const record = this.store.medicalRecord();
-      const loading = this.store.medicalRecordLoading();
-      const loadedForId = this.store.loadedMedicalRecordSeniorId();
 
-      if (record && record.seniorCitizenId === id) {
-        this.form.patchValue({
-          medicalHistoryDescription: record.medicalHistoryDescription,
-          allergies: record.allergies,
-        }, { emitEvent: false });
-      } else if (!loading && record === null && loadedForId === id) {
-        this.resetForm();
-      }
+    effect(() => {
+      const id = Number(this.seniorCitizenId());
+      if (!id) return;
+      this.store.loadMedicalRecord(id);
+    });
+
+    effect(() => {
+      this.syncFormFromStore();
     });
   }
 
-  ngOnInit(): void {
-    this.store.loadMedicalRecord(this.seniorCitizenId());
+  private syncFormFromStore(): void {
+    const id = Number(this.seniorCitizenId());
+    if (!id) return;
+
+    const record = this.store.medicalRecord();
+    const loading = this.store.medicalRecordLoading();
+    const loadedForId = Number(this.store.loadedMedicalRecordSeniorId());
+
+    if (loading && loadedForId !== id) {
+      return;
+    }
+
+    if (record && Number(record.seniorCitizenId) === id) {
+      this.form.patchValue({
+        medicalHistoryDescription: record.medicalHistoryDescription,
+        allergies: record.allergies,
+      }, { emitEvent: false });
+      return;
+    }
+
+    if (!loading && loadedForId === id && !record) {
+      this.resetForm();
+    }
   }
 
   private resetForm(): void {
